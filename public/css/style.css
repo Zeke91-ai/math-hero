@@ -1,0 +1,291 @@
+/* Font Kleintenna Bow (freeware, FontSpace). */
+@font-face {
+  font-family: 'Kleintenna';
+  src: url('../assets/kleintenna-font/Kleintenna-Bow.ttf') format('truetype');
+  font-display: block;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden;
+  background: #8fd3ff; font-family: 'Kleintenna', system-ui, sans-serif;
+  touch-action: none; -webkit-user-select: none; user-select: none;
+  overscroll-behavior: none;
+}
+#app { position: fixed; inset: 0; }
+#game { display: block; width: 100%; height: 100%; }
+#splash {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+  background: rgba(255, 255, 255, 0.75); text-align: center; padding: 24px;
+}
+#splash h1 { font-size: clamp(32px, 8vw, 48px); color: #4b2e83; }
+#splash p { font-size: clamp(12px, 3.5vw, 16px); color: #333; }
+#splash button {
+  min-width: 180px; min-height: 64px; font-size: 16px; border: none;
+  border-radius: 32px; background: #ff8fab; color: #fff; cursor: pointer;
+}
+#splash.hidden { display: none; }
+/* T8: menu utama (Mulai Baru, Lanjutkan, Skor Tertinggi) */
+#splash { overflow-y: auto; }
+#splash button.secondary { background: #4b2e83; box-shadow: 0 4px 0 #2c1a52; }
+#menu-main, #menu-pick, #menu-hs { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
+#menu-pick.hidden, #menu-hs.hidden, #menu-main.hidden { display: none; }
+#pick-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+#splash button.pick-item { min-width: 0; width: 100%; min-height: 56px; font-size: 16px; background: #4b9cff; box-shadow: 0 4px 0 #2d6fc4; }
+#hs-list { width: 100%; text-align: left; font-size: 16px; color: #333; padding-left: 28px; }
+#hs-list li { margin: 6px 0; }
+#menu-msg { font-size: 16px; color: #7a4a00; min-height: 24px; max-width: 360px; background: rgba(255,253,245,0.9); border-radius: 10px; padding: 4px 8px; }
+button { font-family: 'Kleintenna', system-ui, sans-serif; }
+#splash h2 { font-size: 24px; color: #4b2e83; }
+#status {
+  position: absolute; left: 8px; bottom: 8px; font-size: 16px; white-space: nowrap;
+  color: #222; background: rgba(255,255,255,0.7); padding: 2px 6px; border-radius: 4px;
+}
+
+/* T2: kontrol sentuh */
+#controls {
+  position: absolute; inset: 0; pointer-events: none; display: none;
+}
+#controls.active { display: block; }
+#joy-base {
+  position: absolute; left: 16px; bottom: 10px; width: 116px; height: 116px;
+  border-radius: 50%; background: rgba(255,255,255,0.35); border: 3px solid rgba(75,46,131,0.5);
+  pointer-events: auto; touch-action: none;
+}
+#joy-knob {
+  position: absolute; left: 50%; top: 50%; width: 64px; height: 64px;
+  margin: -32px 0 0 -32px; border-radius: 50%; background: rgba(255,143,171,0.9);
+  pointer-events: none;
+}
+.btn {
+  position: absolute; pointer-events: auto; touch-action: none;
+  width: 92px; height: 92px; border-radius: 50%; border: none;
+  background: #ff8fab; color: #fff; font-size: 16px; font-weight: bold;
+  box-shadow: 0 4px 0 #c75a7a;
+}
+.btn.down { transform: translateY(3px); box-shadow: 0 1px 0 #c75a7a; }
+#btn-jump { right: 16px; bottom: 36px; background: #4b9cff; box-shadow: 0 4px 0 #2d6fc4; }
+#btn-action { right: 120px; bottom: 36px; background: #ffb347; box-shadow: 0 4px 0 #c97f22; }
+#btn-pause { top: 12px; right: 12px; width: 64px; height: 44px; border-radius: 12px; font-size: 16px; background: #4b2e83; box-shadow: 0 3px 0 #2c1a52; }
+#btn-pause.small { font-size: 16px; }
+/* T7: tombol suara di kiri tombol jeda, jauh dari HUD. */
+#btn-mute { top: 12px; right: 84px; width: 104px; height: 44px; border-radius: 12px; font-size: 16px; background: #4b2e83; box-shadow: 0 3px 0 #2c1a52; }
+
+/* T4: panel soal pilihan ganda */
+.hidden { display: none !important; }
+#quiz {
+  position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(40, 20, 70, 0.55);
+}
+.quiz-card {
+  width: 100%; max-width: 420px; max-height: 96vh; overflow-y: auto;
+  background: #fffdf5; border-radius: 20px; padding: 18px; text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+#quiz-prompt { font-size: 16px; color: #2c1a52; line-height: 1.4; }
+#quiz-visual { display: block; width: 100%; height: 120px; margin: 8px 0; background: #eef8ff; border-radius: 12px; }
+#quiz-expr { font-size: 24px; font-weight: bold; color: #4b2e83; }
+#quiz-choices { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0; }
+.choice {
+  min-width: 88px; min-height: 72px; padding: 0 16px; font-size: 24px; font-weight: bold;
+  border: none; border-radius: 18px; background: #4b9cff; color: #fff; cursor: pointer;
+  box-shadow: 0 4px 0 #2d6fc4;
+}
+.choice.correct { background: #7bd389; box-shadow: 0 4px 0 #4f9e5e; }
+.choice.wrong { background: #9aa0a6; box-shadow: 0 4px 0 #6b7075; }
+.choice:disabled { opacity: 0.75; }
+#quiz-feedback { font-size: 16px; min-height: 32px; }
+#quiz-feedback.ok { color: #2e8b57; font-weight: bold; }
+#quiz-feedback.hint { color: #b36b00; }
+#quiz-explain { text-align: left; background: #fff3c4; border: 2px solid #e7c46a; border-radius: 12px; padding: 10px 14px; font-size: 16px; color: #2c1a52; margin: 8px 0; }
+#quiz-explain p { margin: 4px 0; }
+button.link {
+  background: none; border: none; color: #4b2e83; font-size: 16px;
+  text-decoration: underline; min-height: 44px; padding: 0 12px; cursor: pointer;
+}
+
+/* T5: layar Game Over dan tamat */
+.panel {
+  position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center;
+  padding: 16px; background: rgba(40, 20, 70, 0.7);
+}
+.panel-card {
+  width: 100%; max-width: 360px; background: #fffdf5; border-radius: 22px; padding: 22px;
+  text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.panel-card h2 { font-size: 24px; color: #4b2e83; margin-bottom: 8px; }
+.panel-card p { font-size: 16px; color: #333; margin: 6px 0; }
+.panel-card .big {
+  margin-top: 14px; min-width: 200px; min-height: 64px; font-size: 16px; font-weight: bold;
+  border: none; border-radius: 32px; background: #ff8fab; color: #fff; cursor: pointer;
+  box-shadow: 0 4px 0 #c75a7a;
+}
+
+/* T6: statistik */
+.stats { font-size: 16px !important; color: #2c1a52 !important; line-height: 1.5; }
+
+.credit { font-size: 16px; margin-top: 12px; text-align: center; color: #2c1a52; background: rgba(255,253,245,0.9); border-radius: 10px; padding: 4px 8px; }
+
+/* Redesain: tombol bergambar (sprite CraftPix), panel level selesai, pilih karakter, pemuatan aset */
+#btn-jump, #btn-action {
+  background-color: transparent; background-size: 100% 100%; background-repeat: no-repeat;
+  image-rendering: pixelated; box-shadow: none; text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4);
+}
+#btn-jump { background-image: url('../assets/game/btn21.png'); }
+#btn-jump.down { background-image: url('../assets/game/btn22.png'); transform: translateY(2px); box-shadow: none; }
+#btn-action { background-image: url('../assets/game/btn27.png'); }
+#btn-action.down { background-image: url('../assets/game/btn28.png'); transform: translateY(2px); box-shadow: none; }
+#btn-action { font-size: 40px; }
+.stats-list { list-style: none; text-align: left; margin: 10px 0; font-size: 16px; color: #2c1a52; }
+.stats-list li { padding: 4px 0; border-bottom: 2px dotted #e2d6f5; }
+#clear-name { font-size: 16px; color: #7a4fc0; }
+#clear-score { font-size: 24px !important; color: #4b2e83 !important; }
+#menu-hero { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
+#menu-hero.hidden { display: none; }
+#hero-list { display: flex; gap: 10px; justify-content: center; width: 100%; }
+#splash button.hero-card {
+  min-width: 0; min-height: 0; width: 104px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  border-radius: 16px; background: #fffdf5; color: #4b2e83; border: 3px solid #b9a4e3; box-shadow: 0 4px 0 #b9a4e3; font-size: 14px;
+}
+#splash button.hero-card.chosen { border-color: #ff8fab; box-shadow: 0 4px 0 #ff8fab; }
+.hero-card canvas { width: 96px; height: 96px; image-rendering: pixelated; }
+#loading-msg { font-size: 16px; color: #4b2e83; }
+body.loaded #loading-msg { display: none; }
+body:not(.loaded) #menu-main button { opacity: 0.5; pointer-events: none; }
+
+/* T12: isi nama (papan huruf di layar), papan juara, dan item lanjutkan bergambar */
+#splash { touch-action: pan-y; } /* menu boleh digulir ke bawah di layar pendek (mis. HP mendatar) */
+#splash[data-panel="name"] .credit, #splash[data-panel="hs"] .credit, #splash[data-panel="pick"] .credit, #splash[data-panel="hero"] .credit,
+#splash[data-panel="name"] > p:not(#menu-msg), #splash[data-panel="hs"] > p:not(#menu-msg) { display: none; }
+#splash[data-panel="name"] { gap: 8px; }
+#menu-name { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 360px; }
+#menu-name.hidden { display: none; }
+#name-title { font-size: 24px !important; color: #4b2e83 !important; }
+#name-hint { font-size: 14px !important; color: #555 !important; }
+#name-slots { display: flex; gap: 6px; justify-content: center; }
+#name-slots .slot {
+  width: 48px; height: 58px; display: flex; align-items: center; justify-content: center;
+  font-size: 32px; color: #4b2e83; background: #fffdf5; border: 3px solid #b9a4e3; border-radius: 12px;
+}
+#name-slots .slot.cursor { border-color: #ff8fab; animation: slotblink 1s steps(2) infinite; }
+@keyframes slotblink { 50% { background: #ffe9ef; } }
+#name-keys { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; width: 100%; }
+#splash #name-keys button.key {
+  min-width: 0; min-height: 48px; width: 100%; padding: 0; font-size: 22px; border-radius: 12px;
+  background: #4b9cff; box-shadow: 0 3px 0 #2d6fc4;
+}
+#splash #name-keys button.key:active { transform: translateY(2px); box-shadow: 0 1px 0 #2d6fc4; }
+#name-actions { display: flex; gap: 10px; width: 100%; }
+#splash #name-actions button { flex: 1; min-width: 0; min-height: 56px; }
+#splash #name-ok:disabled { opacity: 0.45; box-shadow: none; }
+#splash #name-back { min-height: 48px; }
+
+/* Item "Lanjutkan" dengan sprite karakter */
+#splash button.pick-item { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.pick-avatar { width: 40px; height: 40px; image-rendering: pixelated; }
+
+/* Papan Juara */
+#menu-hs { max-width: 380px; }
+#hs-sub { font-size: 14px !important; color: #555 !important; margin-top: -6px; }
+#hs-list { list-style: none; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+#hs-list li.hs-row {
+  display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 10px 6px 6px;
+  background: #fffdf5; border: 3px solid #d9ccf2; border-radius: 16px; text-align: left;
+}
+.hs-rank {
+  flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff; background: #8b6fc9; border-radius: 50%;
+}
+.hs-avatar { flex: none; width: 48px; height: 48px; image-rendering: pixelated; }
+.hs-name { flex: 1; min-width: 0; font-size: 22px; color: #4b2e83; letter-spacing: 1px; overflow: hidden; text-overflow: ellipsis; }
+.hs-score { flex: none; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; }
+.hs-score b { font-size: 22px; color: #2c1a52; font-weight: normal; }
+.hs-score small { font-size: 13px; color: #7a4fc0; }
+#hs-list li.hs-row.rank-1 { background: #fff4c2; border-color: #f2b705; }
+#hs-list li.hs-row.rank-1 .hs-rank { background: #f2b705; }
+#hs-list li.hs-row.rank-2 { background: #f1f4f8; border-color: #aab4c2; }
+#hs-list li.hs-row.rank-2 .hs-rank { background: #8f9bab; }
+#hs-list li.hs-row.rank-3 { background: #ffe9d6; border-color: #d98a4e; }
+#hs-list li.hs-row.rank-3 .hs-rank { background: #c96f2e; }
+li.hs-empty { list-style: none; padding: 16px; font-size: 16px; color: #4b2e83; background: #fffdf5; border: 3px dashed #d9ccf2; border-radius: 16px; }
+/* T13: revamp halaman awal (logo besar, bintang berkelip, tiga karakter, tombol Mulai besar, Kredit di tombol kecil) */
+#splash[data-panel="main"] {
+  background: linear-gradient(180deg, rgba(75,46,131,0.30) 0%, rgba(255,255,255,0.10) 45%, rgba(255,255,255,0) 100%);
+  gap: 12px;
+}
+#splash[data-panel="credit"] { background: rgba(255,255,255,0.8); }
+#title-logo {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0 0.3em;
+  font-size: clamp(52px, 16vw, 88px); line-height: 1; margin-top: 4px;
+  animation: logo-bob 2.6s ease-in-out infinite;
+}
+#title-logo .w1 { color: #ffffff; }
+#title-logo .w2 { color: #ffd54a; }
+#title-logo span {
+  text-shadow: 3px 0 #4b2e83, -3px 0 #4b2e83, 0 3px #4b2e83, 0 -3px #4b2e83,
+    3px 3px #4b2e83, -3px 3px #4b2e83, 3px -3px #4b2e83, -3px -3px #4b2e83, 0 8px 0 #2c1a52;
+}
+#tagline {
+  color: #4b2e83; background: #fffdf5; border: 3px solid #4b2e83; border-radius: 16px;
+  padding: 6px 14px; max-width: 340px; font-size: 16px;
+}
+#title-stars { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+#title-stars i {
+  position: absolute; width: 22px; height: 22px; background: #ffd54a;
+  clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%);
+  animation: star-twinkle 2.2s ease-in-out infinite;
+}
+#title-stars i:nth-child(1) { left: 8%;  top: 9%;  animation-delay: 0s; }
+#title-stars i:nth-child(2) { left: 84%; top: 7%;  width: 28px; height: 28px; animation-delay: 0.4s; }
+#title-stars i:nth-child(3) { left: 20%; top: 24%; width: 16px; height: 16px; animation-delay: 0.9s; }
+#title-stars i:nth-child(4) { left: 76%; top: 26%; width: 18px; height: 18px; animation-delay: 1.3s; }
+#title-stars i:nth-child(5) { left: 92%; top: 40%; width: 14px; height: 14px; animation-delay: 0.6s; }
+#title-stars i:nth-child(6) { left: 4%;  top: 42%; width: 14px; height: 14px; animation-delay: 1.7s; }
+#splash #menu-main { max-width: 320px; margin-top: 4px; }
+#splash #menu-main button { width: 100%; min-height: 60px; }
+#splash #menu-main button.cta {
+  min-height: 76px; font-size: 24px; background: #ff8fab; box-shadow: 0 6px 0 #d65f82;
+  animation: cta-pulse 1.8s ease-in-out infinite;
+}
+#hero-trio { display: flex; justify-content: center; gap: 14px; margin-top: 6px; }
+#hero-trio canvas { width: 96px; height: 96px; image-rendering: pixelated; animation: trio-hop 1.5s ease-in-out infinite; }
+#hero-trio canvas.trio-2 { animation-delay: 0.25s; }
+#hero-trio canvas.trio-3 { animation-delay: 0.5s; }
+#splash button.link-small {
+  min-width: 0; min-height: 44px; padding: 0 20px; font-size: 16px; color: #4b2e83;
+  background: rgba(255,253,245,0.92); box-shadow: none; border-radius: 22px;
+}
+#menu-credit { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
+#menu-credit.hidden { display: none; }
+#splash:not([data-panel="main"]) #title-stars,
+#splash:not([data-panel="main"]) #hero-trio,
+#splash:not([data-panel="main"]) #btn-credit,
+#splash:not([data-panel="main"]) #tagline { display: none; }
+#splash:not([data-panel="main"]) #title-logo { font-size: 32px; animation: none; }
+#splash:not([data-panel="main"]) #title-logo span { text-shadow: 2px 0 #4b2e83, -2px 0 #4b2e83, 0 2px #4b2e83, 0 -2px #4b2e83; }
+@keyframes logo-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes star-twinkle { 0%, 100% { transform: scale(0.6) rotate(0deg); opacity: 0.6; } 50% { transform: scale(1.1) rotate(20deg); opacity: 1; } }
+@keyframes cta-pulse { 0%, 100% { box-shadow: 0 6px 0 #d65f82, 0 0 0 0 rgba(255,213,74,0); } 50% { box-shadow: 0 6px 0 #d65f82, 0 0 0 8px rgba(255,213,74,0.7); } }
+@keyframes trio-hop { 0%, 55%, 100% { transform: translateY(0); } 25% { transform: translateY(-16px); } }
+@media (prefers-reduced-motion: reduce) {
+  #title-logo, #title-stars i, #splash #menu-main button.cta, #hero-trio canvas { animation: none; }
+}
+/* HP mendatar (pendek): logo kecil, tombol berjajar, tiga karakter disembunyikan agar semua muat tanpa gulir */
+@media (max-height: 480px) and (orientation: landscape) {
+  #splash[data-panel="main"] { gap: 6px; padding: 8px 16px; }
+  #splash[data-panel="main"] #title-logo { font-size: 48px; }
+  #splash[data-panel="main"] #hero-trio { display: none; }
+  #splash[data-panel="main"] #menu-main { flex-direction: row; max-width: 640px; }
+  #splash[data-panel="main"] #menu-main button { min-height: 56px; min-width: 0; flex: 1; font-size: 16px; }
+  #splash[data-panel="main"] #menu-main button.cta { min-height: 60px; font-size: 20px; }
+}
+#menu-msg:empty { display: none; }
+@media (max-height: 480px) and (orientation: landscape) { #tagline { max-width: 560px; } }
+/* HP potret pendek (mis. 360x640): kecilkan elemen supaya halaman awal muat tanpa gulir */
+@media (max-height: 700px) and (orientation: portrait) {
+  #splash[data-panel="main"] { padding: 12px 16px; gap: 8px; }
+  #splash[data-panel="main"] #title-logo { font-size: 52px; }
+  #splash #menu-main button.cta { min-height: 64px; font-size: 22px; }
+  #splash #menu-main button { min-height: 54px; }
+  #hero-trio canvas { width: 72px; height: 72px; }
+}

@@ -1,0 +1,18 @@
+# Data pemain lokal (nama dan skor) - jangan dipublikasikan
+data/
+*.sqlite
+
+# Cadangan, catatan kerja agen (lokal), dan keluaran tes
+_backup/
+kb/
+tests/shots/
+tests/*.png
+__pycache__/
+node_modules/
+
+# Paket sumber CraftPix (file asli): lisensi tidak mengizinkan menyebarkan file aslinya.
+# Game hanya memakai sprite hasil olahan di public/assets/game.
+public/assets/svg/craftpix/
+
+.env
+*.log

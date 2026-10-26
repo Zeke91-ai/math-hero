@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#8fd3ff">
+  <title>Math Hero</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%237b4bd6'/%3E%3Cpath d='M8 2l1.7 3.9 4.3.4-3.2 2.8 1 4.2L8 11.2 4.2 13.3l1-4.2L2 6.3l4.3-.4z' fill='%23ffd23f'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Layar permainan Math Hero"></canvas>
+    <div id="splash">
+      <div id="title-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <h1 id="title-logo" aria-label="Math Hero"><span class="w1">Math</span> <span class="w2">Hero</span></h1>
+      <p id="tagline">Petualangan berhitung di Kerajaan Awan</p>
+      <p id="loading-msg">Memuat aset...</p>
+      <div id="menu-main">
+        <button id="btn-start" class="cta" type="button">Mulai Baru</button>
+        <button id="btn-continue" class="secondary" type="button">Lanjutkan</button>
+        <button id="btn-highscore" class="secondary" type="button">Papan Juara</button>
+      </div>
+      <div id="hero-trio" aria-hidden="true"></div>
+      <button id="btn-credit" class="link-small" type="button">Kredit</button>
+      <div id="menu-credit" class="hidden">
+        <h2>Kredit</h2>
+        <p class="credit">Sprite: CraftPix.net (Free Simple Platformer Game Kit). Font: Kleintenna (freeware). Ikon dan vektor: SVG Repo, Vecteezy. Rincian di assets/svg/CREDITS.md</p>
+        <button id="credit-back" class="secondary" type="button">Kembali</button>
+      </div>
+      <div id="menu-name" class="hidden">
+        <p id="name-title">Siapa namamu?</p>
+        <p id="name-hint">Ketuk huruf. Maksimal 6 huruf.</p>
+        <div id="name-slots" aria-live="polite" aria-label="Namamu"></div>
+        <div id="name-keys" role="group" aria-label="Papan huruf"></div>
+        <div id="name-actions">
+          <button id="name-del" class="secondary" type="button" aria-label="Hapus huruf terakhir">Hapus</button>
+          <button id="name-ok" type="button" disabled>Lanjut</button>
+        </div>
+        <button id="name-back" class="secondary" type="button">Kembali</button>
+      </div>
+      <div id="menu-pick" class="hidden">
+        <p id="pick-title"></p>
+        <div id="pick-list"></div>
+        <button id="pick-back" class="secondary" type="button">Kembali</button>
+      </div>
+      <div id="menu-hero" class="hidden">
+        <p id="hero-title">Pilih karaktermu!</p>
+        <div id="hero-list"></div>
+        <button id="hero-back" class="secondary" type="button">Kembali</button>
+      </div>
+      <div id="menu-hs" class="hidden">
+        <h2>Papan Juara</h2>
+        <p id="hs-sub">Skor terbaik tiap pemain</p>
+        <ol id="hs-list"></ol>
+        <button id="hs-back" class="secondary" type="button">Kembali</button>
+      </div>
+      <p id="menu-msg"></p>
+    </div>
+    <div id="status" aria-live="polite"></div>
+    <div id="controls">
+      <div id="joy-base" aria-label="Joystick arah">
+        <div id="joy-knob"></div>
+      </div>
+      <button id="btn-jump" class="btn" type="button" aria-label="Lompat">Lompat</button>
+      <button id="btn-action" class="btn" type="button" aria-label="Tombol B">B</button>
+      <button id="btn-pause" class="btn small" type="button" aria-label="Jeda">Jeda</button>
+      <button id="btn-mute" class="btn small" type="button" aria-label="Suara">Suara</button>
+    </div>
+  </div>
+  <div id="quiz" class="hidden" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="quiz-card">
+      <p id="quiz-prompt"></p>
+      <canvas id="quiz-visual"></canvas>
+      <p id="quiz-expr"></p>
+      <div id="quiz-choices"></div>
+      <p id="quiz-feedback"></p>
+      <div id="quiz-explain" class="hidden"></div>
+      <button id="quiz-close" class="link" type="button">Tutup</button>
+    </div>
+  </div>
+  <div id="over" class="panel hidden" role="dialog" aria-modal="true">
+    <div class="panel-card">
+      <h2>Game Over</h2>
+      <p>Jangan menyerah! Yuk mulai petualangan dari awal.</p>
+      <p id="over-score"></p>
+      <p id="over-best"></p>
+      <p id="over-stats" class="stats"></p>
+      <button id="btn-retry" class="big" type="button">Ke Menu Utama</button>
+    </div>
+  </div>
+  <div id="clear" class="panel hidden" role="dialog" aria-modal="true">
+    <div class="panel-card">
+      <h2 id="clear-title">Level selesai!</h2>
+      <p id="clear-name"></p>
+      <ul id="clear-lines" class="stats-list"></ul>
+      <p id="clear-score"></p>
+      <button id="btn-next" class="big" type="button">Lanjut</button>
+    </div>
+  </div>
+  <div id="ending" class="panel hidden" role="dialog" aria-modal="true">
+    <div class="panel-card">
+      <h2>Petualangan Selesai!</h2>
+      <p>Kamu berhasil melewati semua area. Hebat!</p>
+      <p id="end-score"></p>
+      <p id="end-best"></p>
+      <p id="end-stats" class="stats"></p>
+      <button id="btn-again" class="big" type="button">Ke Menu Utama</button>
+    </div>
+  </div>
+  <script src="js/physics.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/math.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/entities.js"></script>
+  <script src="js/localapi.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
