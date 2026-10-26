@@ -143,6 +143,7 @@
     return { x, y, w, h };
   };
   // Area sentuh tak terlihat (misalnya untuk benda di dalam permainan).
+  M.clearHits = () => { hits = []; }; // overlay menutup layar: tombol adegan di bawahnya tidak boleh tersentuh
   M.hit = function (id, x, y, w, h, onTap, sfx) { hits.push({ id, x, y, w, h, onTap, sfx: sfx || null }); };
 
   // ---------- Input ----------
@@ -163,7 +164,7 @@
     canvas.setPointerCapture(e.pointerId);
     pressed = null;
     for (let i = hits.length - 1; i >= 0; i--) if (M.inRect(p.x, p.y, hits[i])) { pressed = hits[i]; break; }
-    if (M.scene && M.scene.pointerDown) M.scene.pointerDown(p.x, p.y);
+    const T = M.overlay || M.scene; if (T && T.pointerDown) T.pointerDown(p.x, p.y);
     e.preventDefault();
   });
   canvas.addEventListener('pointermove', (e) => {
@@ -171,7 +172,7 @@
     const p = toLogical(e);
     M.pointer.x = p.x; M.pointer.y = p.y;
     if (Math.hypot(p.x - M.pointer.sx, p.y - M.pointer.sy) > 8) M.pointer.moved = true;
-    if (M.scene && M.scene.pointerMove) M.scene.pointerMove(p.x, p.y);
+    const T = M.overlay || M.scene; if (T && T.pointerMove) T.pointerMove(p.x, p.y);
   });
   const endPointer = (e) => {
     if (!M.pointer.down) return;
@@ -181,9 +182,9 @@
       const h = pressed; pressed = null;
       M.audio && M.audio.sfx(h.sfx || 'klik');
       h.onTap(p.x, p.y);
-    } else if (M.scene && M.scene.tap && !M.pointer.moved) M.scene.tap(p.x, p.y);
+    } else { const T = M.overlay || M.scene; if (T && T.tap && !M.pointer.moved) T.tap(p.x, p.y); }
     pressed = null;
-    if (M.scene && M.scene.pointerUp) M.scene.pointerUp(p.x, p.y);
+    { const T = M.overlay || M.scene; if (T && T.pointerUp) T.pointerUp(p.x, p.y); }
   };
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', () => { M.pointer.down = false; pressed = null; });
@@ -361,7 +362,8 @@
     last = now;
     M.dt = dt; M.t += dt;
     readInput();
-    if (M.scene && fade.dir !== 1) {
+    if (M.overlay) { if (M.overlay.update) M.overlay.update(dt); } // overlay (kartu PR) membekukan adegan di bawahnya
+    else if (M.scene && fade.dir !== 1) {
       if (M.scene.update) M.scene.update(dt);
     }
     FX.update(dt);
@@ -373,6 +375,7 @@
     g.setTransform(M.dpr * M.scale, 0, 0, M.dpr * M.scale, 0, 0);
     g.imageSmoothingEnabled = false;
     if (M.scene && M.scene.draw) M.scene.draw(g);
+    if (M.overlay && M.overlay.draw) M.overlay.draw(g);
     if (fade.a > 0) { g.fillStyle = `rgba(26,18,51,${fade.a})`; g.fillRect(0, 0, M.VW, M.VH); }
     fpsN++; if (now - fpsT > 1000) { fps = fpsN; fpsN = 0; fpsT = now; }
     if (M.debug) M.text(g, `${fps} fps ${M.VW}x${M.VH}`, 4, M.VH - 10, { size: 12 });

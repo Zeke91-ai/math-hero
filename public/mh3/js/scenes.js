@@ -48,6 +48,10 @@
       M.button(g, { id: 'main', x: VW / 2 - 110, y: VH - 260, w: 220, h: 64, label: 'MAIN!', color: 'pink', size: 30, onTap: () => M.go('slots') });
       M.button(g, { id: 'seri', x: 10, y: 10, w: 130, h: 34, label: 'Seri Math Hero', color: 'purple', size: 13, onTap: () => { location.href = '../'; } });
       M.button(g, { id: 'kredit', x: VW - 92, y: 10, w: 82, h: 34, label: 'Kredit', color: 'purple', size: 13, onTap: () => M.go('credits') });
+      if (M.debug) M.button(g, { id: 'debugpr', x: 10, y: 52, w: 130, h: 34, label: 'Debug: PR', color: 'orange', size: 13, onTap: () => {
+        const n = (this.dbg = (this.dbg || 0) + 1) - 1;
+        window.MH3.homework.open({ grade: 2 + (n % 4), tier: n % 4, title: 'PR kelas ' + (2 + (n % 4)) }, (r) => M.toast(r.status === 'later' ? 'PR ditunda' : 'PR selesai: ' + r.stars + ' bintang', 2500));
+      } });
       const on = M.audio.prefs.music;
       M.drawToast(g, 250);
       M.button(g, { id: 'suara', x: VW - 140, y: 10, w: 42, h: 34, color: on ? 'purple' : 'gray', icon: on ? 'sound' : 'mute', onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
