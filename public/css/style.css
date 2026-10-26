@@ -289,3 +289,10 @@ li.hs-empty { list-style: none; padding: 16px; font-size: 16px; color: #4b2e83; 
   #splash #menu-main button { min-height: 54px; }
   #hero-trio canvas { width: 72px; height: 72px; }
 }
+/* Seri Math Hero: tautan kembali ke halaman pemilih seri, berdampingan dengan tombol Kredit */
+#menu-foot { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+#splash a.link-small {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 20px; font-size: 16px; color: #4b2e83;
+  background: rgba(255,253,245,0.92); border-radius: 22px; text-decoration: none;
+}
+#splash:not([data-panel="main"]) #menu-foot { display: none; }

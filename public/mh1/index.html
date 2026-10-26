@@ -2,6 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <!-- Math Hero 1 tinggal di mh1/, tetapi skrip, gaya, dan asetnya tetap di folder induk (public/). -->
+  <base href="../">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#8fd3ff">
   <title>Math Hero</title>
@@ -22,7 +24,10 @@
         <button id="btn-highscore" class="secondary" type="button">Papan Juara</button>
       </div>
       <div id="hero-trio" aria-hidden="true"></div>
-      <button id="btn-credit" class="link-small" type="button">Kredit</button>
+      <div id="menu-foot">
+        <a id="btn-series" class="link-small" href="./">&#9664; Seri Math Hero</a>
+        <button id="btn-credit" class="link-small" type="button">Kredit</button>
+      </div>
       <div id="menu-credit" class="hidden">
         <h2>Kredit</h2>
         <p class="credit">Sprite: CraftPix.net (Free Simple Platformer Game Kit). Font: Kleintenna (freeware). Ikon dan vektor: SVG Repo, Vecteezy. Rincian di assets/svg/CREDITS.md</p>
