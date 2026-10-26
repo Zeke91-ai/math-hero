@@ -334,8 +334,18 @@
     if (M.scene.enter) M.scene.enter(M.params);
   }
 
-  let last = performance.now(), fpsN = 0, fpsT = 0, fps = 0;
+  let last = performance.now(), fpsN = 0, fpsT = 0, fps = 0, errAt = -9;
+  // Galat di satu adegan tidak boleh menghentikan loop (layar akan membeku). Galat dicatat, lalu pemain
+  // dikembalikan ke layar judul dengan pesan, alih-alih layar gelap tanpa jalan keluar.
   function frame(now) {
+    requestAnimationFrame(frame);
+    try { tick(now); } catch (e) {
+      console.error(e);
+      fade = { a: 0, dir: 0, next: null };
+      if (M.t - errAt > 2 && M.sceneName !== 'title') { errAt = M.t; switchTo('title'); M.toast('Ups, ada yang macet. Coba muat ulang halaman, ya.', 4000, '#ffe1e6'); }
+    }
+  }
+  function tick(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     M.dt = dt; M.t += dt;
@@ -355,7 +365,6 @@
     if (fade.a > 0) { g.fillStyle = `rgba(26,18,51,${fade.a})`; g.fillRect(0, 0, M.VW, M.VH); }
     fpsN++; if (now - fpsT > 1000) { fps = fpsN; fpsN = 0; fpsT = now; }
     if (M.debug) M.text(g, `${fps} fps ${M.VW}x${M.VH}`, 4, M.VH - 10, { size: 12 });
-    requestAnimationFrame(frame);
   }
   M.start = function (first, params) {
     switchTo(first, params);

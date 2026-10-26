@@ -25,6 +25,8 @@
     S.phase = i;
     S.ph = ph;
     S.mode = M.Modes[ph.mode];
+    // Berkas mode belum termuat (misalnya halaman lama di cache): jangan lanjut ke layar kosong.
+    if (!S.mode) throw new Error(`Mode ${ph.mode} belum termuat`);
     S.done = 0;
     S.state = 'intro';
     S.introT = 0;

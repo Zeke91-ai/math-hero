@@ -49,6 +49,7 @@
       M.button(g, { id: 'seri', x: 10, y: 10, w: 130, h: 34, label: 'Seri Math Hero', color: 'purple', size: 13, onTap: () => { location.href = '../'; } });
       M.button(g, { id: 'kredit', x: VW - 92, y: 10, w: 82, h: 34, label: 'Kredit', color: 'purple', size: 13, onTap: () => M.go('credits') });
       const on = M.audio.prefs.music;
+      M.drawToast(g, 250);
       M.button(g, { id: 'suara', x: VW - 140, y: 10, w: 42, h: 34, color: on ? 'purple' : 'gray', icon: on ? 'sound' : 'mute', onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
     },
   });
