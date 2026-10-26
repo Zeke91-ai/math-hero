@@ -37,6 +37,7 @@
   };
 
   // Gelombang: grup { m: jenis, n: jumlah, start: detik sejak gelombang mulai, gap: jeda antar monster }.
+  // 12 level: tiap dunia 2 Bertahan biasa + 1 bos (ref 3, 6, 9, 12). Kesulitan naik per dunia (tier 0..3).
   const LEVELS = [
     {
       id: 1, nama: 'Gerbang Padang', tema: 'padang', startStars: 150, skyEvery: 6, skyValue: 25, restTime: 5,
@@ -47,6 +48,109 @@
         [{ m: 'biasa', n: 4, start: 4, gap: 9 }],
         [{ m: 'biasa', n: 6, start: 3, gap: 7 }, { m: 'cepat', n: 2, start: 20, gap: 12 }],
         [{ m: 'biasa', n: 6, start: 3, gap: 6 }, { m: 'cepat', n: 3, start: 12, gap: 8 }, { m: 'tebal', n: 2, start: 25, gap: 14 }],
+      ],
+    },
+    {
+      id: 2, nama: 'Ladang Gandum', tema: 'padang', startStars: 150, skyEvery: 6, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'penyihir'], chestAfter: 0,
+      waves: [
+        [{ m: 'biasa', n: 6, start: 3, gap: 6 }, { m: 'cepat', n: 2, start: 18, gap: 10 }],
+        [{ m: 'biasa', n: 5, start: 3, gap: 5 }, { m: 'cepat', n: 3, start: 14, gap: 7 }, { m: 'tebal', n: 1, start: 30, gap: 0 }],
+        [{ m: 'cepat', n: 4, start: 2, gap: 5 }, { m: 'tebal', n: 2, start: 16, gap: 10 }, { m: 'biasa', n: 6, start: 3, gap: 5 }],
+      ],
+    },
+    {
+      id: 3, nama: 'Kapten Slime', tema: 'padang', startStars: 180, skyEvery: 6, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'penyihir'], chestAfter: 0,
+      waves: [
+        [{ m: 'biasa', n: 6, start: 3, gap: 6 }, { m: 'cepat', n: 2, start: 18, gap: 10 }],
+        [{ m: 'biasa', n: 6, start: 3, gap: 5 }, { m: 'cepat', n: 3, start: 14, gap: 7 }],
+        [{ m: 'tebal', n: 2, start: 3, gap: 14 }, { m: 'biasa', n: 6, start: 10, gap: 5 }],
+        [{ m: 'bos1', n: 1, start: 3, gap: 0 }, { m: 'biasa', n: 6, start: 12, gap: 4 }],
+      ],
+    },
+    {
+      id: 4, nama: 'Mulut Gua', tema: 'gua', startStars: 180, skyEvery: 6, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'meriam'], chestAfter: 0,
+      waves: [
+        [{ m: 'biasa', n: 5, start: 3, gap: 6 }, { m: 'lompat', n: 2, start: 15, gap: 9 }],
+        [{ m: 'cepat', n: 5, start: 2, gap: 4 }, { m: 'biasa', n: 5, start: 14, gap: 5 }],
+        [{ m: 'tebal', n: 2, start: 3, gap: 8 }, { m: 'lompat', n: 2, start: 22, gap: 6 }],
+      ],
+    },
+    {
+      id: 5, nama: 'Terowongan Gema', tema: 'gua', startStars: 190, skyEvery: 6, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'meriam'], chestAfter: 0,
+      waves: [
+        [{ m: 'pecah', n: 3, start: 3, gap: 9 }, { m: 'cepat', n: 3, start: 16, gap: 6 }],
+        [{ m: 'tabib', n: 1, start: 3, gap: 10 }, { m: 'tebal', n: 2, start: 14, gap: 9 }, { m: 'biasa', n: 6, start: 2, gap: 5 }],
+        [{ m: 'lompat', n: 3, start: 3, gap: 7 }, { m: 'pecah', n: 3, start: 14, gap: 8 }, { m: 'cepat', n: 3, start: 26, gap: 5 }],
+      ],
+    },
+    {
+      id: 6, nama: 'Kapten Elang', tema: 'gua', startStars: 190, skyEvery: 6, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'meriam'], chestAfter: 0,
+      waves: [
+        [{ m: 'biasa', n: 6, start: 3, gap: 5 }, { m: 'cepat', n: 2, start: 18, gap: 10 }],
+        [{ m: 'pecah', n: 2, start: 3, gap: 10 }, { m: 'tebal', n: 2, start: 16, gap: 10 }],
+        [{ m: 'tabib', n: 2, start: 3, gap: 9 }, { m: 'cepat', n: 4, start: 14, gap: 5 }],
+        [{ m: 'bos2', n: 1, start: 3, gap: 0 }, { m: 'biasa', n: 6, start: 12, gap: 4 }],
+      ],
+    },
+    {
+      id: 7, nama: 'Tepi Rawa', tema: 'kebun', startStars: 200, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'robo'], chestAfter: 0,
+      waves: [
+        [{ m: 'biasa', n: 5, start: 3, gap: 6 }, { m: 'tabib', n: 1, start: 20, gap: 0 }],
+        [{ m: 'lompat', n: 3, start: 3, gap: 7 }, { m: 'cepat', n: 4, start: 18, gap: 5 }],
+        [{ m: 'tebal', n: 3, start: 3, gap: 8 }, { m: 'pecah', n: 2, start: 20, gap: 10 }, { m: 'biasa', n: 4, start: 26, gap: 5 }],
+      ],
+    },
+    {
+      id: 8, nama: 'Hutan Lumut', tema: 'kebun', startStars: 190, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'robo'], chestAfter: 0,
+      waves: [
+        [{ m: 'pecah', n: 3, start: 3, gap: 9 }, { m: 'tabib', n: 1, start: 20, gap: 0 }],
+        [{ m: 'tebal', n: 3, start: 3, gap: 8 }, { m: 'lompat', n: 3, start: 18, gap: 6 }, { m: 'cepat', n: 4, start: 30, gap: 4 }],
+        [{ m: 'raksasa', n: 1, start: 14, gap: 0 }, { m: 'pecah', n: 3, start: 3, gap: 9 }, { m: 'tabib', n: 2, start: 22, gap: 8 }],
+      ],
+    },
+    {
+      id: 9, nama: 'Kapten Ulat', tema: 'kebun', startStars: 210, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'robo'], chestAfter: 0,
+      waves: [
+        [{ m: 'tebal', n: 2, start: 3, gap: 10 }, { m: 'biasa', n: 6, start: 14, gap: 5 }],
+        [{ m: 'lompat', n: 3, start: 3, gap: 6 }, { m: 'pecah', n: 2, start: 18, gap: 9 }, { m: 'cepat', n: 3, start: 30, gap: 5 }],
+        [{ m: 'tabib', n: 2, start: 3, gap: 10 }, { m: 'tebal', n: 2, start: 16, gap: 8 }],
+        [{ m: 'bos3', n: 1, start: 3, gap: 0 }, { m: 'biasa', n: 6, start: 12, gap: 4 }],
+      ],
+    },
+    {
+      id: 10, nama: 'Kaki Kastil', tema: 'langit', startStars: 200, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'rubah'], chestAfter: 0,
+      waves: [
+        [{ m: 'raksasa', n: 1, start: 8, gap: 0 }, { m: 'biasa', n: 8, start: 3, gap: 4 }],
+        [{ m: 'tebal', n: 4, start: 3, gap: 7 }, { m: 'pecah', n: 2, start: 18, gap: 8 }, { m: 'cepat', n: 4, start: 30, gap: 4 }],
+        [{ m: 'lompat', n: 4, start: 3, gap: 6 }, { m: 'tabib', n: 2, start: 16, gap: 10 }, { m: 'raksasa', n: 1, start: 28, gap: 0 }],
+      ],
+    },
+    {
+      id: 11, nama: 'Gerbang Langit', tema: 'langit', startStars: 215, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'rubah'], chestAfter: 0,
+      waves: [
+        [{ m: 'pecah', n: 3, start: 3, gap: 9 }, { m: 'tebal', n: 2, start: 18, gap: 8 }],
+        [{ m: 'raksasa', n: 1, start: 6, gap: 0 }, { m: 'tabib', n: 2, start: 3, gap: 10 }, { m: 'lompat', n: 4, start: 16, gap: 6 }, { m: 'cepat', n: 4, start: 30, gap: 4 }],
+        [{ m: 'tebal', n: 4, start: 3, gap: 7 }, { m: 'pecah', n: 4, start: 16, gap: 7 }, { m: 'biasa', n: 6, start: 34, gap: 4 }],
+      ],
+    },
+    {
+      id: 12, nama: 'Raja Kabut', tema: 'langit', startStars: 300, skyEvery: 7, skyValue: 25, restTime: 5,
+      loadout: ['pemanah', 'menara', 'tembok', 'rubah'], chestAfter: 0,
+      waves: [
+        [{ m: 'tebal', n: 3, start: 3, gap: 8 }, { m: 'cepat', n: 3, start: 20, gap: 5 }],
+        [{ m: 'pecah', n: 3, start: 3, gap: 9 }, { m: 'lompat', n: 3, start: 18, gap: 6 }, { m: 'tabib', n: 1, start: 30, gap: 0 }],
+        [{ m: 'raksasa', n: 1, start: 6, gap: 14 }, { m: 'tebal', n: 3, start: 26, gap: 8 }],
+        [{ m: 'bos4', n: 1, start: 14, gap: 0 }, { m: 'biasa', n: 4, start: 3, gap: 3 }],
       ],
     },
   ];

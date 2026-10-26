@@ -37,6 +37,7 @@ for (const lv of Lv.LEVELS) {
   assert.strictEqual(g.phase, 'won', `level ${lv.id} harus selesai (posisi x=${Math.round(g.p.x)}, mati ${g.deaths}, hati ${g.hearts})`);
   console.log(`ok: level ${lv.id} "${lv.nama}" selesai dalam ${g.t.toFixed(1)} dtk, bintang ${g.stars}/${g.L.stars.length}, hati ${g.hearts}, mati ${g.deaths}, rating ${Sim.rating(g)}`);
   assert.ok(g.L.chests.length === 2, 'tiap level punya Peti Kekuatan dan Peti Kristal');
+  assert.ok(g.L.chests.every((c) => c.got), `semua peti di level ${lv.id} bisa diambil dari jalur bot`);
 }
 // Peti tidak menghalangi: bot tanpa menjawab apa pun tetap menamatkan level (sudah dibuktikan di atas).
 // Checkpoint: jatuh ke jurang mengembalikan ke checkpoint terakhir tanpa macet.
