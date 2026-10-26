@@ -19,7 +19,11 @@
   const py = (y) => L.gy + y * L.ch;
 
   function grade() { return (M.save && M.save.active && M.save.active.grade) || 2; }
-  function addKeys(n) { try { localStorage.setItem(KEYS, String((+localStorage.getItem(KEYS) || 0) + n)); } catch (e) { /* tetap jalan */ } }
+  // Kunci Kristal masuk ke profil aktif; tanpa profil (mode debug dari judul) disimpan terpisah.
+  function addKeys(n) {
+    if (M.save && M.save.active) { M.save.addKeys(n); return; }
+    try { localStorage.setItem(KEYS, String((+localStorage.getItem(KEYS) || 0) + n)); } catch (e) { /* tetap jalan */ }
+  }
 
   function say(t, ms, color) { M.toast(t, ms, color); }
 
@@ -176,11 +180,11 @@
       M.text(g, `Sisa hati: ${gm.hearts} dari ${Sim.HEARTS}`, M.VW / 2, y + 112, { size: 16, align: 'center', color: '#2b1d52', outline: false });
       if (S.keys == null) M.button(g, { id: 'harta', x: x + 30, y: y + 140, w: w - 60, h: 56, label: 'Buka Peti Harta', color: 'yellow', size: 20, icon: 'chest', onTap: openTreasure });
       else M.text(g, S.keys ? `Dapat ${S.keys} Kunci Kristal!` : 'Peti Harta ditunda.', M.VW / 2, y + 168, { size: 18, align: 'center', color: '#8a5a00', outline: false });
-      M.button(g, { id: 'ulang', x: x + 30, y: y + 216, w: w - 60, h: 48, label: 'Main lagi', color: 'green', onTap: () => M.go('defense', { level: S.level.id, onEnd: S.onEnd }) });
+      M.button(g, { id: 'ulang', x: x + 30, y: y + 216, w: w - 60, h: 48, label: 'Main lagi', color: 'green', onTap: () => M.go('defense', S.params) });
       M.button(g, { id: 'lanjutend', x: x + 30, y: y + 278, w: w - 60, h: 48, label: S.onEnd ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
     } else {
       M.text(g, 'Jangan menyerah! Coba taruh lebih banyak pasukan.', M.VW / 2, y + 62, { size: 15, align: 'center', color: '#2b1d52', outline: false, maxW: w - 40 });
-      M.button(g, { id: 'ulang', x: x + 30, y: y + 112, w: w - 60, h: 52, label: 'Coba lagi', color: 'green', onTap: () => M.go('defense', { level: S.level.id, onEnd: S.onEnd }) });
+      M.button(g, { id: 'ulang', x: x + 30, y: y + 112, w: w - 60, h: 52, label: 'Coba lagi', color: 'green', onTap: () => M.go('defense', S.params) });
       M.button(g, { id: 'lanjutend', x: x + 30, y: y + 178, w: w - 60, h: 48, label: S.onEnd ? 'Keluar' : 'Ke judul', color: 'blue', onTap: finish });
     }
   }
@@ -194,8 +198,9 @@
   M.register('defense', {
     enter(p) {
       layout();
-      const level = D.level(p.level || 1);
-      S = { level, g: Sim.create(level), state: 'play', sel: null, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd };
+      // p.def = definisi level lengkap dari peta (nama, tema, tier, loadout, startStars, upg); tanpanya level data apa adanya.
+      const level = p.def || D.level(p.level || 1);
+      S = { level, params: p, g: Sim.create(level), state: 'play', sel: null, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd };
       pickDefaults();
       M.audio.music('padang');
     },
@@ -253,5 +258,5 @@
     },
   });
 
-  MH3.defense = { state: () => S, layout: () => L, addKeys, keys: () => { try { return +localStorage.getItem(KEYS) || 0; } catch (e) { return 0; } } };
+  MH3.defense = { state: () => S, layout: () => L, addKeys, keys: () => { if (M.save && M.save.active) return M.save.keys(); try { return +localStorage.getItem(KEYS) || 0; } catch (e) { return 0; } } };
 })();

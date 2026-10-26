@@ -54,7 +54,9 @@
     if (why) return why;
     const u = UNITS[kind];
     g.stars -= u.cost; g.cards[kind] = u.cd;
-    g.grid[row][col] = { kind, hp: u.hp, max: u.hp, col, row, fire: 0.4, make: u.first || 0, id: g.nextId++, hurt: 0 };
+    // Upgrade (level.upg[kind] = 1..3, dibeli dengan Kunci Kristal): tiap level +30% HP, +50% kerusakan, +40% Bintang.
+    const lv = Math.max(0, ((g.level.upg || {})[kind] || 1) - 1), hp = Math.round(u.hp * (1 + 0.3 * lv) * 10) / 10;
+    g.grid[row][col] = { kind, hp, max: hp, lv, col, row, fire: 0.4, make: u.first || 0, id: g.nextId++, hurt: 0 };
     ev(g, 'place', { kind, col, row });
     return null;
   }
@@ -124,12 +126,12 @@
       if (u.hurt > 0) u.hurt -= dt;
       if (d.make) {
         u.make -= dt;
-        if (u.make <= 0) { u.make += d.make; g.pickups.push({ x: c + 0.5, y: r + 0.3, ty: r + 0.3, value: d.value, age: 0, id: g.nextId++ }); ev(g, 'make', { col: c, row: r }); }
+        if (u.make <= 0) { u.make += d.make; g.pickups.push({ x: c + 0.5, y: r + 0.3, ty: r + 0.3, value: Math.round(d.value * (1 + 0.4 * u.lv)), age: 0, id: g.nextId++ }); ev(g, 'make', { col: c, row: r }); }
       }
       if (d.fire) {
         u.fire -= dt;
         const target = g.monsters.some((m) => m.col === c && m.y >= 0.2 && m.y - BODY < r + 0.5);
-        if (u.fire <= 0 && target) { u.fire = d.fire; g.arrows.push({ col: c, y: r + 0.2, dmg: d.dmg }); ev(g, 'shoot', { col: c, row: r }); }
+        if (u.fire <= 0 && target) { u.fire = d.fire; g.arrows.push({ col: c, y: r + 0.2, dmg: d.dmg * (1 + 0.5 * u.lv) }); ev(g, 'shoot', { col: c, row: r }); }
         else if (u.fire < 0) u.fire = 0;
       }
     }

@@ -120,9 +120,9 @@
     { key: 'pinki', nama: 'Pinki', desc: 'Si pemberani merah muda', need: 0, set: 'mh2' },
     { key: 'owi', nama: 'Owi', desc: 'Burung hantu pintar', need: 0, set: 'mh2' },
     { key: 'hero1', nama: 'Anak Berani', desc: 'Pahlawan Math Hero 1', need: 0, set: 'mh1' },
-    { key: 'dudu', nama: 'Dudu', desc: 'Si biru yang lincah', need: 12, set: 'mh2' },
-    { key: 'hero2', nama: 'Robo Kuning', desc: 'Robot dari Math Hero 1', need: 30, set: 'mh1' },
-    { key: 'hero3', nama: 'Rubah Lincah', desc: 'Rubah dari Math Hero 1', need: 50, set: 'mh1' },
+    { key: 'dudu', nama: 'Dudu', desc: 'Si biru yang lincah', need: 10, set: 'mh2' },
+    { key: 'hero2', nama: 'Robo Kuning', desc: 'Robot dari Math Hero 1', need: 20, set: 'mh1' },
+    { key: 'hero3', nama: 'Rubah Lincah', desc: 'Rubah dari Math Hero 1', need: 30, set: 'mh1' },
   ];
   M.HEROES = HEROES;
   M.heroInfo = (key) => HEROES.find((h) => h.key === key) || HEROES[0];
