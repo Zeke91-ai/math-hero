@@ -221,8 +221,10 @@
   hold(btnA, (v) => { padA = v; if (v) latch.A = true; });
   hold(btnB, (v) => { padB = v; if (v) latch.B = true; });
   // Tombol panah: tiap ketukan = satu langkah (dibaca sebagai I.lHit / I.rHit).
-  hold(document.getElementById('btn-kiri'), (v) => { if (v) latch.L = true; });
-  hold(document.getElementById('btn-kanan'), (v) => { if (v) latch.R = true; });
+  // Panah juga bisa ditahan (I.lHold / I.rHold) untuk adegan yang berjalan terus, seperti level Kejar.
+  let padL = false, padR = false;
+  hold(document.getElementById('btn-kiri'), (v) => { padL = v; if (v) latch.L = true; });
+  hold(document.getElementById('btn-kanan'), (v) => { padR = v; if (v) latch.R = true; });
   ctrl.addEventListener('contextmenu', (e) => e.preventDefault());
 
   const KEYMAP = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd',
@@ -236,7 +238,7 @@
     keys[k] = true; e.preventDefault();
   });
   window.addEventListener('keyup', (e) => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
-  window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; padA = padB = false; if (M.scene && M.scene.blur) M.scene.blur(); });
+  window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; padA = padB = padL = padR = false; if (M.scene && M.scene.blur) M.scene.blur(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && M.scene && M.scene.blur) M.scene.blur(); });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
 
@@ -249,6 +251,7 @@
     I.aHit = (a && !prevA) || !!latch.A; I.bHit = (b && !prevB) || !!latch.B;
     I.a = a || !!latch.A; I.b = b || !!latch.B; prevA = a; prevB = b;
     I.lHit = !!(latch.l || latch.L); I.rHit = !!(latch.r || latch.R);
+    I.lHold = padL || !!keys.l || !!latch.l || !!latch.L; I.rHold = padR || !!keys.r || !!latch.r || !!latch.R;
     for (const k in latch) delete latch[k];
   }
 
