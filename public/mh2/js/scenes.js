@@ -48,6 +48,8 @@
       M.button(g, { id: 'main', x: VW / 2 - 110, y: VH - 260, w: 220, h: 64, label: 'MAIN!', color: 'pink', size: 30, onTap: () => M.go('slots') });
       M.button(g, { id: 'seri', x: 10, y: 10, w: 130, h: 34, label: 'Seri Math Hero', color: 'purple', size: 13, onTap: () => { location.href = '../'; } });
       M.button(g, { id: 'kredit', x: VW - 92, y: 10, w: 82, h: 34, label: 'Kredit', color: 'purple', size: 13, onTap: () => M.go('credits') });
+      const on = M.audio.prefs.music;
+      M.button(g, { id: 'suara', x: VW - 140, y: 10, w: 42, h: 34, color: on ? 'purple' : 'gray', icon: on ? 'sound' : 'mute', onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
     },
   });
 
@@ -157,7 +159,7 @@
   });
 
   // ---------- Peta dunia ----------
-  const NODES = [[0.26, 0.86], [0.7, 0.73], [0.3, 0.6], [0.7, 0.47], [0.5, 0.31]];
+  const NODES = [[0.26, 0.9], [0.7, 0.74], [0.3, 0.58], [0.7, 0.42], [0.42, 0.22]];
   function nodePos(i) { return { x: NODES[i][0] * M.VW, y: 120 + NODES[i][1] * (M.VH - 190) }; }
   function stageOpen(st) { return S.unlocked(st.levels[0].index); }
   function currentLevel() {
@@ -227,19 +229,28 @@
       st.levels.forEach((L, i) => {
         const p = nodePos(i), unlocked = S.unlocked(L.index), stars = S.starsOf(L.id);
         const r = L.boss ? 38 : 30;
-        const col = !unlocked ? 'gray' : L.boss ? 'red' : stars ? 'yellow' : 'blue';
-        M.button(g, { id: 'lv' + L.id, x: p.x - r, y: p.y - r, w: r * 2, h: r * 2, color: col, label: '', onTap: () => {
+        const col = !unlocked ? ['#9aa0b4', '#666c80'] : L.boss ? ['#ff6b6b', '#c9414a'] : stars ? ['#ffd54a', '#d1a21b'] : ['#4b9cff', '#2d6fc4'];
+        // Simpul level: cakram berpiksel dengan bayangan bawah.
+        const pressed = M.pointer.down && Math.hypot(M.pointer.x - p.x, M.pointer.y - p.y) < r;
+        const disc = M.lowres('node' + r + col[0], r * 2 + 8, r * 2 + 12, (cx) => {
+          cx.fillStyle = '#2b1d52'; cx.beginPath(); cx.arc(r + 4, r + 8, r + 2, 0, 7); cx.fill();
+          cx.fillStyle = col[1]; cx.beginPath(); cx.arc(r + 4, r + 8, r - 1, 0, 7); cx.fill();
+          cx.fillStyle = '#2b1d52'; cx.beginPath(); cx.arc(r + 4, r + 4, r + 2, 0, 7); cx.fill();
+          cx.fillStyle = col[0]; cx.beginPath(); cx.arc(r + 4, r + 4, r - 1, 0, 7); cx.fill();
+          cx.fillStyle = 'rgba(255,255,255,0.4)'; cx.fillRect(r - 8, 8, 12, 4);
+        });
+        const dy = pressed ? 3 : 0;
+        g.drawImage(disc, Math.round(p.x - r - 4), Math.round(p.y - r - 4 + dy));
+        M.hit('lv' + L.id, p.x - r, p.y - r, r * 2, r * 2, () => {
           if (!unlocked) { M.toast('Selesaikan level sebelumnya dulu, ya!'); M.sfx('salah'); return; }
           openLevel(L);
-        } });
-        if (!unlocked) M.icon(g, 'lock', p.x - 12, p.y - 14, 24, '#2b1d52');
-        else if (L.boss) M.drawBoss(g, st.bos.sprite, p.x, p.y + 16, st.bos.sprite === 'prof' ? 1.6 : 1.4, M.t);
-        else M.text(g, String(i + 1), p.x, p.y - 2, { size: 26, align: 'center' });
+        });
+        if (!unlocked) M.icon(g, 'lock', p.x - 12, p.y - 12 + dy, 24, '#2b1d52');
+        else if (L.boss) M.drawBoss(g, st.bos.sprite, p.x, p.y + 24 + dy, st.bos.sprite === 'prof' ? 2 : /^slime/.test(st.bos.sprite) ? 2.2 : 1.6, M.t);
+        else M.text(g, String(i + 1), p.x, p.y - 1 + dy, { size: 26, align: 'center' });
         if (unlocked) {
-          const modeName = M.Modes[(L.phases ? L.phases[0] : L).mode];
-          M.text(g, L.nama, p.x, p.y + r + 14, { size: 13, align: 'center', maxW: 130 });
-          if (stars || !L.boss) M.stars(g, p.x, p.y + r + 26, stars, 1.2);
-          if (modeName && !L.boss) M.text(g, modeName.nama, p.x, p.y - r - 8, { size: 10, align: 'center', color: '#fff3c4' });
+          M.text(g, L.nama, p.x, p.y + r + 14, { size: 13, align: 'center' });
+          if (stars || !L.boss) M.stars(g, p.x, p.y + r + 25, stars, 1.2);
         }
         // Pahlawan berdiri di level yang sedang dikerjakan.
         if (L === cur && unlocked) {
@@ -250,7 +261,7 @@
       // Kristal dunia.
       const got = S.starsOf(`${st.id}-5`) > 0;
       g.globalAlpha = got ? 1 : 0.3;
-      M.art(g, 'kristal', VW / 2 - 15, nodePos(4).y - 112 + Math.sin(M.t * 2) * 4, 2.6);
+      M.art(g, 'kristal', nodePos(4).x + 58, nodePos(4).y - 40 + Math.sin(M.t * 2) * 4, 2.6);
       g.globalAlpha = 1;
       if (!open) {
         M.box(g, 40, VH / 2 - 40, VW - 80, 80, '#2b1d52', { line: '#fff' });
@@ -263,6 +274,7 @@
       backBtn(g, () => M.go('slots'));
       M.button(g, { id: 'pahlawan', x: 58, y: 6, w: 46, h: 38, color: 'teal', label: '', onTap: () => M.go('heroes', {}), draw: (gg, x, y) => M.hero(gg, heroKey(), 'idle', M.t, x + 23, y + 34, { scale: 1 }) });
       M.text(g, S.active ? S.active.nama : '', 112, 25, { size: 16 });
+      M.button(g, { id: 'buku', x: VW - 160, y: 8, w: 58, h: 34, label: 'Buku', size: 14, color: 'orange', onTap: () => M.go('buku', { back: ['map', { stage: this.stage }] }) });
       M.art(g, 'bintang', VW - 94, 14, 2);
       M.text(g, String(S.totalStars()), VW - 66, 25, { size: 18, color: '#ffd54a' });
       const cs = crystalsDone().filter(Boolean).length;
@@ -274,6 +286,57 @@
       // Titik halaman.
       M.STAGES.forEach((s, i) => { g.fillStyle = i + 1 === this.stage ? '#ffd54a' : 'rgba(255,255,255,0.5)'; g.fillRect(VW / 2 - 50 + i * 18, VH - 22, 10, 10); });
       M.drawToast(g, 160);
+    },
+  });
+
+  // ---------- Buku Konsep ----------
+  // Semua kartu konsep (dengan animasinya) bisa dibaca ulang. Kartu dari level yang belum terbuka masih terkunci.
+  function conceptPages() {
+    const seen = new Set(), pages = [];
+    M.ALL_LEVELS.forEach((L) => (L.phases || [L]).forEach((ph) => {
+      const c = ph.cfg, kind = c.kind || (c.waves && c.waves[0].kind) || (c.ops || [c.op]).join(',');
+      const key = ph.mode + ':' + kind;
+      if (seen.has(key)) return;
+      seen.add(key);
+      pages.push({ mode: ph.mode, cfg: c, level: L });
+    }));
+    return pages;
+  }
+  M.register('buku', {
+    enter(p) { this.pages = conceptPages(); this.i = 0; this.t = 0; this.back = p.back || ['map', {}]; },
+    update(dt) {
+      this.t += dt;
+      if (Math.abs(M.input.x) > 0.5 && !this.lock) { this.flip(Math.sign(M.input.x)); this.lock = true; }
+      if (Math.abs(M.input.x) < 0.2) this.lock = false;
+      if (M.input.pause) M.go(this.back[0], this.back[1]);
+    },
+    flip(d) { this.i = (this.i + d + this.pages.length) % this.pages.length; this.t = 0; M.sfx('kartu'); },
+    draw(g) {
+      const VW = M.VW, VH = M.VH, pg = this.pages[this.i], mode = M.Modes[pg.mode];
+      M.drawBg(g, 'langit', M.t * 10, 0);
+      backBtn(g, () => M.go(this.back[0], this.back[1]));
+      M.text(g, 'Buku Konsep', VW / 2, 28, { size: 24, align: 'center', color: '#ffd54a', ow: 5 });
+      const open = S.unlocked(pg.level.index);
+      const x = 14, y = 64, w = VW - 28, h = VH - 140;
+      M.panel(g, x, y, w, h, { title: `${this.i + 1} / ${this.pages.length}`, titleFill: '#7b4bd6' });
+      if (!open) {
+        M.icon(g, 'lock', VW / 2 - 20, y + h / 2 - 60, 40, '#2b1d52');
+        M.text(g, `Terbuka di level ${pg.level.id}`, VW / 2, y + h / 2, { size: 18, align: 'center', color: '#2b1d52', outline: false });
+      } else {
+        const con = mode.concept(pg.cfg, pg.level);
+        M.text(g, mode.nama, VW / 2, y + 34, { size: 14, align: 'center', color: '#7b4bd6', outline: false });
+        M.text(g, con.judul, VW / 2, y + 58, { size: 19, align: 'center', color: '#d65f82', outline: false, maxW: w - 30 });
+        const dx = x + 16, dy = y + 84, dw = w - 32, dh = 180;
+        M.box(g, dx, dy, dw, dh, '#e9f6ff', { line: '#2b1d52', shade: false });
+        g.save(); g.beginPath(); g.rect(dx + 3, dy + 3, dw - 6, dh - 6); g.clip();
+        if (con.demo) con.demo(g, this.t, dx + 3, dy + 3, dw - 6, dh - 6);
+        g.restore();
+        let ty = dy + dh + 16;
+        con.baris.forEach((line) => { ty += M.text(g, line, VW / 2, ty, { size: 15, align: 'center', color: '#2b1d52', outline: false, maxW: w - 36, base: 'top' }) + 6; });
+        M.text(g, `Dipakai di level ${pg.level.id}: ${pg.level.nama}`, VW / 2, y + h - 24, { size: 12, align: 'center', color: '#6b4fa8', outline: false });
+      }
+      M.button(g, { id: 'sebelum', x: 20, y: VH - 66, w: 110, h: 48, label: 'Sebelum', color: 'blue', size: 16, onTap: () => this.flip(-1) });
+      M.button(g, { id: 'sesudah', x: VW - 130, y: VH - 66, w: 110, h: 48, label: 'Sesudah', color: 'blue', size: 16, onTap: () => this.flip(1) });
     },
   });
 
@@ -415,7 +478,8 @@
         M.text(g, l, VW / 2, y, { size: head ? 22 : 16, align: 'center', color: head ? '#ffd54a' : '#fff' });
       });
       if (y0 + CREDITS.length * 30 < 0) this.t = 0;
-      ['pinki', 'owi', 'dudu', 'hero1', 'hero2', 'hero3'].forEach((k, i) => M.hero(g, k, 'run', M.t + i, 40 + i * 56, VH - 20, { scale: 1.6 }));
+      g.fillStyle = '#1d1438'; g.fillRect(0, VH - 70, VW, 70);
+      ['pinki', 'owi', 'dudu', 'hero1', 'hero2', 'hero3'].forEach((k, i) => M.hero(g, k, 'run', M.t + i, 40 + i * 56, VH - 16, { scale: 1.6 }));
       M.button(g, { id: 'tutup', x: VW - 92, y: 10, w: 82, h: 34, label: 'Tutup', size: 14, color: 'purple', onTap: () => M.go(this.ending ? 'map' : 'title', {}) });
     },
   });

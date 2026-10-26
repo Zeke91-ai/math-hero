@@ -33,3 +33,14 @@ Lisensi Vecteezy mengharuskan atribusi. Teks atribusi tampil di layar awal game.
 - CraftPix.net, Free Simple Platformer Game Kit Pixel Art (pahlawan, musuh, tile, peti, trofi, jebakan, ikon, tombol). Disalin dan diberi nama pendek oleh scripts/prepare_assets.py ke public/assets/game/. Varian warna (tileset_pink, enemy7) dibuat dari aset yang sama.
 - Font Kleintenna Bow (freeware), public/assets/kleintenna-font/.
 
+
+## Math Hero 2 (2026-10)
+- Atlas `public/mh2/assets/sprites.png` (+ `sprites.json`) dibuat oleh `scripts/prepare_assets_mh2.py`: sprite dipotong ke isinya, hanya baris/animasi yang dipakai yang diambil, lalu digabung ke satu atlas. File asli paket tidak disertakan. Sumber (CraftPix.net, lisensi gratis yang mengizinkan pemakaian komersial tetapi melarang menyebarkan file aslinya):
+  - Free Pixel Art Tiny Hero Sprites (pahlawan Pinki, Owi, Dudu; debu lompat; batu),
+  - Free Top-Down Hunt Animals Pixel Sprite Pack (kelinci, rubah, rusa, babi hutan, burung),
+  - Free Slime Mobs Pixel Art Top-Down Sprite Pack (slime, Raja Slime, Ulat Raksasa, Koki Kacau),
+  - Free Roguelike Shoot 'Em Up Pixel Art Game Kit (alien, ledakan, portal, altar, batu, robot).
+- Sprite Math Hero 1 di `public/assets/game` (pahlawan lama, permata, peti, tileset, ikon) dipakai ulang langsung.
+- Ikon buah dan lebah dari SVG Repo (tabel di atas) dipakai ulang di Pasar Koin dan Kebun Kotak.
+- Pixel art lain (Peri Angka, Profesor Kacau, kristal, hati, bintang, awan, gerobak, peti, bibit, bunga, meteor, mahkota, topi koki, pizza, koin, uang kertas, timbangan) dibuat khusus untuk game ini di kode `public/mh2/js`.
+- Musik dan efek suara disintesis dengan Web Audio, tanpa file rekaman.

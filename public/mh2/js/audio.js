@@ -104,16 +104,17 @@
       nextAt += stepDur; step++;
     }
   }
+  // Lagu yang diminta sebelum sentuhan pertama disimpan dulu, lalu dimulai saat unlock().
   function music(name) {
     if (name === curName) return;
     curName = name; cur = TRACKS[name] || null; step = 0;
-    if (!ensure() || !cur) return;
+    if (!ac || !cur) return;
     nextAt = ac.currentTime + 0.06;
     if (!timer) timer = setInterval(schedule, 25);
   }
   function jingle(name) {
     const j = JINGLES[name];
-    if (!ensure() || !j) return;
+    if (!ac || !j) return;
     music(null);
     const sd = 60 / j.bpm / 2;
     let at = ac.currentTime + 0.05;
@@ -148,12 +149,17 @@
     naik: (t) => { [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, t + i * 0.06, 0.1, 'square', 0.08, sfxBus)); },
   };
   function sfx(name) {
-    if (!prefs.sfx || !ensure()) return;
+    if (!prefs.sfx || !ac) return;
     const f = SFX[name];
     if (f) f(ac.currentTime + 0.005);
   }
 
-  function unlock() { if (ensure() && ac.state === 'suspended') ac.resume(); }
+  function unlock() {
+    const fresh = !ac;
+    if (!ensure()) return;
+    if (ac.state === 'suspended') ac.resume();
+    if (fresh && cur) { nextAt = ac.currentTime + 0.06; if (!timer) timer = setInterval(schedule, 25); }
+  }
   function setPaused(p) {
     paused = p;
     if (!p && ac && cur) { nextAt = ac.currentTime + 0.06; }

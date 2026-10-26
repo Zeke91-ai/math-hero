@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#4b2e83">
+  <title>Seri Math Hero</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%237b4bd6'/%3E%3Cpath d='M8 2l1.7 3.9 4.3.4-3.2 2.8 1 4.2L8 11.2 4.2 13.3l1-4.2L2 6.3l4.3-.4z' fill='%23ffd23f'/%3E%3C/svg%3E">
+  <style>
+    /* Halaman pemilih seri: Math Hero 1 dan Math Hero 2. Gaya pixel, satu file, tanpa pustaka luar. */
+    @font-face { font-family: 'Kleintenna'; src: url('assets/kleintenna-font/Kleintenna-Bow.ttf') format('truetype'); font-display: swap; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: 'Kleintenna', system-ui, sans-serif; color: #2b1d52; -webkit-tap-highlight-color: transparent;
+      background: linear-gradient(180deg, #5aa9ff 0%, #9fd6ff 55%, #c9ecff 100%) fixed; overflow-x: hidden;
+    }
+    .sky { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+    .cloud {
+      position: absolute; width: 96px; height: 24px; background: #fff; opacity: 0.9;
+      box-shadow: 24px -12px 0 #fff, 48px -12px 0 #fff, 72px 0 0 #fff, 12px 12px 0 #eaf6ff, 60px 12px 0 #eaf6ff;
+      animation: drift linear infinite;
+    }
+    .cloud:nth-child(1) { top: 8%; animation-duration: 60s; }
+    .cloud:nth-child(2) { top: 26%; animation-duration: 85s; animation-delay: -30s; transform: scale(0.7); }
+    .cloud:nth-child(3) { top: 52%; animation-duration: 70s; animation-delay: -50s; }
+    .cloud:nth-child(4) { top: 78%; animation-duration: 95s; animation-delay: -10s; transform: scale(0.8); }
+    @keyframes drift { from { left: -180px; } to { left: 110%; } }
+    main { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 28px 16px 40px; text-align: center; }
+    .badge {
+      display: inline-block; background: #ffd54a; color: #2b1d52; padding: 6px 16px; font-size: 16px; letter-spacing: 2px;
+      box-shadow: 0 -4px 0 #2b1d52, 0 4px 0 #2b1d52, -4px 0 0 #2b1d52, 4px 0 0 #2b1d52;
+    }
+    h1 {
+      font-size: clamp(48px, 13vw, 96px); line-height: 1; margin: 18px 0 6px; color: #fff; font-weight: normal;
+      text-shadow: 4px 0 #2b1d52, -4px 0 #2b1d52, 0 4px #2b1d52, 0 -4px #2b1d52, 4px 4px #2b1d52, -4px 4px #2b1d52, 4px -4px #2b1d52, -4px -4px #2b1d52, 0 10px 0 #1d1438;
+    }
+    h1 span { color: #ffd54a; }
+    .tag { font-size: clamp(16px, 4vw, 20px); color: #2b1d52; margin-bottom: 26px; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 26px; }
+    @media (min-width: 760px) { .grid { grid-template-columns: 1fr 1fr; } }
+    .card {
+      position: relative; background: #fff6dc; text-align: left; padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 10px;
+      box-shadow: 0 -6px 0 #2b1d52, 0 6px 0 #2b1d52, -6px 0 0 #2b1d52, 6px 0 0 #2b1d52, 10px 14px 0 rgba(29,20,56,0.35);
+    }
+    .card .stage { width: 100%; aspect-ratio: 16 / 8; image-rendering: pixelated; display: block; background: #8fd3ff; box-shadow: 0 0 0 4px #2b1d52; }
+    .card h2 { font-size: 30px; font-weight: normal; line-height: 1.05; }
+    .card h2 small { display: block; font-size: 16px; color: #7b4bd6; margin-top: 4px; }
+    .card ul { list-style: none; font-size: 16px; line-height: 1.5; }
+    .card li::before { content: '\2605  '; color: #f2b705; }
+    .new {
+      position: absolute; top: -14px; right: 14px; background: #ff5d73; color: #fff; padding: 4px 12px; font-size: 16px;
+      box-shadow: 0 -3px 0 #2b1d52, 0 3px 0 #2b1d52, -3px 0 0 #2b1d52, 3px 0 0 #2b1d52; animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse { 50% { transform: scale(1.08) rotate(-3deg); } }
+    .play {
+      display: block; margin-top: auto; text-align: center; text-decoration: none; color: #fff; font-size: 26px; padding: 14px 10px 16px;
+      background: #ff8fab; box-shadow: inset 0 -6px 0 #d65f82, 0 -4px 0 #2b1d52, 0 4px 0 #2b1d52, -4px 0 0 #2b1d52, 4px 0 0 #2b1d52;
+      text-shadow: 0 3px 0 rgba(0,0,0,0.25); transition: transform 0.08s;
+    }
+    .play:hover, .play:focus-visible { transform: translateY(-2px); outline: none; filter: brightness(1.05); }
+    .play:active { transform: translateY(2px); }
+    .card.two .play { background: #4b9cff; box-shadow: inset 0 -6px 0 #2d6fc4, 0 -4px 0 #2b1d52, 0 4px 0 #2b1d52, -4px 0 0 #2b1d52, 4px 0 0 #2b1d52; }
+    .modes { display: flex; flex-wrap: wrap; gap: 6px; }
+    .modes span { font-size: 13px; background: #e9e1ff; padding: 3px 8px; box-shadow: 0 0 0 2px #2b1d52; }
+    footer { margin-top: 34px; font-size: 14px; color: #2b1d52; line-height: 1.6; }
+    footer a { color: #4b2e83; }
+    @media (prefers-reduced-motion: reduce) { .cloud, .new { animation: none; } }
+  </style>
+</head>
+<body>
+  <div class="sky" aria-hidden="true"><i class="cloud"></i><i class="cloud"></i><i class="cloud"></i><i class="cloud"></i></div>
+  <main>
+    <div class="badge">SERI</div>
+    <h1>MATH <span>HERO</span></h1>
+    <p class="tag">Petualangan belajar matematika untuk anak SD. Pilih petualanganmu!</p>
+    <div class="grid">
+      <section class="card one" aria-labelledby="mh1-title">
+        <canvas class="stage" id="cv1" width="320" height="160" aria-hidden="true"></canvas>
+        <h2 id="mh1-title">Math Hero 1<small>Petualangan di Kerajaan Awan</small></h2>
+        <ul>
+          <li>Platformer klasik: lari, lompat, buka peti soal</li>
+          <li>8 level, 4 bos, kelas 1 sampai 4</li>
+          <li>Tambah, kali, bagi, dan susun kelompok</li>
+        </ul>
+        <a class="play" href="mh1/">Main Math Hero 1</a>
+      </section>
+      <section class="card two" aria-labelledby="mh2-title">
+        <span class="new">BARU!</span>
+        <canvas class="stage" id="cv2" width="320" height="160" aria-hidden="true"></canvas>
+        <h2 id="mh2-title">Math Hero 2<small>Misi Kristal Bilangan</small></h2>
+        <ul>
+          <li>6 dunia, 30 level, 6 bos, dan bos terakhir 3 babak</li>
+          <li>Paham konsep: garis bilangan, nilai tempat, pecahan</li>
+          <li>Kumpulkan bintang dan buka pahlawan baru</li>
+        </ul>
+        <div class="modes" aria-label="Jenis permainan">
+          <span>Platformer</span><span>Pelari</span><span>Penembak</span><span>Balap</span><span>Teka-teki timbangan</span>
+          <span>Kebun susun</span><span>Bagi rata</span><span>Warung uang</span><span>Pizza pecahan</span>
+        </div>
+        <a class="play" href="mh2/">Main Math Hero 2</a>
+      </section>
+    </div>
+    <footer>
+      Bisa dimainkan di HP (layar tegak) maupun laptop. Progres tersimpan di perangkat ini saja.<br>
+      Sprite: CraftPix.net. Font: Kleintenna. Ikon buah: SVG Repo. Kode: lisensi MIT.
+    </footer>
+  </main>
+  <script>
+    // Pratinjau bergerak tiap seri: pahlawan berlari di atas tanah berpiksel.
+    (function () {
+      const load = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+      const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      Promise.all([
+        load('assets/game/tileset.png'), load('assets/game/hero1_run.png'), load('assets/game/hero2_run.png'), load('assets/game/hero3_run.png'),
+        load('mh2/assets/sprites.png'), fetch('mh2/assets/sprites.json').then((r) => r.json()).catch(() => ({})),
+      ]).then(([tiles, h1, h2, h3, atlas, meta]) => {
+        const c1 = document.getElementById('cv1').getContext('2d'), c2 = document.getElementById('cv2').getContext('2d');
+        [c1, c2].forEach((c) => { c.imageSmoothingEnabled = false; });
+        function ground(c, sx, w, h, row) {
+          if (!tiles) return;
+          for (let x = -((sx % 32) + 32) % 32 - 32; x < w + 32; x += 32) {
+            c.drawImage(tiles, row * 16 + 16, 0, 16, 16, x, h - 40, 32, 32);
+            c.drawImage(tiles, row * 16 + 16, 16, 16, 16, x, h - 8, 32, 32);
+          }
+        }
+        function clouds(c, t, w, color) {
+          c.fillStyle = color;
+          for (let i = 0; i < 3; i++) { const x = ((i * 130 - t * 12) % (w + 80) + w + 80) % (w + 80) - 60; c.fillRect(x, 20 + i * 18, 48, 8); c.fillRect(x + 8, 14 + i * 18, 28, 6); }
+        }
+        function atlasFrame(c, name, f, x, y, s) {
+          const m = meta[name]; if (!m || !atlas) return;
+          f = Math.floor(f) % m.n;
+          c.drawImage(atlas, m.x + f * m.w, m.y, m.w, m.h, Math.round(x - m.w * s / 2), Math.round(y - m.h * s), m.w * s, m.h * s);
+        }
+        function frame(now) {
+          const t = now / 1000;
+          // Seri 1: langit siang Kerajaan Awan.
+          c1.fillStyle = '#8fd3ff'; c1.fillRect(0, 0, 320, 160);
+          clouds(c1, t, 320, '#fff');
+          ground(c1, t * 60, 320, 160, 0);
+          [h1, h2, h3].forEach((im, i) => { if (im) c1.drawImage(im, (Math.floor(t * 14) % 12) * 32, 0, 32, 32, 60 + i * 70, 72 + Math.round(Math.abs(Math.sin(t * 4 + i)) * -8), 48, 48); });
+          // Seri 2: senja berbintang dengan kristal dan pahlawan baru.
+          const g = c2.createLinearGradient(0, 0, 0, 160); g.addColorStop(0, '#2b1d52'); g.addColorStop(1, '#ff9a8b');
+          c2.fillStyle = g; c2.fillRect(0, 0, 320, 160);
+          c2.fillStyle = '#fff'; for (let i = 0; i < 30; i++) if ((i * 7 + Math.floor(t * 2)) % 5) c2.fillRect((i * 53) % 320, (i * 29) % 70, 2, 2);
+          const ky = 34 + Math.sin(t * 3) * 4;
+          c2.fillStyle = '#1d1438'; c2.beginPath(); c2.moveTo(160, ky - 18); c2.lineTo(176, ky); c2.lineTo(160, ky + 26); c2.lineTo(144, ky); c2.fill();
+          c2.fillStyle = '#64e3ff'; c2.beginPath(); c2.moveTo(160, ky - 14); c2.lineTo(172, ky); c2.lineTo(160, ky + 21); c2.lineTo(148, ky); c2.fill();
+          ground(c2, t * 60, 320, 160, 6);
+          ['pinki_run', 'owi_run', 'dudu_run'].forEach((n, i) => atlasFrame(c2, n, t * 12 + i, 90 + i * 70, 120, 1.7));
+          if (!reduce) requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+      });
+    })();
+  </script>
+</body>
+</html>

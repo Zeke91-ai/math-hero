@@ -1,12 +1,13 @@
 {
   "name": "math-hero",
   "version": "0.1.0",
-  "description": "Game petualangan matematika kelas 1-4 SD, dimainkan di Chrome HP via LAN",
+  "description": "Seri Math Hero: game petualangan matematika kelas 1-4 SD (Math Hero 1 dan Math Hero 2), dimainkan di Chrome HP via LAN",
   "private": true,
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/math.test.js && node tests/bot_sanity.js && node scripts/cek_level.js && python tests/playthrough.py && python tests/menu.py && python tests/pose_b.py && python tests/lompat2x.py && python tests/nama_highscore.py && python tests/halaman_awal.py && python tests/mode_statis.py"
+    "test:mh2": "node tests/mh2.test.js",
+    "test": "node tests/mh2.test.js && node tests/math.test.js && node tests/bot_sanity.js && node scripts/cek_level.js && python tests/playthrough.py && python tests/menu.py && python tests/pose_b.py && python tests/lompat2x.py && python tests/nama_highscore.py && python tests/halaman_awal.py && python tests/mode_statis.py && python tests/mh2_playthrough.py"
   },
   "engines": {
     "node": ">=18"

@@ -24,8 +24,9 @@
     }
     // Garis baris menonjolkan "kelompok sama banyak".
     if (o.rowLabels) for (let r = 0; r < rows; r++) {
-      M.box(g, x + w + 10, y + r * cell + 6, 30, cell - 10, '#fff6dc', { line: '#2b1d52', border: 2, shade: false });
-      M.text(g, String(cols), x + w + 25, y + r * cell + cell / 2 + 1, { size: 14, align: 'center', color: '#2b1d52', outline: false });
+      const lh = Math.max(12, cell - 8), lw = Math.max(18, Math.round(cell * 0.9));
+      M.box(g, x + w + 8, y + r * cell + (cell - lh) / 2, lw, lh, '#fff6dc', { line: '#2b1d52', border: 2, shade: false });
+      M.text(g, String(cols), x + w + 8 + lw / 2, y + r * cell + cell / 2 + 1, { size: Math.min(14, Math.round(cell * 0.6)), align: 'center', color: '#2b1d52', outline: false });
     }
   }
 
@@ -104,7 +105,7 @@
         if (R.lock) return;
         const T = R.task;
         if (v === T.answer) finish(`${T.rows} × ${T.cols} = ${T.answer}`);
-        else P.mistake([`Hitung per baris: ${Array(T.rows).fill(T.cols).join(' + ')}.`].concat(T.explain), {
+        else P.mistake([`Kamu pilih ${v}. Yuk hitung lagi.`].concat(T.explain), {
           x: M.VW / 2, y: plotY() + 60, visual: (g, t, x, y, w, h) => drawPlot(g, x + 6, y + 4, T.rows, T.cols, { cell: 15, rowLabels: true, grow: t }) });
       }
 

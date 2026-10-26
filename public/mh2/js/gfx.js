@@ -478,11 +478,14 @@
       if (sprite === 'slime2') M.art(ctx, 'topiKoki', x, top + 6, s * 0.9, { anchor: 'feet' });
       else if (sprite === 'slime1') M.art(ctx, 'mahkota', x, top + 8, s * 0.8, { anchor: 'feet' });
     } else if (sprite === 'babi' || sprite === 'kelinci' || sprite === 'rubah' || sprite === 'rusa') {
-      M.spr(ctx, `${sprite}_run_${o.dir || 'l'}`, M.at(`${sprite}_run_${o.dir || 'l'}`, t, 10), x, y, { scale: s });
-      if (sprite === 'babi') M.art(ctx, 'mahkota', x + (o.dir === 'r' ? 6 : -6) * s, y - 22 * s, s * 0.6, { anchor: 'feet' });
+      const name = `${sprite}_run_${o.dir || 'l'}`, info = M.sprInfo(name);
+      M.spr(ctx, name, M.at(name, t, 10), x, y, { scale: s });
+      // Mahkota di atas kepala (kepala ada di sisi arah lari).
+      if (sprite === 'babi') M.art(ctx, 'mahkota', x + (o.dir === 'r' ? 0.22 : o.dir === 'u' ? 0 : -0.22) * info.w * s, y - info.h * s + 3 * s, s * 0.5, { anchor: 'feet' });
     } else if (sprite === 'burung') {
-      M.spr(ctx, `burung_fly_${o.dir || 'd'}`, M.at(`burung_fly_${o.dir || 'd'}`, t, 10), x, y, { scale: s });
-      M.art(ctx, 'mahkota', x, y - 26 * s, s * 0.6, { anchor: 'feet' });
+      const name = `burung_fly_${o.dir || 'd'}`, info = M.sprInfo(name);
+      M.spr(ctx, name, M.at(name, t, 10), x, y, { scale: s });
+      M.art(ctx, 'mahkota', x, y - info.h * s + 4 * s, s * 0.5, { anchor: 'feet' });
     } else if (sprite === 'prof') {
       const bob = Math.round(Math.sin(t * 3) * s);
       M.art(ctx, 'prof', x, y + bob, s, { anchor: 'feet', flip: o.flip });
