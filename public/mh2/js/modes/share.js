@@ -1,7 +1,8 @@
 // Mode "Bagi Rata": jelajah ruangan dari atas (top-down). Pahlawan mengambil permata dari tumpukan lalu
 // membagikannya SATU-SATU ke para slime. Konsep: pembagian = bagi rata bergiliran; sisa = yang tidak cukup
 // untuk semua (disimpan di peti).
-// Joystick: jalan. B: ambil segenggam (di tumpukan) / beri 1 (di slime) / simpan 1 (di peti). A: ambil kembali 1 dari slime.
+// Joystick: jalan. B: ambil segenggam (di tumpukan) / beri 1 (di slime) / simpan 1 (di peti). A: tarik kembali 1 dari slime.
+// Label tombol berubah sesuai benda terdekat, dan di tumpukan A maupun B sama-sama mengambil.
 (function () {
   const M = window.MH2, C = window.MH2Concepts;
   const BAGI = C.BAGI, X = C.X;
@@ -33,7 +34,7 @@
         },
       };
     },
-    controls() { return { joy: true, a: 'Ambil 1', b: 'Beri' }; },
+    controls() { return { joy: true, a: null, b: 'Ambil' }; },
     create(P) {
       const cfg = P.cfg;
       const R = { task: null, hx: 0, hy: 0, face: 1, moving: false, bag: 0, pile: 0, slimes: [], chest: null, lock: false, gem: 'gem3', checkT: 0 };
@@ -42,7 +43,7 @@
         const T = R.task = C.share(cfg);
         const rm = room();
         R.pile = T.total; R.bag = 0; R.lock = false; R.gem = M.pick(GEMS);
-        R.hx = rm.x + rm.w / 2; R.hy = rm.y + rm.h * 0.45;
+        R.hx = rm.x + rm.w / 2; R.hy = Math.max(rm.y + rm.h * 0.45, rm.y + 52 + 80);
         R.slimes = [];
         for (let i = 0; i < T.groups; i++) {
           const col = T.groups <= 3 ? i : i % 2, row = T.groups <= 3 ? 0 : Math.floor(i / 2);
@@ -50,19 +51,20 @@
           const ny = T.groups <= 3 ? rm.y + rm.h - 40 : rm.y + rm.h * (0.62 + row * 0.3) - 10;
           R.slimes.push({ x: nx, y: Math.min(ny, rm.y + rm.h - 30), n: 0, sp: 'slime' + ((i % 3) + 1), joy: 0 });
         }
-        R.chest = T.rem ? { x: rm.x + rm.w - 34, y: rm.y + 46, n: 0 } : null;
+        R.chest = T.rem ? { x: rm.x + rm.w - 34, y: rm.y + 122, n: 0 } : null;
       }
       newTask();
       const pileXY = () => { const rm = room(); return { x: rm.x + rm.w / 2, y: rm.y + 52 }; };
 
+      // Titik "tangan" pahlawan dibandingkan dengan tiap benda; yang terdekat dalam jangkauan bisa dipakai.
       function nearest() {
-        const pl = pileXY();
+        const pl = pileXY(), hx = R.hx, hy = R.hy - 20;
         const opts = [];
-        if (R.pile > 0) opts.push({ kind: 'pile', x: pl.x, y: pl.y, d: Math.hypot(R.hx - pl.x, R.hy - pl.y) });
-        R.slimes.forEach((s) => opts.push({ kind: 'slime', o: s, x: s.x, y: s.y, d: Math.hypot(R.hx - s.x, R.hy - (s.y - 10)) }));
-        if (R.chest) opts.push({ kind: 'chest', o: R.chest, x: R.chest.x, y: R.chest.y, d: Math.hypot(R.hx - R.chest.x, R.hy - R.chest.y) });
+        if (R.pile > 0) opts.push({ kind: 'pile', x: pl.x, y: pl.y, d: Math.hypot(hx - pl.x, hy - (pl.y + 16)) });
+        R.slimes.forEach((s) => opts.push({ kind: 'slime', o: s, x: s.x, y: s.y, d: Math.hypot(hx - s.x, hy - (s.y - 14)) }));
+        if (R.chest) opts.push({ kind: 'chest', o: R.chest, x: R.chest.x, y: R.chest.y, d: Math.hypot(hx - R.chest.x, hy - R.chest.y) });
         opts.sort((a, b) => a.d - b.d);
-        return opts[0] && opts[0].d < 58 ? opts[0] : null;
+        return opts[0] && opts[0].d < 64 ? opts[0] : null;
       }
 
       function check() {
@@ -126,10 +128,17 @@
           R.moving = Math.abs(I.x) + Math.abs(I.y) > 0.1;
           if (!R.lock) {
             R.hx = M.clamp(R.hx + I.x * sp * dt, rm.x + 16, rm.x + rm.w - 16);
-            R.hy = M.clamp(R.hy + I.y * sp * dt, rm.y + 40, rm.y + rm.h - 4);
+            // Pahlawan tidak bisa berdiri menutupi tumpukan permata.
+            R.hy = M.clamp(R.hy + I.y * sp * dt, pileXY().y + 76, rm.y + rm.h - 4);
             if (I.x > 0.2) R.face = 1; else if (I.x < -0.2) R.face = -1;
+            const t = nearest();
             if (I.bHit) act();
-            if (I.aHit) takeBack();
+            if (I.aHit) { if (t && t.kind === 'pile') act(); else takeBack(); }
+            // Label tombol sesuai benda terdekat.
+            if (!t) M.padLabels(null, R.bag ? 'Beri' : 'Ambil');
+            else if (t.kind === 'pile') M.padLabels('Ambil', 'Ambil');
+            else if (t.kind === 'slime') M.padLabels(t.o.n ? 'Tarik 1' : null, R.bag ? 'Beri 1' : 'Beri');
+            else M.padLabels(t.o.n ? 'Tarik 1' : null, 'Simpan');
           }
           for (const s of R.slimes) if (s.joy > 0) s.joy -= dt;
         },
@@ -152,7 +161,12 @@
           const pl = pileXY();
           for (let i = 0; i < Math.min(R.pile, 18); i++) {
             const a = i * 2.4, rr = 4 + Math.sqrt(i) * 6;
-            M.spr1(g, R.gem, Math.floor(M.t * 8 + i) % 7, pl.x + Math.cos(a) * rr, pl.y + Math.sin(a) * rr * 0.5, { scale: 1.3, anchor: 'center' });
+            M.spr1(g, R.gem, Math.floor(M.t * 8 + i) % 7, pl.x + Math.cos(a) * rr * 1.3, pl.y + Math.sin(a) * rr * 0.6, { scale: 1.6, anchor: 'center' });
+          }
+          if (R.pile > 0 && !R.bag && !R.lock) {
+            const bob = Math.sin(M.t * 5) * 3;
+            M.box(g, pl.x - 58, pl.y - 52 + bob, 116, 24, '#ffd54a', { line: '#2b1d52', border: 2, shade: false });
+            M.text(g, 'Ambil di sini!', pl.x, pl.y - 40 + bob, { size: 13, align: 'center', color: '#2b1d52', outline: false });
           }
           M.box(g, pl.x - 34, pl.y + 18, 68, 22, '#fff6dc', { line: '#2b1d52', border: 2, shade: false });
           M.text(g, `${R.pile} sisa`, pl.x, pl.y + 29, { size: 13, align: 'center', color: '#2b1d52', outline: false });

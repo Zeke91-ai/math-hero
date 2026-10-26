@@ -1,13 +1,14 @@
 // Mode "Balap Hitung": balapan jalan 3 lajur bergaya pseudo-3D melawan hewan-hewan pembalap.
-// Soal muncul di papan atas; gerbang jawaban datang dari kejauhan. Pindah lajur (joystick) ke gerbang yang benar
-// untuk TURBO; gerbang salah membuat kart melambat dan Peri menjelaskan caranya. A = lompat (menghindari batu).
+// Soal muncul di papan atas; gerbang jawaban datang dari kejauhan. Pindah lajur dengan tombol panah (satu ketukan =
+// satu lajur) ke gerbang yang benar untuk TURBO; gerbang salah membuat kart melambat dan Peri menjelaskan caranya.
+// Tidak ada rintangan lain dan jarak antar gerbang panjang, supaya fokus anak tetap pada hitungan.
 // Konsep: kelancaran berhitung (tambah, kurang, puluhan, kali, bagi) dan membandingkan bilangan (<, =, >).
 (function () {
   const M = window.MH2, C = window.MH2Concepts;
   const Z0 = 160;          // jarak terdekat yang tampak di layar
   const FAR = 3200;        // jarak terjauh
-  const GAP = 1900;        // jarak antar gerbang
-  const BASE = 330;        // kecepatan dasar
+  const GAP = 2600;        // jarak antar gerbang (sekitar 8 detik untuk berpikir)
+  const BASE = 300;        // kecepatan dasar
 
   const GROUND = {
     padang: ['#6cc46a', '#5db35c'], pantai: ['#f2d58a', '#e8c877'], kebun: ['#9cc65a', '#8db84c'], gua: ['#3a2a5e', '#33244f'],
@@ -21,7 +22,7 @@
       const cmp = (cfg.ops || []).includes('compare');
       return {
         judul: cmp ? 'Turbo dengan jawaban benar' : 'Hitung cepat, ngebut tepat!',
-        baris: cmp ? ['Pindah lajur ke gerbang yang benar.', 'Untuk < dan >: mulut buaya menghadap yang lebih besar.', 'Jawaban benar = TURBO!'] : ['Soal muncul di papan atas.', 'Pindah lajur (joystick) ke gerbang yang benar.', 'Jawaban benar = TURBO! A = lompati batu.'],
+        baris: cmp ? ['Ketuk panah kiri/kanan untuk pindah lajur.', 'Untuk < dan >: mulut buaya menghadap yang lebih besar.', 'Jawaban benar = TURBO!'] : ['Soal muncul di papan atas.', 'Ketuk panah kiri/kanan untuk pindah lajur.', 'Masuk gerbang yang benar = TURBO!'],
         demo(g, t, x, y, w, h) {
           g.fillStyle = '#6cc46a'; g.fillRect(x, y, w, h);
           g.fillStyle = '#5d6278';
@@ -39,14 +40,14 @@
         },
       };
     },
-    controls() { return { joy: true, a: 'Lompat', b: null }; },
+    controls() { return { arrows: true, a: null, b: null }; },
     create(P) {
       const cfg = P.cfg;
       const rivalKeys = [cfg.rival || 'kelinci', ...['kelinci', 'rubah', 'rusa'].filter((k) => k !== cfg.rival)].slice(0, 3);
       const total = P.tasks * GAP + 1400;
       const R = {
-        pos: 0, speed: BASE, lane: 0, laneX: 0, boost: 0, slow: 0, jump: 0, inv: 0, curve: 0, curveT: 0,
-        gates: [], rocks: [], coins: [], rivals: [], q: null, finished: false, finishT: 0, total,
+        pos: 0, speed: BASE, lane: 0, laneX: 0, boost: 0, slow: 0, curve: 0, curveT: 0,
+        gates: [], coins: [], rivals: [], q: null, finished: false, finishT: 0, total,
       };
       // Lawan: yang utama sedikit lebih cepat dari kecepatan dasar, sehingga hanya bisa dikalahkan dengan turbo.
       rivalKeys.forEach((k, i) => R.rivals.push({ key: k, pos: 120 + i * 90, lane: [-1, 1, 0][i], base: BASE * (i === 0 ? (cfg.mustWin ? 1.12 : 1.06) : 0.92 + i * 0.03), main: i === 0 }));
@@ -54,7 +55,6 @@
         const q = C.race(cfg);
         R.gates.push({ z: (i + 1) * GAP, q, done: false });
         // Batu di antara gerbang (tidak di dunia pertama).
-        if (P.level.stage > 1 && Math.random() < 0.7) R.rocks.push({ z: (i + 1) * GAP - GAP / 2, lane: M.between(-1, 1), hit: false });
         for (let c = 0; c < 5; c++) R.coins.push({ z: i * GAP + 500 + c * 90, lane: (i % 3) - 1, got: false });
       }
       const horizon = () => Math.round(M.VH * 0.36);
@@ -77,6 +77,11 @@
           P.mistake([`${gt.q.label.replace(' = ?', '')}: jawabannya ${gt.q.answer}, bukan ${pick}.`].concat(gt.q.explain), { soft: true, x: M.VW / 2, y: bottom() - 80, text: 'Pelan...' });
         }
       }
+      function steer(d) {
+        if (R.finished) return;
+        const n = M.clamp(R.lane + d, -1, 1);
+        if (n !== R.lane) { R.lane = n; M.sfx('klik'); }
+      }
       function rank() { return 1 + R.rivals.filter((r) => r.pos > R.pos).length; }
 
       return {
@@ -87,6 +92,7 @@
           const i = gt.q.choices.indexOf(gt.q.answer);
           R.lane = (wrong ? (i + 1) % 3 : i) - 1; R.pos = gt.z - 10;
         },
+        tap(x, y) { if (y > M.HUD_H + 110) steer(x < M.VW / 2 ? -1 : 1); },
         update(dt) {
           const I = M.input;
           if (R.finished) {
@@ -105,13 +111,11 @@
           }
           if (R.boost > 0) R.boost -= dt;
           if (R.slow > 0) R.slow -= dt;
-          if (R.jump > 0) R.jump -= dt;
-          if (R.inv > 0) R.inv -= dt;
           // Pindah lajur sekali per dorongan joystick.
-          if (Math.abs(I.x) > 0.5 && !R.laneLock) { R.lane = M.clamp(R.lane + Math.sign(I.x), -1, 1); R.laneLock = true; M.sfx('klik'); }
-          if (Math.abs(I.x) < 0.3) R.laneLock = false;
+          // Pindah lajur: satu ketukan panah (atau tombol panah keyboard) = satu lajur.
+          if (I.lHit) steer(-1);
+          if (I.rHit) steer(1);
           R.laneX += (R.lane - R.laneX) * Math.min(1, dt * 10);
-          if (I.aHit && R.jump <= 0) { R.jump = 0.6; M.sfx('lompat'); }
           const target = BASE * (R.boost > 0 ? 1.6 : R.slow > 0 ? 0.55 : 1);
           R.speed += (target - R.speed) * Math.min(1, dt * 2);
           R.pos += R.speed * dt;
@@ -126,11 +130,6 @@
             passGate(gt);
             // Tugas terakhir dihitung saat garis finis dilewati, agar balapan selesai dulu.
             if (R.gates.some((x) => !x.done)) P.taskDone();
-          }
-          for (const rk of R.rocks) {
-            if (!rk.hit && Math.abs(R.pos - rk.z) < 30 && rk.lane === R.lane && R.jump <= 0 && R.inv <= 0) {
-              rk.hit = true; R.inv = 1; R.slow = 1.2; P.hurt(1, M.VW / 2, bottom() - 30);
-            }
           }
           for (const c of R.coins) if (!c.got && Math.abs(R.pos - c.z) < 30 && c.lane === R.lane) { c.got = true; P.addScore(10, M.VW / 2, bottom() - 60); M.sfx('koin'); }
           if (R.pos >= R.total) { R.finished = true; M.sfx(rank() === 1 ? 'naik' : 'benar'); M.fx.confetti(); }
@@ -154,7 +153,6 @@
           // Benda di jalan, dari yang terjauh.
           const items = [];
           for (const gt of R.gates) if (!gt.done) items.push({ z: gt.z, kind: 'gate', o: gt });
-          for (const rk of R.rocks) if (!rk.hit) items.push({ z: rk.z, kind: 'rock', o: rk });
           for (const c of R.coins) if (!c.got) items.push({ z: c.z, kind: 'coin', o: c });
           for (const rv of R.rivals) items.push({ z: rv.pos, kind: 'rival', o: rv });
           items.push({ z: R.total, kind: 'finish' });
@@ -167,11 +165,11 @@
               it.o.q.choices.forEach((v, i) => {
                 const x = laneScreen(i - 1, p), w = 84 * p, h = 54 * p;
                 g.fillStyle = '#2b1d52'; g.fillRect(Math.round(x - w / 2), Math.round(y - h - 40 * p), Math.max(1, Math.round(5 * p)), Math.round(h + 40 * p)); g.fillRect(Math.round(x + w / 2 - 5 * p), Math.round(y - h - 40 * p), Math.max(1, Math.round(5 * p)), Math.round(h + 40 * p));
-                M.box(g, x - w / 2, y - h - 46 * p, w, h, '#fff6dc', { line: '#2b1d52', border: Math.max(1, Math.round(3 * p)), shade: false });
+                // Gerbang di lajurmu sekarang diberi warna kuning agar jelas akan masuk ke mana.
+                const mine = i - 1 === R.lane;
+                M.box(g, x - w / 2, y - h - 46 * p, w, h, mine ? '#ffe17a' : '#fff6dc', { line: mine ? '#d65f82' : '#2b1d52', border: Math.max(1, Math.round((mine ? 4 : 3) * p)), shade: false });
                 if (p > 0.12) M.text(g, v, x, y - h / 2 - 46 * p, { size: Math.max(8, Math.round(30 * p)), align: 'center', color: '#2b1d52', outline: false });
               });
-            } else if (it.kind === 'rock') {
-              M.art(g, 'meteor', laneScreen(it.o.lane, p) - 18 * p * 2, y - 24 * p * 2, Math.max(0.5, 3.5 * p));
             } else if (it.kind === 'coin') {
               M.spr1(g, 'gem4', M.t * 10, laneScreen(it.o.lane, p), y - 20 * p, { scale: Math.max(0.4, 2.4 * p), anchor: 'center' });
             } else if (it.kind === 'rival') {
@@ -186,8 +184,8 @@
             }
           }
           // Kart pemain.
-          const kx = VW / 2, ky = B + 26 - (R.jump > 0 ? Math.sin(Math.PI * (1 - R.jump / 0.6)) * 40 : 0);
-          if (!(R.inv > 0 && Math.floor(M.t * 14) % 2)) {
+          const kx = VW / 2, ky = B + 26;
+          {
             M.hero(g, M.save.active ? M.save.active.hero : 'pinki', 'idle', M.t, kx, ky - 22, { scale: 2 });
             M.art(g, 'gerobak', kx - 40, ky - 26, 4);
             if (R.boost > 0) M.fx.burst(kx + M.between(-20, 20), ky + 12, { n: 1, color: ['#ffd54a', '#ff8fab'], speed: 60, up: -60, life: 0.3 });

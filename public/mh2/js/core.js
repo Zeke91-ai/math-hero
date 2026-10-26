@@ -219,6 +219,9 @@
   }
   hold(btnA, (v) => { padA = v; if (v) latch.A = true; });
   hold(btnB, (v) => { padB = v; if (v) latch.B = true; });
+  // Tombol panah: tiap ketukan = satu langkah (dibaca sebagai I.lHit / I.rHit).
+  hold(document.getElementById('btn-kiri'), (v) => { if (v) latch.L = true; });
+  hold(document.getElementById('btn-kanan'), (v) => { if (v) latch.R = true; });
   ctrl.addEventListener('contextmenu', (e) => e.preventDefault());
 
   const KEYMAP = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd',
@@ -244,18 +247,26 @@
     const a = padA || !!keys.A, b = padB || !!keys.B;
     I.aHit = (a && !prevA) || !!latch.A; I.bHit = (b && !prevB) || !!latch.B;
     I.a = a || !!latch.A; I.b = b || !!latch.B; prevA = a; prevB = b;
+    I.lHit = !!(latch.l || latch.L); I.rHit = !!(latch.r || latch.R);
     for (const k in latch) delete latch[k];
   }
 
-  // Adegan memilih kontrol yang tampil: { joy: true, a: 'Lompat', b: 'Ambil' } atau null.
+  // Adegan memilih kontrol yang tampil: { joy: true, a: 'Lompat', b: 'Ambil' }, { arrows: true, ... } atau null.
   M.setControls = function (c) {
     ctrl.classList.toggle('on', !!c);
     if (!c) return;
-    ctrl.classList.toggle('nojoy', !c.joy);
-    ctrl.classList.toggle('noa', !c.a);
-    ctrl.classList.toggle('nob', !c.b);
-    btnA.querySelector('small').textContent = c.a || '';
-    btnB.querySelector('small').textContent = c.b || '';
+    ctrl.classList.toggle('nojoy', !c.joy && !c.arrows);
+    ctrl.classList.toggle('arrows', !!c.arrows);
+    labA = labB = NONE; // paksa terapkan, termasuk label kosong (tombol disembunyikan)
+    M.padLabels(c.a, c.b);
+  };
+  // Label tombol A/B bisa berubah sesuai keadaan (misalnya "Ambil" di dekat tumpukan, "Beri" di dekat slime).
+  // Tombol tanpa label disembunyikan. DOM hanya diubah jika labelnya berganti.
+  const NONE = {};
+  let labA = NONE, labB = NONE;
+  M.padLabels = function (a, b) {
+    if (a !== labA) { labA = a; btnA.querySelector('small').textContent = a || ''; ctrl.classList.toggle('noa', !a); }
+    if (b !== labB) { labB = b; btnB.querySelector('small').textContent = b || ''; ctrl.classList.toggle('nob', !b); }
   };
 
   // ---------- Partikel dan teks melayang ----------

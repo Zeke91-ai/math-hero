@@ -49,6 +49,47 @@ test('lari angka: target jumlah selalu bisa dicapai, label ekspresi benar', () =
   }
 });
 
+test('lari angka: tiap titik pilihan punya minimal satu bola benar, dua label berbeda', () => {
+  const cfgs = [{ kind: 'sum', tMin: 5, tMax: 10, orbMax: 4 }, { kind: 'sum', tMin: 10, tMax: 20, orbMax: 6 }, { kind: 'multiple' }, { kind: 'equal', values: [6, 8, 10, 12] }];
+  for (const cfg of cfgs) for (let i = 0; i < N; i++) {
+    const goal = C.runnerGoal(cfg);
+    const have = goal.kind === 'sum' ? C.between(0, goal.target - 1) : 0;
+    const pair = C.runnerPair(cfg, goal, have);
+    assert.equal(pair.length, 2);
+    assert.notEqual(pair[0].label, pair[1].label);
+    for (const o of pair) {
+      if (goal.kind === 'sum') assert.equal(o.good, o.value <= goal.target - have);
+      if (goal.kind === 'equal') assert.equal(calc(o.label), o.value);
+    }
+    assert.ok(pair.some((o) => o.good), JSON.stringify({ goal, have, pair }));
+  }
+});
+
+test('level gesit: hitungan tetap kecil', () => {
+  for (const L of ALL_LEVELS) for (const ph of (L.phases || [L])) {
+    if (ph.mode === 'racer') for (let i = 0; i < 200; i++) {
+      const q = C.race(ph.cfg), e = q.label.replace(' = ?', '');
+      const m = /^(\d+) ([+\-×:]) (\d+)$/.exec(e);
+      if (!m) continue; // perbandingan
+      const a = Number(m[1]), b = Number(m[3]);
+      if (m[2] === '×') assert.ok(a <= 5 && b <= 10 && a * b <= 50, `${L.id}: ${e}`);
+      if (m[2] === ':') assert.ok(b <= 5, `${L.id}: ${e}`);
+      if (m[2] === '+' && a % 10) assert.ok(a <= 20 && b <= 20, `${L.id}: ${e}`);
+      if (m[2] === '-') assert.ok(a <= 20, `${L.id}: ${e}`);
+    }
+    if (ph.mode === 'shooter') for (const w of ph.cfg.waves) for (let i = 0; i < 200; i++) {
+      const t = C.shooterTarget(C.shooterWave(w));
+      if (w.kind === 'divide') assert.ok(Number(t.label.split(':')[1]) <= 5, `${L.id}: ${t.label}`);
+      if (w.kind === 'multiple') assert.ok(t.value <= 50, `${L.id}: ${t.label}`);
+    }
+    if (ph.mode === 'runner') for (let i = 0; i < 200; i++) {
+      const g = C.runnerGoal(ph.cfg);
+      if (g.kind === 'sum') assert.ok(g.target <= 20);
+      if (g.kind === 'equal') assert.ok(g.v <= 12);
+    }
+  }
+});
+
 test('meteor angka: sasaran benar dan salah sesuai aturan', () => {
   const cfgs = [{ kind: 'bond', n: 10 }, { kind: 'multiple', k: 3 }, { kind: 'even' }, { kind: 'odd' }, { kind: 'divide', q: 4 }, { kind: 'half' }, { kind: 'greater', n: 40 }];
   for (const cfg of cfgs) for (let i = 0; i < N; i++) {
@@ -126,7 +167,7 @@ test('data stage: 6 stage x 5 level, id unik, mode terdaftar, soal bisa dibuat',
       const cfg = ph.cfg;
       for (let i = 0; i < 40; i++) {
         if (ph.mode === 'numline') C.numline(cfg);
-        else if (ph.mode === 'runner') { const g = C.runnerGoal(cfg); C.runnerOrb(cfg, g, 0); }
+        else if (ph.mode === 'runner') { const g = C.runnerGoal(cfg); C.runnerPair(cfg, g, 0); }
         else if (ph.mode === 'shooter') (cfg.waves || [cfg]).forEach((w) => C.shooterTarget(C.shooterWave(w)));
         else if (ph.mode === 'racer') C.race(cfg);
         else if (ph.mode === 'balance') C.balance(cfg);

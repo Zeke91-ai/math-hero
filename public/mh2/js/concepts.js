@@ -130,11 +130,29 @@
     }
     throw new Error('runner: jenis tidak dikenal');
   }
+  // Titik pilihan Lari Angka: dua bola (bawah dan atas) dan SELALU ada minimal satu yang benar,
+  // sehingga anak tidak pernah terpaksa mengambil yang salah. Label kedua bola selalu berbeda.
+  function runnerPair(cfg, goal, have) {
+    let good, guard = 0;
+    do { good = runnerOrb(cfg, goal, have); } while (!good.good && guard++ < 200);
+    if (!good.good) {
+      // Cadangan (seharusnya tidak terjadi): bola 1 untuk jumlah, atau kelipatan/ekspresi yang pasti benar.
+      good = goal.kind === 'sum' ? { label: '1', value: 1, good: true } : goal.kind === 'multiple' ? { label: String(goal.k), value: goal.k, good: true } : Object.assign(exprFor(goal.v), { value: goal.v, good: true });
+    }
+    let other;
+    guard = 0;
+    do { other = runnerOrb(cfg, goal, have); } while (other.label === good.label && guard++ < 200);
+    if (other.label === good.label) other = { label: String(good.value + 1), value: good.value + 1, good: false };
+    if (goal.kind === 'sum') other.good = other.value <= goal.target - have;
+    return Math.random() < 0.5 ? [good, other] : [other, good];
+  }
+
   // Ekspresi acak yang hasilnya n (penjumlahan, pengurangan, atau perkalian jika bisa).
   function exprFor(n) {
     const opts = [];
     if (n >= 2) { const a = between(1, n - 1); opts.push({ label: `${a}+${n - a}` }); }
-    const b = between(1, 9); opts.push({ label: `${n + b}-${b}` });
+    // Pengurangan hanya untuk bilangan kecil agar tetap mudah dihitung sambil berlari.
+    if (n <= 10) { const b = between(1, 5); opts.push({ label: `${n + b}-${b}` }); }
     const fs = range(2, 9).filter((f) => n % f === 0 && n / f <= 12 && n / f > 1);
     if (fs.length) { const f = pick(fs); opts.push({ label: `${f}${X}${n / f}` }, { label: `${n / f}${X}${f}` }); }
     return pick(opts);
@@ -179,10 +197,11 @@
     }
     if (k === 'divide') {
       // Ekspresi pembagian yang hasilnya q.
-      const q = cfg.q || between(2, 6);
-      const goods = range(2, 9).map((d) => ({ label: `${d * q}${BAGI}${d}`, v: q }));
+      // Pembagi kecil (2 sampai dMax) supaya bisa dihitung sambil menghindar.
+      const q = cfg.q || between(2, cfg.qMax || 5), dMax = cfg.dMax || 5;
+      const goods = range(2, dMax).map((d) => ({ label: `${d * q}${BAGI}${d}`, v: q }));
       const bads = [];
-      range(2, 9).forEach((d) => { const w = q + pick([-1, 1, 2]); if (w > 0) bads.push({ label: `${d * w}${BAGI}${d}`, v: w }); });
+      range(2, dMax).forEach((d) => { const w = q + pick([-1, 1, 2]); if (w > 0) bads.push({ label: `${d * w}${BAGI}${d}`, v: w }); });
       return { kind: k, label: `Tembak yang hasilnya ${q}`, short: `${BAGI} = ${q}`, goodItems: goods, badItems: bads, need: cfg.need || 5,
         explainBad: (it) => [`${it.label} = ${it.v}, bukan ${q}.`, `Ingat: ${it.label.split(BAGI)[1]} ${X} ${it.v} = ${it.label.split(BAGI)[0]}.`],
         explainGood: (it) => `${it.label} = ${q} karena ${it.label.split(BAGI)[1]} ${X} ${q} = ${it.label.split(BAGI)[0]}` };
@@ -212,6 +231,8 @@
   }
 
   // ============ 4. Balap Hitung ============
+  // Tiap operasi punya rentang sendiri agar campuran (mis. kali + bandingkan) tidak saling memperbesar angka:
+  //   tambah/kurang: aMin, aMax, bMin, bMax   kali: mulA (maks faktor pertama), mulB   bagi: dMax, qMax   bandingkan: cMin, cMax.
   function race(cfg) {
     const op = cfg.op === 'mix' ? pick(cfg.ops || ['add', 'sub', 'mul', 'div']) : cfg.op;
     let label, answer, explain, opts = null;
@@ -228,15 +249,15 @@
       label = `${a} + ${b}`; answer = a + b;
       explain = [`${a / 10} puluhan + ${b / 10} puluhan = ${a / 10 + b / 10} puluhan = ${answer}.`];
     } else if (op === 'mul') {
-      const a = between(cfg.aMin || 2, cfg.aMax || 5), b = between(cfg.bMin || 2, cfg.bMax || 10);
+      const a = between(2, cfg.mulA || 5), b = between(2, cfg.mulB || 10);
       label = `${a} ${X} ${b}`; answer = a * b;
       explain = [`${a} ${X} ${b} = ${Array(Math.min(a, 6)).fill(b).join(' + ')}${a > 6 ? ' + ...' : ''} = ${answer}.`];
     } else if (op === 'div') {
-      const d = between(cfg.dMin || 2, cfg.dMax || 5), q = between(cfg.qMin || 2, cfg.qMax || 10);
+      const d = between(2, cfg.dMax || 5), q = between(2, cfg.qMax || 10);
       label = `${d * q} ${BAGI} ${d}`; answer = q;
       explain = [`${d * q} dibagi rata ke ${d} kelompok: tiap kelompok ${q}.`, `Cek: ${d} ${X} ${q} = ${d * q}.`];
     } else if (op === 'compare') {
-      const a = between(cfg.aMin || 10, cfg.aMax || 99);
+      const a = between(cfg.cMin || 10, cfg.cMax || 99);
       let b = Math.random() < 0.2 ? a : pick([a + between(1, 9), a - between(1, 9), Number(String(a).split('').reverse().join(''))]);
       if (b < 0) b = a + 3;
       label = `${a} ? ${b}`; answer = a > b ? '>' : a < b ? '<' : '=';
@@ -383,6 +404,6 @@
     throw new Error('pizza: jenis tidak dikenal ' + k);
   }
 
-  return { X, BAGI, rnd, between, pick, shuffle, range, near, choices, fracLabel, gcd, fmtRp, numline, runnerGoal, runnerOrb, runnerExplain, exprFor,
+  return { X, BAGI, rnd, between, pick, shuffle, range, near, choices, fracLabel, gcd, fmtRp, numline, runnerGoal, runnerOrb, runnerPair, runnerExplain, exprFor,
     shooterWave, shooterTarget, race, balance, sideSum, garden, share, market, fewest, DENOMS, pizza };
 });
