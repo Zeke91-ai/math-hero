@@ -15,7 +15,11 @@
   if (!MH3.homework.openRaw) {
     const raw = MH3.homework.open;
     MH3.homework.openRaw = raw;
-    MH3.homework.open = (opts, cb) => raw(opts, (r) => { S.logPR(r, opts && opts.title); if (cb) cb(r); });
+    // Kartu baru (bukan lanjutan yang disimpan) memakai tingkat yang sudah disesuaikan dengan hasil PR terakhir.
+    MH3.homework.open = (opts, cb) => {
+      if (opts && opts.tier != null && !opts.id) opts = Object.assign({}, opts, { tier: S.adaptTier(opts.tier) });
+      raw(opts, (r) => { S.logPR(r, opts && opts.title); if (cb) cb(r); });
+    };
   }
 
   // ---------- Judul ----------
@@ -173,6 +177,11 @@
         txt(g, open ? h.desc : `Butuh ${h.need} bintang`, x + cw / 2, y + 132, { size: 12, align: 'center', color: '#6b4fa8' });
       });
       if (this.msg) M.text(g, this.msg, VW / 2, 104 + 3 * 160 + 16, { size: 14, align: 'center', color: '#fff3c4', maxW: VW - 30 });
+      // Kelas sekolah: menentukan jenis soal PR (kelas 2 sampai 5).
+      const gy = 104 + 3 * 160 + 40, bw = (VW - 30 - 3 * 10) / 4, grade = S.active ? S.active.grade : 2;
+      M.text(g, 'Kelas sekolahmu?', VW / 2, gy, { size: 18, align: 'center', color: '#ffd54a', ow: 4 });
+      [2, 3, 4, 5].forEach((k, i) => M.button(g, { id: 'kelas' + k, x: 15 + i * (bw + 10), y: gy + 14, w: bw, h: 48, label: 'Kelas ' + k, size: 15,
+        color: grade === k ? 'yellow' : 'purple', onTap: () => { S.setGrade(k); M.sfx('benar'); this.msg = `Soal PR sekarang untuk kelas ${k}.`; } }));
     },
   });
 

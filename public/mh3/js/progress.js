@@ -51,6 +51,7 @@
   function norm(p) {
     p.stars = p.stars || {}; p.best = p.best || {}; p.seen = p.seen || {};
     p.grade = p.grade || 2; p.hero = p.hero || 'pinki';
+    p.recent = Array.isArray(p.recent) ? p.recent : [];
     p.rescued = Array.isArray(p.rescued) ? p.rescued : [];
     p.upg = p.upg || {}; p.keys = p.keys | 0;
     p.loadout = Array.isArray(p.loadout) ? p.loadout : [];
@@ -136,6 +137,7 @@
     now = now || Date.now();
     const e = { id: r.id, seed: r.seed, tier: r.tier, grade: r.grade, title: title || 'PR', kind: kindOf(title), t: now };
     if (!e.id) return null;
+    if (r.status === 'done') noteAnswer(p, r);
     const b = p.book;
     if (r.status === 'done') {
       b.later = b.later.filter((x) => !sameHw(x, e));
@@ -157,7 +159,26 @@
   }
   const weekCount = (p, now) => p.book.done.filter((e) => e.t >= (now || Date.now()) - 7 * DAY).length;
 
+  // ---------- Tingkat soal adaptif ----------
+  // p.recent = 6 PR terakhir yang selesai: 1 = bersih (tanpa salah dan tanpa petunjuk), 0 = tidak bersih.
+  const RECENT_MAX = 6, DROP_RUN = 3;
+  function noteAnswer(p, r) {
+    const clean = !(r.wrong > 0) && !(r.hints > 0);
+    p.recent = (p.recent || []).concat(clean ? 1 : 0).slice(-RECENT_MAX);
+    return p.recent;
+  }
+  // Tingkat soal (0-3) untuk dunia `base`. Tidak pernah menghukum: turun 1 tingkat bila 3 PR terakhir berturut-turut
+  // belum bersih, naik 1 tingkat bila 6 PR terakhir semuanya bersih. Di luar itu tetap di tingkat dunia.
+  function adaptTier(p, base) {
+    const r = p.recent || [];
+    let shift = 0;
+    if (r.length >= DROP_RUN && r.slice(-DROP_RUN).every((x) => x === 0)) shift = -1;
+    else if (r.length >= RECENT_MAX && r.every((x) => x === 1)) shift = 1;
+    return Math.max(0, Math.min(3, (base | 0) + shift));
+  }
+
   return { PATTERN, KIND_LABEL, WORLDS, LEVELS, ROSTER, MAX_LV, UPG_COST, LOADOUT_MAX, STAR_BONUS,
     level, unit, rescueFor, norm, blank, starsOf, totalStars, totalScore, crystals, record, unlocked, current, bonusStars,
-    owned, rescue, unitLevel, upgradeCost, upgrade, addKeys, loadout, toggleLoadout, logPR, finishLater, weekCount, kindOf };
+    owned, rescue, unitLevel, upgradeCost, upgrade, addKeys, loadout, toggleLoadout, logPR, finishLater, weekCount, kindOf,
+    noteAnswer, adaptTier };
 });

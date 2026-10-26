@@ -62,6 +62,8 @@
     remove(i) { data.slots[i] = null; if (data.active === i) data.active = -1; persist(); },
     setHero(key) { act((p) => { p.hero = key; }); },
     setGrade(g) { act((p) => { p.grade = Math.max(2, Math.min(5, g | 0)); }); },
+    // Tingkat soal PR untuk dunia `base`, disesuaikan dengan 6 PR terakhir (lihat progress.js adaptTier).
+    adaptTier: (base) => P.adaptTier(cur(), base),
     // Muat ulang dari penyimpanan (dipakai tes untuk meniru buka-tutup aplikasi).
     reload() { data = load(); },
     markSeen(key) { act((p) => { p.seen[key] = true; }); },
