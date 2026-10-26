@@ -38,6 +38,15 @@
     else if (e.type === 'castle') { a.sfx('salah'); S.shake = 0.35; say('Monster lolos! Hati Benteng berkurang.', 1600, '#ffe1e6'); }
     else if (e.type === 'wave') { S.banner = { text: e.index + 1 >= e.total ? 'Gelombang terakhir!' : `Gelombang ${e.index + 1}`, t: 0 }; }
     else if (e.type === 'waveClear') say('Gelombang selesai!', 1400, '#e3ffe6');
+    else if (e.type === 'laser') { a.sfx('tembak'); S.beams.push({ col: e.col, row: e.row, t: 0.25 }); }
+    else if (e.type === 'boom') { a.sfx('ledak'); fx.burst(cx(e.col), py(e.y - 0.3), { n: 14, speed: 140, color: ['#ffd54a', '#ff8a3d'], life: 0.45 }); }
+    else if (e.type === 'jump') fx.burst(cx(e.col), py(e.y), { n: 6, speed: 60, color: '#fff6dc', life: 0.3 });
+    else if (e.type === 'heal') fx.float('+', cx(e.col), py(e.y - 0.6), '#5fd068', 16);
+    else if (e.type === 'perisai') { a.sfx('boost'); fx.burst(cx(e.col), py(e.row + 0.5), { n: 10, speed: 70, color: ['#64e3ff', '#fff6dc'], life: 0.5 }); }
+    else if (e.type === 'boss') { S.banner = { text: D.MONSTERS[e.kind].nama + '!', t: 0 }; say('Perisai Rumus! Pecahkan dengan satu soal PR.', 2600, '#ffe9a8'); }
+    else if (e.type === 'tangkis') { if (M.t - S.lastTangkis > 1.2) { S.lastTangkis = M.t; a.sfx('hit'); say('Perisai Rumus menahan! Pecahkan dulu.', 1400, '#ffe9a8'); } }
+    else if (e.type === 'shieldBreak') { a.sfx('benar'); fx.confetti(); say('Perisai pecah! Serang sekarang!', 2000, '#e3ffe6'); }
+    else if (e.type === 'shieldUp') say('Perisai Rumus muncul lagi!', 1800, '#ffe9a8');
     else if (e.type === 'meteor') { a.sfx('ledak'); fx.confetti(); }
   }
 
@@ -49,6 +58,19 @@
     MH3.homework.open({ grade: grade(), tier: S.level.tier || 0, title: 'Peti Kekuatan' }, (r) => {
       if (r.status === 'done') { S.g.chest = null; S.state = 'power'; M.audio.sfx('benar'); }
       else say('Peti disimpan. Buka lagi kalau sudah siap.', 2200);
+    });
+  }
+  // Perisai Rumus bos: satu soal PR benar memecahkannya. Papan berhenti selama kartu terbuka.
+  function openShield() {
+    const b = Sim.shieldedBoss(S.g);
+    if (!b || S.state !== 'play') return;
+    S.state = 'pr';
+    MH3.homework.open({ grade: grade(), tier: S.level.tier || 0, title: 'Perisai Rumus' }, (r) => {
+      S.state = 'play';
+      if (r.status === 'done') Sim.breakShield(S.g, b.id);
+      else say('Perisai belum pecah. Coba lagi kapan saja.', 2000);
+      for (const e of S.g.events) handle(e);
+      S.g.events.length = 0;
     });
   }
   function openTreasure() {
@@ -78,7 +100,13 @@
   function drawUnit(g, u) {
     const x = cx(u.col), yb = py(u.row + 1) - 4, t = M.t + u.id;
     const shake = u.hurt > 0 ? Math.sin(M.t * 60) * 2 : 0;
-    if (u.kind === 'pemanah') M.hero(g, 'pinki', u.fire > 0.1 && u.fire < 0.5 ? 'throw' : 'idle', t, x + shake, yb, { scale: 1.5 });
+    const ud = D.UNITS[u.kind];
+    if (S.g.rowShield[u.row] > 0) { g.fillStyle = 'rgba(100,227,255,0.28)'; g.fillRect(L.gx, py(u.row) + 2, COLS * CW, L.ch - 4); }
+    if (ud.hero) {
+      if (u.kind === 'meriam') {
+        M.box(g, x - 18 + shake, yb - 22, 36, 18, '#5a4a7a', { line: '#2b1d52' }); M.box(g, x - 6 + shake, yb - 34, 12, 16, '#3a3346', { line: '#1d1438' });
+      } else M.hero(g, ud.hero, u.fire > 0.1 && u.fire < 0.5 ? 'throw' : 'idle', t, x + shake, yb, { scale: 1.5 });
+    } else if (u.kind === 'pemanah') M.hero(g, 'pinki', u.fire > 0.1 && u.fire < 0.5 ? 'throw' : 'idle', t, x + shake, yb, { scale: 1.5 });
     else if (u.kind === 'tembok') {
       M.box(g, x - 22 + shake, yb - L.ch + 8, 44, L.ch - 10, '#a89f94', { line: '#3a3346' });
       g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(x - 16 + shake, yb - L.ch * 0.5, 32, 3); g.fillRect(x - 4 + shake, yb - L.ch + 16, 3, L.ch * 0.4);
@@ -93,9 +121,18 @@
     const name = m.hurt > 0 ? d.hit : d.sprite;
     if (y < L.gy - 40) return;
     g.save(); g.beginPath(); g.rect(0, 0, M.VW, L.castleY + CASTLE); g.clip();
-    M.spr1(g, name, m.hurt > 0 ? 2 : M.t * 9 + m.id, x, y + 2, { scale: d.scale });
+    if (d.boss) {
+      M.drawBoss(g, d.boss, x, y + 2, d.scale, M.t, { hurt: m.hurt });
+      if (m.shield) { // Perisai Rumus: gelembung dengan tanda tanya
+        const r = L.ch * 0.62; g.fillStyle = 'rgba(100,227,255,0.28)'; g.strokeStyle = '#64e3ff'; g.lineWidth = 3;
+        g.beginPath(); g.arc(x, y - L.ch * 0.45, r, 0, 7); g.fill(); g.stroke();
+        M.text(g, '?', x, y - L.ch * 0.3, { size: 26, align: 'center', color: '#fff6dc' });
+      }
+    } else M.spr1(g, name, m.hurt > 0 ? 2 : M.t * 9 + m.id, x, y + 2, { scale: d.scale });
+    if (m.slow > 0) { g.fillStyle = 'rgba(100,227,255,0.35)'; g.fillRect(x - 18, y - L.ch * 0.7, 36, L.ch * 0.7); }
     g.restore();
-    if (m.hp < m.max) { const w = 30; g.fillStyle = '#1d1438'; g.fillRect(x - w / 2, y - L.ch * 0.85, w, 4); g.fillStyle = '#ff6b6b'; g.fillRect(x - w / 2 + 1, y - L.ch * 0.85 + 1, (w - 2) * m.hp / m.max, 2); }
+    if (m.hp < m.max) { const w = d.boss ? 50 : 30; g.fillStyle = '#1d1438'; g.fillRect(x - w / 2, y - L.ch * 0.85, w, 4); g.fillStyle = '#ff6b6b'; g.fillRect(x - w / 2 + 1, y - L.ch * 0.85 + 1, (w - 2) * m.hp / m.max, 2); }
+    else if (d.boss) { g.fillStyle = '#1d1438'; g.fillRect(x - 25, y - L.ch * 0.85, 50, 4); g.fillStyle = '#ff6b6b'; g.fillRect(x - 24, y - L.ch * 0.85 + 1, 48, 2); }
   }
   function drawStarPickup(g, p) {
     const bob = Math.sin(M.t * 5 + p.id) * 3, x = L.gx + p.x * CW, y = py(p.y) + bob;
@@ -122,6 +159,8 @@
       M.button(g, { id: 'kartu_' + k, x, y, w: cw, h: 64, color: can ? 'white' : 'gray', selected: S.sel === k, textColor: '#2b1d52', label: '', onTap: () => { S.sel = S.sel === k ? null : k; }, sfx: 'kartu',
         draw: (c, bx, by) => {
           if (k === 'pemanah') M.hero(c, 'pinki', 'idle', M.t, bx + cw / 2, by + 42, { scale: 1.2 });
+          else if (u.hero && k !== 'meriam') M.hero(c, u.hero, 'idle', M.t, bx + cw / 2, by + 42, { scale: 1.2 });
+          else if (k === 'meriam') { M.box(c, bx + cw / 2 - 14, by + 22, 28, 14, '#5a4a7a', { line: '#2b1d52' }); M.box(c, bx + cw / 2 - 5, by + 12, 10, 14, '#3a3346', { line: '#1d1438' }); }
           else if (k === 'tembok') M.box(c, bx + cw / 2 - 15, by + 12, 30, 28, '#a89f94', { line: '#3a3346' });
           else M.art(c, 'bintang', bx + cw / 2 - 16, by + 8, 3);
           M.text(c, String(u.cost), bx + cw / 2, by + 54, { size: 16, align: 'center', color: can ? '#8a5a00' : '#555', outline: false });
@@ -151,6 +190,8 @@
       if (gm.chest) M.button(g, { id: 'peti', x: L.gx + 6, y: by, w: 170, h: 38, color: 'yellow', label: 'Peti PR!', size: 18, onTap: openChest, icon: 'chest' });
       M.button(g, { id: 'siap', x: L.gx + COLS * CW - 106, y: by, w: 100, h: 38, color: 'green', label: 'Siap! ' + Math.ceil(gm.restT), size: 16, onTap: () => Sim.skip(gm) });
     }
+    const sb = S.state === 'play' && Sim.shieldedBoss(gm);
+    if (sb) M.button(g, { id: 'perisai', x: (M.VW - 230) / 2, y: L.castleY - 2, w: 230, h: 34, color: 'orange', label: 'Pecahkan Perisai!', size: 16, onTap: openShield, icon: 'chest' });
     if (S.state === 'power') {
       g.fillStyle = 'rgba(29,20,56,0.7)'; g.fillRect(0, 0, M.VW, M.VH);
       const x = 24, y = M.VH * 0.22, w = M.VW - 48, h = 330;
@@ -200,7 +241,7 @@
       layout();
       // p.def = definisi level lengkap dari peta (nama, tema, tier, loadout, startStars, upg); tanpanya level data apa adanya.
       const level = p.def || D.level(p.level || 1);
-      S = { level, params: p, g: Sim.create(level), state: 'play', sel: null, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd };
+      S = { level, params: p, g: Sim.create(level), state: 'play', sel: null, beams: [], lastTangkis: -9, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd };
       pickDefaults();
       M.audio.music('padang');
     },
@@ -211,6 +252,8 @@
       if (!S) return;
       if (S.banner) S.banner.t += dt;
       S.shake = Math.max(0, S.shake - dt);
+      for (const b of S.beams) b.t -= dt;
+      S.beams = S.beams.filter((b) => b.t > 0);
       const gm = S.g;
       if (S.state === 'end') { S.endT += dt; return; }
       if (S.state !== 'play') return;
@@ -230,7 +273,8 @@
       for (const row of S.g.grid) for (const u of row) if (u) items.push([u.row + 1, () => drawUnit(g, u)]);
       for (const m of S.g.monsters) items.push([m.y, () => drawMonster(g, m)]);
       items.sort((a, b) => a[0] - b[0]).forEach((it) => it[1]());
-      for (const a of S.g.arrows) { g.fillStyle = '#fff6dc'; g.fillRect(Math.round(cx(a.col)) - 2, Math.round(py(a.y)) - 8, 4, 12); g.fillStyle = '#ffd54a'; g.fillRect(Math.round(cx(a.col)) - 2, Math.round(py(a.y)) - 8, 4, 4); }
+      for (const b of S.beams) { g.fillStyle = `rgba(255,236,120,${Math.min(1, b.t * 4)})`; g.fillRect(Math.round(cx(b.col)) - 7, L.gy, 14, py(b.row) - L.gy); }
+      for (const a of S.g.arrows) { g.fillStyle = a.shot === 'es' ? '#9fe8ff' : a.shot === 'bom' ? '#ff8a3d' : '#fff6dc'; g.fillRect(Math.round(cx(a.col)) - 2, Math.round(py(a.y)) - 8, 4, 12); g.fillStyle = '#ffd54a'; g.fillRect(Math.round(cx(a.col)) - 2, Math.round(py(a.y)) - 8, 4, 4); }
       for (const p of S.g.pickups) drawStarPickup(g, p);
       drawCastle(g);
       M.fx.draw(g);

@@ -11,6 +11,12 @@
     pemanah: { nama: 'Pemanah Kecil', info: 'Menembak lurus ke atas jalurnya', cost: 100, hp: 6, cd: 5, fire: 1.3, dmg: 1 },
     menara: { nama: 'Menara Bintang', info: 'Menghasilkan Bintang', cost: 50, hp: 4, cd: 5, make: 8, first: 4, value: 25 },
     tembok: { nama: 'Tembok Batu', info: 'Memblok monster', cost: 50, hp: 22, cd: 7 },
+    // Pasukan penduduk yang diselamatkan (id sama dengan progress.js ROSTER).
+    penyihir: { nama: 'Penyihir Es', info: 'Memperlambat monster', cost: 150, hp: 5, cd: 7, fire: 1.6, dmg: 0.5, shot: 'es', slow: 3, hero: 'owi' },
+    meriam: { nama: 'Meriam', info: 'Ledakan di area sekitar', cost: 200, hp: 7, cd: 9, fire: 3.2, dmg: 3, shot: 'bom', splash: 0.6, hero: 'dudu' },
+    robo: { nama: 'Robo Kuning', info: 'Laser satu jalur penuh', cost: 175, hp: 8, cd: 8, fire: 2.4, dmg: 1.2, shot: 'laser', hero: 'hero2' },
+    rubah: { nama: 'Rubah Lincah', info: 'Menyerang 3 jalur sekaligus', cost: 175, hp: 6, cd: 8, fire: 1.5, dmg: 1, shot: 'tiga', hero: 'hero3' },
+    anak: { nama: 'Anak Berani', info: 'Perisai satu baris sebentar', cost: 150, hp: 5, cd: 10, shot: 'perisai', every: 14, dur: 4, hero: 'hero1' },
   };
 
   // Monster (sprite MH1). spd dalam petak per detik, dps = kerusakan per detik ke pasukan yang diserang.
@@ -18,6 +24,16 @@
     biasa: { nama: 'Monster Biasa', hp: 4, spd: 0.2, dps: 1, sprite: 'enemy1_run', hit: 'enemy1_hit', scale: 1.5 },
     cepat: { nama: 'Monster Cepat', hp: 3, spd: 0.4, dps: 1, sprite: 'enemy2_run', hit: 'enemy2_hit', scale: 1.5 },
     tebal: { nama: 'Monster Tebal', hp: 12, spd: 0.13, dps: 1.6, sprite: 'enemy4_walk', hit: 'enemy4_hit', scale: 1.5 },
+    lompat: { nama: 'Monster Lompat', hp: 6, spd: 0.28, dps: 1.2, sprite: 'enemy3_walk', hit: 'enemy3_hit', scale: 1.5, jump: true }, // melompati penghadang pertama
+    raksasa: { nama: 'Raksasa Batu', hp: 28, spd: 0.09, dps: 2.5, sprite: 'enemy7_run', hit: 'enemy7_hit', scale: 2.2 },
+    pecah: { nama: 'Monster Pecah', hp: 6, spd: 0.2, dps: 1, sprite: 'enemy6_run', hit: 'enemy6_hit', scale: 1.5, split: { m: 'biasa', n: 2 } }, // pecah jadi 2 Monster Biasa
+    tabib: { nama: 'Monster Tabib', hp: 5, spd: 0.17, dps: 0.8, sprite: 'enemy5_fly', hit: 'enemy5_hit', scale: 1.5, heal: { every: 2, amount: 1.5, range: 1 } },
+    // Bos: Perisai Rumus kebal dari semua serangan sampai dipecahkan dengan satu soal PR, lalu terbuka `open` detik.
+    // Kalau sampai Benteng, hati berkurang `castle` dan bos terdorong mundur, bukan hilang.
+    bos1: { nama: 'Kapten Slime', hp: 40, spd: 0.07, dps: 3, boss: 'slime1', scale: 2.4, open: 12, castle: 2 },
+    bos2: { nama: 'Kapten Elang', hp: 55, spd: 0.08, dps: 3, boss: 'burung', scale: 1.7, open: 12, castle: 2 },
+    bos3: { nama: 'Kapten Ulat', hp: 70, spd: 0.075, dps: 3.5, boss: 'slime3', scale: 2.4, open: 11, castle: 2 },
+    bos4: { nama: 'Raja Kabut', hp: 90, spd: 0.08, dps: 4, boss: 'prof', scale: 2.2, open: 10, castle: 2 },
   };
 
   // Gelombang: grup { m: jenis, n: jumlah, start: detik sejak gelombang mulai, gap: jeda antar monster }.
