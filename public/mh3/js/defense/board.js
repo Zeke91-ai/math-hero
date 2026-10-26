@@ -31,11 +31,11 @@
   function handle(e) {
     const fx = M.fx, a = M.audio;
     if (e.type === 'place') { a.sfx('kartu'); fx.burst(cx(e.col), py(e.row + 0.8), { n: 8, speed: 80, color: ['#fff6dc', '#ffd54a'], life: 0.4 }); }
-    else if (e.type === 'star') { a.sfx('ambil'); fx.float('+' + e.value, cx(Math.floor(e.x)) , py(e.y) - 10, '#ffd54a', 18); }
+    else if (e.type === 'star') { a.sfx('ambil'); fx.float('+' + e.value, cx(Math.floor(e.x)) , py(e.y) - 10, '#ffd54a', 18); fx.pop(cx(Math.floor(e.x)), py(e.y)); }
     else if (e.type === 'shoot') a.sfx('tembak');
     else if (e.type === 'kill') { a.sfx('pop'); fx.burst(cx(e.col), py(e.y - 0.4), { n: 12, speed: 120, color: ['#fff6dc', '#b38cff', '#64e3ff'], life: 0.5 }); }
     else if (e.type === 'unitDown') { a.sfx('hit'); fx.burst(cx(e.col), py(e.row + 0.5), { n: 12, speed: 90, color: '#9aa0b4', life: 0.5 }); }
-    else if (e.type === 'castle') { a.sfx('salah'); S.shake = 0.35; say('Monster lolos! Hati Benteng berkurang.', 1600, '#ffe1e6'); }
+    else if (e.type === 'castle') { a.sfx('salah'); S.shake = 0.35; M.flash('#ff6b6b', 0.3); say('Monster lolos! Hati Benteng berkurang.', 1600, '#ffe1e6'); }
     else if (e.type === 'wave') { S.banner = { text: e.index + 1 >= e.total ? 'Gelombang terakhir!' : `Gelombang ${e.index + 1}`, t: 0 }; }
     else if (e.type === 'waveClear') say('Gelombang selesai!', 1400, '#e3ffe6');
     else if (e.type === 'laser') { a.sfx('tembak'); S.beams.push({ col: e.col, row: e.row, t: 0.25 }); }
@@ -99,7 +99,7 @@
   }
   function drawUnit(g, u) {
     const x = cx(u.col), yb = py(u.row + 1) - 4, t = M.t + u.id;
-    const shake = u.hurt > 0 ? Math.sin(M.t * 60) * 2 : 0;
+    const shake = u.hurt > 0 ? M.motion(Math.sin(M.t * 60) * 2) : 0;
     const ud = D.UNITS[u.kind];
     if (S.g.rowShield[u.row] > 0) { g.fillStyle = 'rgba(100,227,255,0.28)'; g.fillRect(L.gx, py(u.row) + 2, COLS * CW, L.ch - 4); }
     if (ud.hero) {
@@ -268,7 +268,7 @@
       if (!S) return;
       M.drawBg(g, S.level.tema, 0, 0);
       g.save();
-      if (S.shake > 0) g.translate(Math.round((Math.random() - 0.5) * 8), Math.round((Math.random() - 0.5) * 6));
+      if (S.shake > 0 && !M.reduceMotion) g.translate(Math.round((Math.random() - 0.5) * 8), Math.round((Math.random() - 0.5) * 6));
       drawGrid(g);
       const items = [];
       for (const row of S.g.grid) for (const u of row) if (u) items.push([u.row + 1, () => drawUnit(g, u)]);

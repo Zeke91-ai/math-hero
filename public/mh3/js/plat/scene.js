@@ -23,9 +23,9 @@
     const a = M.audio, fx = M.fx;
     const sx = (x) => (x - S.cam.x) * SC, sy = (y) => HUD + (y - S.cam.y) * SC;
     if (e.type === 'jump' || e.type === 'djump') a.sfx('lompat');
-    else if (e.type === 'star') { a.sfx('ambil'); fx.float('+1', sx(e.x), sy(e.y), '#ffd54a', 16); }
+    else if (e.type === 'star') { a.sfx('ambil'); fx.float('+1', sx(e.x), sy(e.y), '#ffd54a', 16); fx.pop(sx(e.x), sy(e.y)); }
     else if (e.type === 'stomp') { a.sfx('pop'); fx.burst(sx(e.x), sy(e.y), { n: 10, speed: 110, color: ['#fff6dc', '#b38cff'], life: 0.4 }); }
-    else if (e.type === 'hurt') { a.sfx('hit'); S.shake = 0.3; }
+    else if (e.type === 'hurt') { a.sfx('hit'); S.shake = 0.3; M.flash('#ff6b6b', 0.3); }
     else if (e.type === 'respawn') say('Ulang dari bendera terakhir, ya!', 1800);
     else if (e.type === 'checkpoint') { a.sfx('kartu'); say('Bendera! Kamu mulai dari sini kalau jatuh.', 1800, '#e3ffe6'); }
     else if (e.type === 'power') say({ djump: 'Lompat ganda!', magnet: 'Magnet bintang!', shield: 'Perisai!' }[e.key] || 'Kekuatan!', 1800);
@@ -156,17 +156,18 @@
       if (!S) return;
       M.drawBg(g, S.def.tema, S.cam.x, S.cam.y);
       g.save();
-      if (S.shake > 0) g.translate(Math.round((Math.random() - 0.5) * 6), Math.round((Math.random() - 0.5) * 5));
+      if (S.shake > 0 && !M.reduceMotion) g.translate(Math.round((Math.random() - 0.5) * 6), Math.round((Math.random() - 0.5) * 5));
       drawWorld(g);
       M.fx.draw(g);
       g.restore();
       drawHud(g);
       if (S.state === 'pause') {
         g.fillStyle = 'rgba(29,20,56,0.7)'; g.fillRect(0, 0, M.VW, M.VH);
-        const x = 40, y = M.VH * 0.3, w = M.VW - 80;
-        M.panel(g, x, y, w, 200, { title: 'Jeda' });
+        const x = 40, y = M.VH * 0.3, w = M.VW - 80, on = M.audio.prefs.music;
+        M.panel(g, x, y, w, 240, { title: 'Jeda' });
         M.button(g, { id: 'lanjut', x: x + 30, y: y + 36, w: w - 60, h: 52, label: 'Lanjut', color: 'green', onTap: () => { S.state = 'play'; } });
-        M.button(g, { id: 'keluar', x: x + 30, y: y + 108, w: w - 60, h: 52, label: 'Keluar', color: 'blue', onTap: quit });
+        M.button(g, { id: 'suara', x: x + 30, y: y + 100, w: w - 60, h: 52, label: on ? 'Suara: nyala' : 'Suara: mati', color: on ? 'purple' : 'gray', size: 16, onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
+        M.button(g, { id: 'keluar', x: x + 30, y: y + 164, w: w - 60, h: 52, label: 'Keluar', color: 'blue', onTap: quit });
       }
       if (S.state === 'power') {
         g.fillStyle = 'rgba(29,20,56,0.7)'; g.fillRect(0, 0, M.VW, M.VH);

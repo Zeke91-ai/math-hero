@@ -8,6 +8,7 @@ Halaman awal (`/`) sekarang adalah **pemilih seri**:
 |---|---|---|
 | **Math Hero 1**: Petualangan di Kerajaan Awan | `mh1/` | Platformer, 8 level, 4 bos. Dijelaskan di bagian [Math Hero 1](#math-hero-1). |
 | **Math Hero 2**: Misi Kristal Bilangan | `mh2/` | 6 dunia x 5 level, 9 jenis permainan, 6 bos. Dijelaskan di bagian [Math Hero 2](#math-hero-2). |
+| **Math Hero 3**: Misi Kristal Bilangan | `mh3/` | Kelas 2-5 SD, 4 dunia x 5 level (Bertahan, Kejar, Bos), PR adaptif. Dijelaskan di bagian [Math Hero 3](#math-hero-3). |
 
 Keduanya dijaga dengan prinsip yang sama: anak **memahami konsep** (bukan menebak), semua jawaban pilihan/sentuh tanpa keyboard HP, kesalahan dijawab dengan penjelasan ramah, dan gaya pixel art.
 
@@ -147,6 +148,57 @@ Alamat khusus untuk guru, orang tua, atau pengujian:
 - `mh2/?buka=1` membuka semua level.
 - `mh2/?level=3-2` langsung memainkan level tertentu.
 - `mh2/?debug=1` menampilkan fps.
+
+# Math Hero 3
+
+Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat `/mh3/` di server lokal). Pemain memilih kelas di menu, lalu menjalani 4 dunia, masing-masing 5 level: **Bertahan** (pertahanan jalur), **Kejar** (platformer), dan **Bos** di level terakhir tiap dunia. Kunci Kristal didapat dari PR atau peti soal.
+
+## Cara bermain
+
+- **PR (soal pekerjaan rumah):** soal muncul sebagai kartu. Jawab dengan coretan atau pilihan, dan ada dua petunjuk jika buntu. Jawaban salah dijelaskan dengan ramah, bukan dihukum. PR yang belum selesai bisa ditunda dan dikerjakan di Buku PR.
+- **Bertahan:** pasang pasukan di petak, kumpulkan bintang yang jatuh untuk membayar pasukan, dan hentikan monster sebelum melewati jalur. Kekuatan super punya waktu isi ulang.
+- **Kejar:** lari dan lompat sampai kristal tujuan. Peti soal memberi Kunci Kristal atau kekuatan (lompat ganda, magnet bintang, perisai). Jatuh dari platform membawa ke bendera terakhir.
+- **Bos:** Perisai Rumus naik di 66% dan 33% HP bos. Perisai dibuka dengan menjawab soal.
+- **Adaptif:** tingkat soal naik atau turun sendiri mengikuti hasil enam PR terakhir.
+
+## Kontrol
+
+- **Sentuh (HP):** joystick atau panah kiri-kanan, tombol **A** atau **B** untuk lompat dan aksi. Di layar Bertahan cukup ketuk kartu pasukan lalu ketuk petak.
+- **Keyboard (laptop):** panah atau A/D untuk gerak, Z, Spasi, atau K untuk lompat, Esc atau P untuk jeda.
+- **Senyap / Bersuara:** tombol di pojok layar judul dan peta, dan tombol di menu Jeda Kejar. Pilihannya tersimpan di browser.
+
+## Suara dan efek
+
+- Musik dan efek suara disintesis di browser dengan Web Audio (`js/audio.js`, sama dengan MH2). Tidak ada file audio yang diunduh.
+- Efek gerak: getaran layar saat kena serangan, kilatan merah singkat, bintang berhamburan saat bintang diambil, dan tekan tombol yang memberi umpan balik.
+- **Kurangi gerakan:** jika HP atau browser meminta "kurangi gerakan" (`prefers-reduced-motion`), getaran dan kilatan dimatikan. Efek bintang tetap ada tetapi lebih sedikit.
+
+## Struktur
+
+- `public/mh3/index.html`: halaman dan urutan skrip.
+- `js/core.js`: layar logis 360 lebar, loop, input, tombol, partikel (`M.fx`), kilatan (`M.flash`), dan `M.motion` untuk kurangi gerakan.
+- `js/audio.js`: musik dan efek suara.
+- `js/progress.js`: dunia, daftar 20 level, kelas, dan fungsi murni untuk profil pemain. `js/save.js` menyimpan profil di localStorage.
+- `js/homework.js` dan `js/homework_ui.js`: pembuat soal PR kelas 2-5 (murni logika) dan kartu PR.
+- `js/defense/` (`data.js`, `sim.js`, `board.js`): Bertahan. Data dan simulasi terpisah dari papan supaya bisa diuji di Node.
+- `js/plat/` (`levels.js`, `physics.js`, `sim.js`, `scene.js`): Kejar. Peta level ditulis sebagai teks di `levels.js`.
+- `js/story.js`: naskah cerita sebelum dan sesudah tiap level.
+- `js/scenes.js`: judul, pilih kelas, peta, Barak, Buku PR, hasil, dan kredit.
+
+## Menambah atau mengubah level
+
+- Nama dan tema level: `js/progress.js` (daftar `WORLDS`).
+- Isi level Bertahan: `js/defense/data.js`. Isi level Kejar: `js/plat/levels.js`.
+- Cerita: `js/story.js`.
+- Menambah level di luar 20 perlu perubahan pola per dunia (`PATTERN`) di `progress.js`, lalu tes.
+- Setelah mengubah, jalankan `npm run test:mh3`.
+
+## Tes
+
+- `npm run test:mh2` dan `npm run test:mh3`: tes logika (Node), termasuk generator PR, data level, dan adaptif.
+- Tes sentuh di Chromium (layar 393x851, butuh paket `playwright` untuk Node): `node tests/mh3_plat_ui.js`, `node tests/mh3_defense_ui.js`, `node tests/mh3_map_ui.js`, `node tests/mh3_boss_ui.js`, `node tests/mh3_chests_ui.js`. Tes ini juga memeriksa tidak ada galat di konsol.
+
+Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
 
 # Umum
 

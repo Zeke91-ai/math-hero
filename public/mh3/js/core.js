@@ -45,6 +45,11 @@
   M.shuffle = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = M.rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   M.inRect = (x, y, r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
   M.fmt = (n) => Number(n).toLocaleString('id-ID');
+  // Gerak berlebih (guncangan, kilatan) dimatikan jika HP meminta "kurangi gerakan". M.motion(v) = v atau 0.
+  const motionQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  M.reduceMotion = !!(motionQuery && motionQuery.matches);
+  if (motionQuery && motionQuery.addEventListener) motionQuery.addEventListener('change', (e) => { M.reduceMotion = e.matches; });
+  M.motion = (v) => (M.reduceMotion ? 0 : v);
 
   // ---------- Teks ----------
   // Teks berbingkai agar terbaca di atas latar ramai. o: size, color, align, base, outline, ow, maxW, lh, font.
@@ -288,6 +293,10 @@
   FX.float = function (text, x, y, color, size) {
     FX.list.push({ kind: 'txt', text, x, y, vx: 0, vy: -40, g: 0, life: 0, max: 1.1, c: color || '#ffd54a', s: size || 18 });
   };
+  // Bintang kecil berhamburan saat bintang diambil. Jumlahnya dikurangi bila reduced motion.
+  FX.pop = function (x, y) {
+    FX.burst(x, y, { kind: 'star', n: M.reduceMotion ? 3 : 6, speed: 90, up: 60, gravity: 200, life: 0.5, size: 5, color: ['#ffd54a', '#fff6dc', '#ffe98a'] });
+  };
   FX.confetti = function () {
     FX.burst(M.VW / 2, M.VH * 0.3, { n: 60, speed: 260, up: 160, life: 1.8, gravity: 260, color: ['#ff8fab', '#ffd54a', '#64e3ff', '#5fd068', '#b38cff'], size: 5 });
   };
@@ -332,6 +341,10 @@
     ctx.globalAlpha = 1;
   };
 
+  // Kilatan warna di seluruh layar saat pemain kena serangan atau salah menjawab. Memudar dalam beberapa ratus ms.
+  let flash = { c: '#fff', t: 0, dur: 0.3 };
+  M.flash = function (color, sec) { if (M.reduceMotion) return; flash = { c: color, t: sec || 0.3, dur: sec || 0.3 }; };
+
   // ---------- Adegan dan loop ----------
   let fade = { a: 0, dir: 0, next: null };
   M.register = (name, sc) => { M.scenes[name] = sc; };
@@ -370,6 +383,7 @@
       if (M.scene.update) M.scene.update(dt);
     }
     FX.update(dt);
+    if (flash.t > 0) flash.t = Math.max(0, flash.t - dt);
     if (fade.dir === 1) { fade.a += dt * 5; if (fade.a >= 1) { fade.a = 1; fade.dir = -1; switchTo(fade.next[0], fade.next[1]); } }
     else if (fade.dir === -1) { fade.a -= dt * 4; if (fade.a <= 0) { fade.a = 0; fade.dir = 0; } }
     I.pause = false;
@@ -379,6 +393,7 @@
     g.imageSmoothingEnabled = false;
     if (M.scene && M.scene.draw) M.scene.draw(g);
     if (M.overlay && M.overlay.draw) M.overlay.draw(g);
+    if (flash.t > 0) { g.globalAlpha = 0.4 * (flash.t / flash.dur); g.fillStyle = flash.c; g.fillRect(0, 0, M.VW, M.VH); g.globalAlpha = 1; }
     if (fade.a > 0) { g.fillStyle = `rgba(26,18,51,${fade.a})`; g.fillRect(0, 0, M.VW, M.VH); }
     fpsN++; if (now - fpsT > 1000) { fps = fpsN; fpsN = 0; fpsT = now; }
     if (M.debug) M.text(g, `${fps} fps ${M.VW}x${M.VH}`, 4, M.VH - 10, { size: 12 });

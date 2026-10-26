@@ -143,7 +143,7 @@
   function drawSolve(g) {
     const VW = M.VW, VH = M.VH;
     dim(g);
-    const sh = S.shake > 0 ? Math.sin(S.t * 60) * 6 * (S.shake / 0.5) : 0;
+    const sh = S.shake > 0 ? M.motion(Math.sin(S.t * 60) * 6 * (S.shake / 0.5)) : 0;
     const px = 10 + sh, pw = VW - 20;
     // Banner jeda kertas.
     M.text(g, 'Ambil kertas dan pensil.\nTidak ada waktu, santai saja.', VW / 2, 36, { size: 18, align: 'center', color: '#ffd54a', lh: 24 });
