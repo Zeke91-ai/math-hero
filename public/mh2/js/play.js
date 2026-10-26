@@ -45,12 +45,16 @@
 
   // ---------- Objek P untuk mode ----------
   function makeP(ph) {
+    // Mode memakai setTimeout; laporan yang datang setelah level ditinggalkan diabaikan.
+    const own = S;
+    const alive = () => S === own && M.sceneName === 'play';
     const P = {
       cfg: ph.cfg, tasks: ph.tasks, theme: ph.tema || S.level.tema, level: S.level, boss: !!S.level.boss,
       C, get done() { return S.done; }, get hearts() { return S.hearts; }, get t() { return S.time; },
       top: HUD_H + 4,
-      // Jawaban benar: skor penuh jika belum salah di soal ini.
+      // Jawaban benar: tambah skor, bunyi, efek, dan pesan singkat (opsional).
       correct(o) {
+        if (!alive()) return;
         o = o || {};
         const pts = o.pts !== undefined ? o.pts : 100;
         S.score += pts; S.correct++;
@@ -63,6 +67,7 @@
       },
       // Jawaban salah: tidak menghukum keras. Tampilkan penjelasan konsep (lembut di mode aksi, kartu di mode teka-teki).
       mistake(lines, o) {
+        if (!alive()) return;
         o = o || {};
         S.mistakes++;
         M.sfx('salah');
@@ -73,7 +78,7 @@
         }
       },
       hurt(n, x, y) {
-        if (S.state !== 'play') return;
+        if (!alive() || S.state !== 'play') return;
         S.hearts = Math.max(0, S.hearts - (n || 1));
         S.mistakes++;
         S.shake = 0.35;
@@ -82,9 +87,10 @@
         if (S.hearts <= 0) setTimeout(fail, 700);
       },
       heal() { if (S.hearts < HEARTS) { S.hearts++; M.sfx('ambil'); } },
-      addScore(n, x, y) { S.score += n; if (x !== undefined) M.fx.float(`+${n}`, x, y, '#ffd54a', 16); },
+      addScore(n, x, y) { if (!alive()) return; S.score += n; if (x !== undefined) M.fx.float(`+${n}`, x, y, '#ffd54a', 16); },
       // Satu tugas selesai. Jika semua tugas babak ini selesai, lanjut babak berikut atau menang.
       taskDone() {
+        if (!alive()) return;
         S.done++;
         if (S.done >= S.ph.tasks) {
           S.state = 'clear'; S.clearT = 0;
@@ -176,7 +182,7 @@
   // ---------- Jeda ----------
   function openPause() {
     if (S.state !== 'play') return;
-    S.prevState = S.state; S.state = 'pause';
+    S.prevState = S.state; S.state = 'pause'; S.pauseAt = M.t;
     M.setControls(null);
     M.audio.setPaused(true);
   }
@@ -199,6 +205,11 @@
     M.panel(g, x, y, w, h, { title: L.boss ? (L.final ? 'BOS TERAKHIR' : 'BOS') : `Level ${L.id}`, titleFill: L.boss ? '#ff5d73' : '#7b4bd6' });
     M.text(g, ph.judul || L.nama, M.VW / 2, y + 34, { size: 24, align: 'center', color: '#2b1d52', outline: false });
     M.text(g, `${mode.nama}`, M.VW / 2, y + 58, { size: 14, align: 'center', color: '#7b4bd6', outline: false });
+    if (L.boss) {
+      const bos = M.STAGES[L.stage - 1].bos;
+      M.drawBoss(g, bos.sprite, x + 34, y + 66, bos.sprite === 'prof' ? 1.6 : 1.4, S.introT);
+      M.drawBoss(g, bos.sprite, x + w - 34, y + 66, bos.sprite === 'prof' ? 1.6 : 1.4, S.introT + 0.5, { flip: true, dir: 'r' });
+    }
     // Kotak demo animasi konsep.
     const dx = x + 16, dy = y + 74, dw = w - 32, dh = 170;
     M.box(g, dx, dy, dw, dh, '#e9f6ff', { line: '#2b1d52', shade: false });
@@ -273,7 +284,7 @@
     M.button(g, { id: 'musik', x: x + 30, y: y + 214, w: (w - 70) / 2, h: 42, label: pr.music ? 'Musik ON' : 'Musik OFF', size: 14, color: pr.music ? 'purple' : 'gray', onTap: () => M.audio.setMusicOn(!pr.music) });
     M.button(g, { id: 'efek', x: x + 40 + (w - 70) / 2, y: y + 214, w: (w - 70) / 2, h: 42, label: pr.sfx ? 'Efek ON' : 'Efek OFF', size: 14, color: pr.sfx ? 'purple' : 'gray', onTap: () => M.audio.setSfxOn(!pr.sfx) });
     M.text(g, `Level ${S.level.id}: ${S.level.nama}`, M.VW / 2, y + h - 30, { size: 13, align: 'center', color: '#6b4fa8', outline: false });
-    if (M.input.pause) closePause();
+    if (M.input.pause && M.t - S.pauseAt > 0.2) closePause();
   }
 
   function drawFail(g) {

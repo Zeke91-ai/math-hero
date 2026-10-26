@@ -244,7 +244,7 @@
       explain = [a === b ? `${a} sama dengan ${b}.` : `Bandingkan puluhan: ${Math.floor(a / 10)} dan ${Math.floor(b / 10)}${Math.floor(a / 10) === Math.floor(b / 10) ? `, sama. Lalu satuan: ${a % 10} dan ${b % 10}` : ''}.`, `Jadi ${a} ${answer} ${b}.`];
     } else throw new Error('race: operasi tidak dikenal ' + op);
     const ch = opts || choices(answer, 3, typeof answer === 'number' && answer >= 20 ? [1, 2, 10] : [1, 2, 3]).map(String);
-    return { op, label: label + ' = ?', answer: String(answer), choices: opts ? shuffle(opts.slice()) : ch, explain };
+    return { op, label: op === 'compare' ? label : label + ' = ?', answer: String(answer), choices: opts ? shuffle(opts.slice()) : ch, explain };
   }
 
   // ============ 5. Timbangan Ajaib ============

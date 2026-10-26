@@ -92,6 +92,8 @@ Uji mode ini: `python tests/mode_statis.py` (server statis murni di sub-folder `
 
 # Math Hero 2
 
+![Cuplikan Math Hero 2: kartu konsep, judul, peta, dan sembilan jenis permainan](docs/mh2-cuplikan.png)
+
 **Misi Kristal Bilangan.** Profesor Kacau memecahkan Kristal Bilangan, dan angka-angka di enam dunia jadi kacau. Bersama Peri Angka, pemain memulihkan tiap pecahan kristal dengan *memahami* cara kerja angka. Tiap dunia punya materi, musik, latar, dan bos sendiri; tiap level memakai jenis permainan yang berbeda agar anak tidak bosan.
 
 ## Dunia dan materi

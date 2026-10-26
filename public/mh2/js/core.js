@@ -19,10 +19,12 @@
   // Lebar logis selalu 360. Tinggi logis mengikuti bentuk layar (dibatasi), kolom di tengah pada layar lebar.
   function resize() {
     const w = window.innerWidth, h = window.innerHeight;
-    const colW = Math.min(w, Math.round(h * 0.66));
-    app.style.width = colW + 'px';
+    let colW = Math.min(w, Math.round(h * 0.66));
     M.dpr = Math.min(window.devicePixelRatio || 1, 2);
     M.scale = colW / M.VW;
+    // Layar pendek (laptop mendatar): kecilkan skala agar tinggi logis minimal 560 tetap muat.
+    if (h / M.scale < 560) { M.scale = h / 560; colW = Math.round(M.VW * M.scale); }
+    app.style.width = colW + 'px';
     M.VH = Math.max(560, Math.min(900, Math.round(h / M.scale)));
     M.cssW = colW; M.cssH = h;
     canvas.width = Math.round(colW * M.dpr);
@@ -152,7 +154,7 @@
 
   function toLogical(e) {
     const r = canvas.getBoundingClientRect();
-    return { x: (e.clientX - r.left) / r.width * M.VW, y: (e.clientY - r.top) / r.height * M.VH };
+    return { x: (e.clientX - r.left) / M.scale, y: (e.clientY - r.top) / M.scale };
   }
   canvas.addEventListener('pointerdown', (e) => {
     M.audio && M.audio.unlock();

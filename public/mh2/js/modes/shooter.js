@@ -66,7 +66,9 @@
       function spawn() {
         const onScreenGood = R.rocks.some((r) => r.good && !r.dead);
         let t = C.shooterTarget(R.wave, onScreenGood ? 0.4 : 1);
-        const x = M.between(40, M.VW - 40);
+        // Cari posisi yang tidak menumpuk dengan meteor lain yang masih di atas.
+        let x = M.between(40, M.VW - 40);
+        for (let k = 0; k < 8 && R.rocks.some((q) => !q.dead && q.y < top() + 90 && Math.abs(q.x - x) < 56); k++) x = M.between(40, M.VW - 40);
         R.rocks.push(Object.assign(t, { x, y: top() - 30, vy: M.between(32, 48) + P.level.stage * 3, sway: Math.random() * 6, kind: Math.random() < 0.6 ? 'meteor' : 'alien' + M.between(1, 6), dead: false, hitT: 0 }));
       }
 

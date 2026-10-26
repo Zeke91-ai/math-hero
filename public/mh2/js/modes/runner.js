@@ -178,7 +178,7 @@
             for (let x = s[0]; x < s[1]; x += 32) {
               const sx = Math.round(x - cam);
               if (sx < -32 || sx > M.VW) continue;
-              const col = x === s[0] ? 0 : x + 32 >= s[1] ? 2 : 1;
+              const col = !groundAt(x - 1) ? 0 : !groundAt(x + 33) ? 2 : 1;
               M.tile1(g, tx + col, 0, sx, y0);
               for (let k = 1; k * 32 + y0 < M.VH; k++) M.tile1(g, tx + col, 1, sx, y0 + k * 32);
             }
