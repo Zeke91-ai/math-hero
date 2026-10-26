@@ -1,12 +1,19 @@
 // Math Hero 3: adegan Kejar (platformer layar tegak). Menggambar sim.js dan membaca panah kiri/kanan + tombol Lompat.
 // Mulai: MH3.plat.start(levelDef, onWin, onLose)  atau  M.go('plat', { level: 1, onEnd })
-// Peti (PR) tidak menghalangi: menyentuhnya hanya memanggil opts.onChest(kind, id, done) bila ada (disambung di tugas 2.3).
+// Peti (PR) tidak menghalangi: menyentuhnya membuka kartu PR (MH3.homework). Peti Kekuatan -> pilih 1 dari 3 kekuatan,
+// Peti Kristal -> 1 sampai 3 Kunci Kristal. opts.onChest(kind, id, g) bila ada menggantikan perilaku ini.
 (function () {
   const M = window.MH2;
   const MH3 = window.MH3 = window.MH3 || {};
   const Sim = MH3.platSim, Lv = MH3.platLevels, Ph = window.Physics;
   const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 112;
   let S = null;
+  const grade = () => (M.save && M.save.active && M.save.active.grade) || 2;
+  const POWERS = [
+    { key: 'djump', nama: 'Lompat ganda', info: 'Lompat sekali lagi di udara', color: 'red' },
+    { key: 'magnet', nama: 'Magnet bintang', info: 'Bintang di sekitar tertarik ke kamu', color: 'yellow' },
+    { key: 'shield', nama: 'Perisai', info: 'Menahan satu pukulan', color: 'teal' },
+  ];
 
   const heroKey = () => (M.save && M.save.active && M.save.active.hero) || 'pinki';
   const say = (t, ms, c) => M.toast(t, ms, c);
@@ -27,8 +34,20 @@
   }
   function chest(e) {
     const f = S.opts.onChest;
-    if (f) f(e.kind, e.id, S.g);
-    else say(e.kind === 'power' ? 'Peti Kekuatan! (PR belum tersambung)' : 'Peti Kristal! (PR belum tersambung)', 1800);
+    if (f) { f(e.kind, e.id, S.g); return; }
+    const ch = S.g.L.chests[e.id], power = e.kind === 'power';
+    S.state = 'card';
+    MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: power ? 'Peti Kekuatan' : 'Peti Kristal' }, (r) => {
+      M.setControls({ arrows: true, a: 'Lompat', b: null });
+      if (r.status !== 'done') { ch.got = false; ch.skip = true; S.state = 'play'; say('Peti disimpan. Sentuh lagi kalau sudah siap.', 2200); return; }
+      M.audio.sfx('benar');
+      if (power) S.state = 'power';
+      else {
+        S.state = 'play'; S.keys = (S.keys || 0) + Math.max(1, Math.min(3, r.stars));
+        MH3.defense.addKeys(Math.max(1, Math.min(3, r.stars))); M.fx.confetti();
+        say(`Dapat ${Math.max(1, Math.min(3, r.stars))} Kunci Kristal!`, 2000, '#e3ffe6');
+      }
+    });
   }
 
   function updateCam(dt, snap) {
@@ -93,13 +112,14 @@
     M.panel(g, x, y, w, 330, { title: 'Kristal direbut!' });
     M.stars(g, M.VW / 2, y + 40, Sim.rating(gm), 4);
     M.text(g, `Bintang: ${gm.stars} dari ${gm.L.stars.length}`, M.VW / 2, y + 114, { size: 16, align: 'center', color: '#2b1d52', outline: false });
+    if (S.keys) M.text(g, `Kunci Kristal: ${S.keys}`, M.VW / 2, y + 140 + (gm.deaths ? 18 : 0), { size: 14, align: 'center', color: '#8a5a00', outline: false });
     if (gm.deaths) M.text(g, `Kamu jatuh ${gm.deaths}x, tapi tidak menyerah!`, M.VW / 2, y + 140, { size: 13, align: 'center', color: '#6b6478', outline: false });
     M.button(g, { id: 'ulang', x: x + 30, y: y + 168, w: w - 60, h: 52, label: 'Main lagi', color: 'green', onTap: () => M.go('plat', S.params) });
     M.button(g, { id: 'lanjutend', x: x + 30, y: y + 236, w: w - 60, h: 52, label: S.params.onEnd || S.params.onWin ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
   }
   function finish() {
     const gm = S.g, P = S.params;
-    const res = { win: true, stars: Sim.rating(gm), collected: gm.stars, hearts: gm.hearts, deaths: gm.deaths, level: S.def.id };
+    const res = { win: true, stars: Sim.rating(gm), collected: gm.stars, keys: S.keys, hearts: gm.hearts, deaths: gm.deaths, level: S.def.id };
     if (P.onEnd) P.onEnd(res); else if (P.onWin) P.onWin(res); else M.go('title');
   }
   function quit() {
@@ -110,7 +130,7 @@
   M.register('plat', {
     enter(p) {
       const def = p.def || Lv.level(p.level || 1);
-      S = { def, params: p, opts: p, g: Sim.create(def), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0 };
+      S = { def, params: p, opts: p, g: Sim.create(def), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0 };
       updateCam(0, true);
       M.setControls({ arrows: true, a: 'Lompat', b: null });
       M.audio.music('padang');
@@ -147,6 +167,15 @@
         M.panel(g, x, y, w, 200, { title: 'Jeda' });
         M.button(g, { id: 'lanjut', x: x + 30, y: y + 36, w: w - 60, h: 52, label: 'Lanjut', color: 'green', onTap: () => { S.state = 'play'; } });
         M.button(g, { id: 'keluar', x: x + 30, y: y + 108, w: w - 60, h: 52, label: 'Keluar', color: 'blue', onTap: quit });
+      }
+      if (S.state === 'power') {
+        g.fillStyle = 'rgba(29,20,56,0.7)'; g.fillRect(0, 0, M.VW, M.VH);
+        const x = 24, y = M.VH * 0.22, w = M.VW - 48;
+        M.panel(g, x, y, w, 330, { title: 'Pilih kekuatan!' });
+        POWERS.forEach((p, i) => {
+          M.button(g, { id: 'p_' + p.key, x: x + 16, y: y + 28 + i * 92, w: w - 32, h: 80, color: p.color, label: '', onTap: () => { Sim.grantPower(S.g, p.key); S.state = 'play'; },
+            draw: (c, bx, by, bw) => { M.text(c, p.nama, bx + bw / 2, by + 26, { size: 22, align: 'center' }); M.text(c, p.info, bx + bw / 2, by + 56, { size: 13, align: 'center', maxW: bw - 20 }); } });
+        });
       }
       if (S.state === 'end') drawEnd(g);
       M.drawToast(g, HUD + 6);

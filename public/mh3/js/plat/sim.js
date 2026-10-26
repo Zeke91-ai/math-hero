@@ -109,7 +109,11 @@
       if (d < 24 || (mag && d < mag)) { if (mag && d >= 24) { s.x += (pc.x - s.x) * Math.min(1, dt * 10); s.y += (pc.y - s.y) * Math.min(1, dt * 10); if (Math.hypot(s.x - pc.x, s.y - pc.y) > 24) continue; } s.got = true; g.stars++; g.events.push({ type: 'star', x: s.x, y: s.y }); }
     }
     for (const c of L.checkpoints) if (!c.got && Math.abs(c.x - pc.x) < 28 && Math.abs(c.y - (p.y + p.h)) < 70) { c.got = true; g.cp = { x: c.x, y: c.y }; g.events.push({ type: 'checkpoint', x: c.x, y: c.y }); }
-    for (const ch of L.chests) if (!ch.got && overlap(p, ch)) { ch.got = true; g.events.push({ type: 'chest', kind: ch.kind, id: ch.id }); }
+    for (const ch of L.chests) {
+      const on = overlap(p, ch);
+      if (!on) ch.skip = false; // peti yang ditunda terbuka lagi setelah hero menjauh
+      else if (!ch.got && !ch.skip) { ch.got = true; g.events.push({ type: 'chest', kind: ch.kind, id: ch.id }); }
+    }
     if (overlap(p, L.goal)) { g.phase = 'won'; g.events.push({ type: 'win' }); }
   }
 

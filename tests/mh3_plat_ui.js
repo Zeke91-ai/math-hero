@@ -44,6 +44,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   let shot = false, i = 0, last;
   for (; i < 1500; i++) {
     last = await info();
+    if (await pg.evaluate(() => !!MH3.homework.active)) { await touch('touchEnd', []); await pg.touchscreen.tap(300 * s, 670 * s); await pg.waitForTimeout(300); await touch('touchStart', [pt(ctl.kanan, 1)]); continue; } // peti membuka kartu PR: Nanti
     if (last.state === 'end') break;
     if (last.jump) { await touch('touchStart', [pt(ctl.a, 2)]); await pg.waitForTimeout(160); await touch('touchEnd', [pt(ctl.a, 2)]); }
     if (!shot && last.x > 900) { shot = true; await pg.screenshot({ path: 'tests/shots/mh3_plat_1.png' }); }
