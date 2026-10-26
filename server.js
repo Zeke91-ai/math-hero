@@ -20,6 +20,7 @@ const MIME = {
   '.mp3': 'audio/mpeg',
   '.ogg': 'audio/ogg',
   '.wav': 'audio/wav',
+  '.ttf': 'font/ttf',
 };
 
 function lanAddresses() {
@@ -35,9 +36,20 @@ function lanAddresses() {
 const server = http.createServer(async (req, res) => {
   const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
   if (await store.handleApi(req, res, urlPath)) return;
-  let filePath = path.normalize(path.join(ROOT, urlPath === '/' ? 'index.html' : urlPath));
+  let filePath = path.normalize(path.join(ROOT, urlPath));
   if (!filePath.startsWith(ROOT)) {
     res.writeHead(403); return res.end('Forbidden');
+  }
+  // Folder (/, /mh1/, /mh2/) dilayani dengan index.html-nya. Tanpa garis miring akhir, arahkan ulang
+  // agar path relatif di halaman (css/, js/, assets/) mengarah ke folder yang benar.
+  let isDir = false;
+  try { isDir = fs.statSync(filePath).isDirectory(); } catch (e) { /* tidak ada: 404 di bawah */ }
+  if (isDir) {
+    if (!urlPath.endsWith('/')) {
+      const q = (req.url || '').includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+      res.writeHead(301, { Location: urlPath + '/' + q }); return res.end();
+    }
+    filePath = path.join(filePath, 'index.html');
   }
   fs.readFile(filePath, (err, data) => {
     if (err) {
