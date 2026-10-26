@@ -1,0 +1,65 @@
+/* Math Hero 2. Font Kleintenna Bow (freeware) dari folder aset Math Hero 1. */
+@font-face { font-family: 'Kleintenna'; src: url('../../assets/kleintenna-font/Kleintenna-Bow.ttf') format('truetype'); font-display: block; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%; overflow: hidden; background: #1a1233;
+  touch-action: none; -webkit-user-select: none; user-select: none; overscroll-behavior: none;
+  font-family: 'Kleintenna', system-ui, sans-serif; -webkit-tap-highlight-color: transparent;
+}
+/* Layar main berbentuk kolom tegak. Di laptop kolom ada di tengah dengan latar bermotif. */
+#frame {
+  position: fixed; inset: 0; display: flex; justify-content: center;
+  background-color: #1a1233;
+  background-image: radial-gradient(#2c2059 1.5px, transparent 1.5px);
+  background-size: 18px 18px;
+}
+#app { position: relative; height: 100%; width: 100%; overflow: hidden; box-shadow: 0 0 0 4px #0d0920, 0 0 40px rgba(0,0,0,0.6); }
+#screen { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+/* Kontrol sentuh: joystick kiri bawah, tombol B dan A kanan bawah. Tampil hanya di mode yang memakainya. */
+#controls { position: absolute; inset: 0; pointer-events: none; display: none; }
+#controls.on { display: block; }
+#joy {
+  position: absolute; left: 14px; bottom: 16px; width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,0.18); border: 4px solid rgba(255,255,255,0.45); pointer-events: auto; touch-action: none;
+}
+#controls.nojoy #joy { display: none; }
+#knob {
+  position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%;
+  background: #ff8fab; box-shadow: inset 0 -6px 0 #d65f82, 0 0 0 4px #4b2e83; pointer-events: none;
+}
+.pad {
+  position: absolute; bottom: 30px; width: 86px; height: 86px; border-radius: 50%; border: none; pointer-events: auto; touch-action: none;
+  font-family: 'Kleintenna', system-ui, sans-serif; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  box-shadow: inset 0 -8px 0 rgba(0,0,0,0.25), 0 0 0 4px #2b1d52, 0 6px 0 4px #2b1d52; cursor: pointer;
+}
+.pad span { font-size: 34px; line-height: 1; text-shadow: 0 3px 0 rgba(0,0,0,0.35); }
+.pad small { font-size: 12px; margin-top: 2px; max-width: 80px; line-height: 1; }
+.pad.down { transform: translateY(4px); box-shadow: inset 0 -4px 0 rgba(0,0,0,0.25), 0 0 0 4px #2b1d52, 0 2px 0 4px #2b1d52; }
+#btn-a { right: 14px; background: #4b9cff; }
+#btn-b { right: 112px; bottom: 54px; background: #ffb347; }
+#controls.noa #btn-a, #controls.nob #btn-b { display: none; }
+/* Tombol panah kiri/kanan (pengganti joystick untuk mode berlajur seperti Balap). */
+.pad.arrow { display: none; background: #8b5cf6; bottom: 30px; }
+#controls.arrows .pad.arrow { display: flex; }
+#controls.arrows #joy { display: none; }
+#btn-kiri { left: 14px; }
+#btn-kanan { left: 112px; }
+.pad.arrow i { width: 30px; height: 34px; background: #fff; clip-path: polygon(0 50%, 100% 0, 100% 100%); filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
+#btn-kanan i { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+#controls.noa #btn-b { right: 14px; bottom: 30px; }
+
+#loading {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  background: #2b1d52; color: #ffd54a; z-index: 5;
+}
+#loading p { font-size: 34px; text-shadow: 3px 3px 0 #0d0920; letter-spacing: 2px; }
+#loading .bar { width: 200px; height: 18px; border: 4px solid #fff; background: #0d0920; }
+#loading .bar i { display: block; height: 100%; width: 0; background: #64e3ff; }
+#loading small { color: #cbbcff; font-size: 14px; }
+body.ready #loading { display: none; }
+#rotate {
+  position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 6;
+  background: rgba(26,18,51,0.94); color: #fff; font-size: 22px; text-align: center; padding: 24px;
+}
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) { #rotate { display: flex; } }
