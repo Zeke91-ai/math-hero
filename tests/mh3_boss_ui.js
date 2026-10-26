@@ -36,11 +36,15 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   });
   await pg.waitForFunction(() => MH3.defense.state().g.monsters.some((m) => m.kind === 'bos1'), null, { timeout: 8000 });
   await pg.evaluate(() => { const g = MH3.defense.state().g; g.monsters = g.monsters.filter((m) => m.kind === 'bos1'); g.monsters[0].y = 2.5; });
+  let b0 = await pg.evaluate(() => { const m = MH3.defense.state().g.monsters[0]; return m.shield; });
+  ok(b0 === false, 'bos mulai tanpa perisai');
+  await pg.evaluate(() => { const m = MH3.defense.state().g.monsters[0]; m.hp = m.max * 0.68; });
+  await pg.waitForFunction(() => MH3.defense.state().g.monsters[0].shield, null, { timeout: 15000 });
   await pg.waitForTimeout(1500);
   await pg.screenshot({ path: 'tests/shots/mh3_boss_1.png' });
   const boss = () => pg.evaluate(() => { const m = MH3.defense.state().g.monsters.find((q) => q.kind === 'bos1'); return m && { hp: m.hp, max: m.max, shield: m.shield }; });
   let bs = await boss();
-  ok(bs && bs.shield && bs.hp === bs.max, 'bos berperisai dan tidak terluka oleh pasukan (hp ' + bs.hp + ')');
+  ok(bs && bs.shield && Math.abs(bs.hp / bs.max - 0.66) < 0.02, 'perisai naik di 66% dan menahan pasukan (hp ' + bs.hp + ')');
   // Ketuk tombol Pecahkan Perisai! (tengah, di atas Benteng).
   await tap(196, L.castleY + 15);
   await pg.waitForFunction(() => MH3.homework.active, null, { timeout: 4000 }).catch(() => {});
@@ -54,7 +58,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   bs = await boss(); ok(bs && !bs.shield, 'perisai pecah setelah jawaban benar');
   await pg.waitForTimeout(2500);
   await pg.screenshot({ path: 'tests/shots/mh3_boss_2.png' });
-  bs = await boss(); ok(!bs || bs.hp < bs.max, 'bos terluka setelah perisai pecah (hp ' + (bs ? bs.hp : 'mati') + ')');
+  bs = await boss(); ok(!bs || bs.hp < bs.max * 0.66 - 0.01, 'bos terluka setelah perisai pecah (hp ' + (bs ? bs.hp : 'mati') + ')');
   ok(errs.length === 0, 'tanpa galat konsol ' + errs.join(' | '));
   await b.close(); srv.close();
 })();

@@ -70,7 +70,7 @@
     b.plat(38, 40, 3).put(39, 3, '*');
     b.put(44, 0, 'e').put(47, 0, '*').put(50, 0, 'e').put(53, 0, '^').put(54, 0, '^');
     b.put(57, 0, 'P');
-    b.put(62, 0, 'c').put(68, 0, '*').put(69, 0, '*').put(70, 0, 'e');
+    b.put(66, 0, 'c').put(68, 0, '*').put(69, 0, '*').put(70, 0, 'e');
     b.plat(61, 63, 2).put(62, 2, '*');
     b.isle(74, 76, 2).put(75, 2, '*');
     b.put(79, 0, 'e').put(82, 0, '^').put(83, 0, '^');
@@ -185,15 +185,45 @@
   }
 
 
+  // Level panjang: 4 bagian disambung (asli, dua potongan level lain, asli) supaya anak butuh sekitar 2-3 menit.
+  // Awal dan akhir tiap peta adalah tanah datar, jadi sambungan aman. S hanya di bagian pertama, E dan K di bagian
+  // terakhir, P di bagian pertama (dua Peti PR tetap). Tiap sambungan diberi checkpoint.
+  function compose(own, o1, o2) {
+    const strip = (m, chars) => m.map((r) => r.replace(new RegExp('[' + chars + ']', 'g'), '.'));
+    const parts = [strip(own, 'EK'), strip(o1, 'SEPK'), strip(o2, 'SEPK'), strip(own, 'SPK')];
+    const rows = own.length;
+    const out = Array.from({ length: rows }, () => '');
+    const joins = [];
+    parts.forEach((m, i) => {
+      if (i) joins.push(out[0].length + 3);
+      for (let r = 0; r < rows; r++) out[r] += m[r];
+    });
+    const rk = GROUND - 1, kc = out[0].length - 4; // Peti Kristal di tanah datar tepat sebelum tujuan
+    out[rk] = out[rk].slice(0, kc) + 'K' + out[rk].slice(kc + 1);
+    // Checkpoint di tanah datar dekat sambungan: ambil kolom pertama yang kosong dengan tanah datar 3 kolom di kiri-kanannya.
+    for (const j of joins) {
+      const r = GROUND - 1, flat = (c) => out[GROUND][c] === '#' && out[r][c] === '.' && out[r - 1][c] === '.';
+      for (let c = j; c < j + 40; c++) {
+        if (![-3, -2, -1, 0, 1, 2, 3].every((d) => flat(c + d))) continue;
+        out[r] = out[r].slice(0, c) + 'c' + out[r].slice(c + 1);
+        break;
+      }
+    }
+    return out;
+  }
+
+  const BASE = [level1(), level2(), level3(), level4(), level5(), level6(), level7(), level8()];
+  const LONG = BASE.map((m, i) => compose(m, BASE[(i + 1) % BASE.length], BASE[(i + 3) % BASE.length]));
+
   const LEVELS = [
-    { id: 1, nama: 'Jejak di Padang', tema: 'padang', map: level1() },
-    { id: 2, nama: 'Kejar Lewat Bukit', tema: 'padang', map: level2() },
-    { id: 3, nama: 'Jalan Kristal', tema: 'gua', map: level3() },
-    { id: 4, nama: 'Jurang Berkilau', tema: 'gua', map: level4() },
-    { id: 5, nama: 'Jembatan Kabut', tema: 'kebun', map: level5() },
-    { id: 6, nama: 'Rawa Dalam', tema: 'kebun', map: level6() },
-    { id: 7, nama: 'Tangga Awan', tema: 'langit', map: level7() },
-    { id: 8, nama: 'Menara Petir', tema: 'langit', map: level8() },
+    { id: 1, nama: 'Jejak di Padang', tema: 'padang', map: LONG[0] },
+    { id: 2, nama: 'Kejar Lewat Bukit', tema: 'padang', map: LONG[1] },
+    { id: 3, nama: 'Jalan Kristal', tema: 'gua', map: LONG[2] },
+    { id: 4, nama: 'Jurang Berkilau', tema: 'gua', map: LONG[3] },
+    { id: 5, nama: 'Jembatan Kabut', tema: 'kebun', map: LONG[4] },
+    { id: 6, nama: 'Rawa Dalam', tema: 'kebun', map: LONG[5] },
+    { id: 7, nama: 'Tangga Awan', tema: 'langit', map: LONG[6] },
+    { id: 8, nama: 'Menara Petir', tema: 'langit', map: LONG[7] },
   ];
   return { ROWS, LEVELS, build, level: (id) => LEVELS.find((l) => l.id === id) };
 });

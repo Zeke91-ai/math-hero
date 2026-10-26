@@ -75,13 +75,20 @@
   function damage(g, m, dmg) {
     if (m.shield) { ev(g, 'tangkis', { col: m.col, y: m.y, id: m.id }); return false; }
     m.hp -= dmg; m.hurt = 0.15;
+    // Bos: Perisai Rumus naik saat HP turun ke 66% dan 33% (sisa kerusakan dibuang supaya tiap ambang pasti menyalakannya).
+    const gate = GATES[m.gate || 0];
+    if (MONSTERS[m.kind].boss && gate && m.hp > 0 && m.hp <= gate * m.max) {
+      m.hp = gate * m.max; m.gate = (m.gate || 0) + 1; m.shield = true;
+      ev(g, 'shieldUp', { id: m.id });
+    }
     return true;
   }
-  // Soal PR benar: Perisai Rumus bos pecah dan bos terbuka selama `open` detik.
+  const GATES = [0.66, 0.33];
+  // Soal PR benar: Perisai Rumus bos pecah dan bos bisa dilukai sampai ambang berikutnya.
   function breakShield(g, id) {
     const m = g.monsters.find((q) => q.id === id && q.shield);
     if (!m) return false;
-    m.shield = false; m.openT = MONSTERS[m.kind].open || 10;
+    m.shield = false;
     ev(g, 'shieldBreak', { col: m.col, y: m.y, id: m.id });
     return true;
   }
@@ -123,7 +130,7 @@
       g.waveT += dt;
       while (g.spawns.length && g.spawns[0].at <= g.waveT) {
         const s = g.spawns.shift(), d = MONSTERS[s.m];
-        g.monsters.push({ id: g.nextId++, kind: s.m, col: s.col, y: -0.2, hp: d.hp, max: d.hp, hurt: 0, atk: null, slow: 0, shield: !!d.boss, openT: 0, healT: d.heal ? d.heal.every : 0, jumped: false });
+        g.monsters.push({ id: g.nextId++, kind: s.m, col: s.col, y: -0.2, hp: d.hp, max: d.hp, hurt: 0, atk: null, slow: 0, shield: false, gate: 0, openT: 0, healT: d.heal ? d.heal.every : 0, jumped: false });
         if (d.boss) ev(g, 'boss', { id: g.monsters[g.monsters.length - 1].id, kind: s.m });
       }
       if (!g.spawns.length && !g.monsters.length) {
@@ -193,7 +200,6 @@
       const d = MONSTERS[m.kind];
       m.atk = null;
       if (m.slow > 0) m.slow -= dt;
-      if (d.boss && !m.shield && m.openT > 0) { m.openT -= dt; if (m.openT <= 0) { m.shield = true; ev(g, 'shieldUp', { id: m.id }); } }
       if (d.heal) {
         m.healT -= dt;
         if (m.healT <= 0) {
@@ -213,7 +219,7 @@
         if (m.atk.hp <= 0) { g.grid[m.atk.row][m.atk.col] = null; ev(g, 'unitDown', { kind: m.atk.kind, col: m.atk.col, row: m.atk.row }); m.atk = null; }
       } else if (!frozen) m.y += d.spd * (m.slow > 0 ? 0.45 : 1) * dt;
       if (m.y >= ROWS && g.phase !== 'lost') {
-        if (d.boss) { hitCastle(g, m, d.castle); m.y = 1; m.shield = true; m.openT = 0; } // bos terdorong mundur
+        if (d.boss) { hitCastle(g, m, d.castle); m.y = 1; } // bos terdorong mundur
         else { m.reached = true; hitCastle(g, m); }
       }
     }

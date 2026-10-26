@@ -133,6 +133,7 @@
     g.restore();
     if (m.hp < m.max) { const w = d.boss ? 50 : 30; g.fillStyle = '#1d1438'; g.fillRect(x - w / 2, y - L.ch * 0.85, w, 4); g.fillStyle = '#ff6b6b'; g.fillRect(x - w / 2 + 1, y - L.ch * 0.85 + 1, (w - 2) * m.hp / m.max, 2); }
     else if (d.boss) { g.fillStyle = '#1d1438'; g.fillRect(x - 25, y - L.ch * 0.85, 50, 4); g.fillStyle = '#ff6b6b'; g.fillRect(x - 24, y - L.ch * 0.85 + 1, 48, 2); }
+    if (d.boss) { g.fillStyle = '#fff6dc'; for (const t of [0.66, 0.33]) g.fillRect(x - 25 + 50 * t, y - L.ch * 0.85 - 1, 1, 6); } // ambang Perisai Rumus
   }
   function drawStarPickup(g, p) {
     const bob = Math.sin(M.t * 5 + p.id) * 3, x = L.gx + p.x * CW, y = py(p.y) + bob;

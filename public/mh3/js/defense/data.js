@@ -28,12 +28,12 @@
     raksasa: { nama: 'Raksasa Batu', hp: 28, spd: 0.09, dps: 2.5, sprite: 'enemy7_run', hit: 'enemy7_hit', scale: 2.2 },
     pecah: { nama: 'Monster Pecah', hp: 6, spd: 0.2, dps: 1, sprite: 'enemy6_run', hit: 'enemy6_hit', scale: 1.5, split: { m: 'biasa', n: 2 } }, // pecah jadi 2 Monster Biasa
     tabib: { nama: 'Monster Tabib', hp: 5, spd: 0.17, dps: 0.8, sprite: 'enemy5_fly', hit: 'enemy5_hit', scale: 1.5, heal: { every: 2, amount: 1.5, range: 1 } },
-    // Bos: Perisai Rumus kebal dari semua serangan sampai dipecahkan dengan satu soal PR, lalu terbuka `open` detik.
+    // Bos: Perisai Rumus naik saat HP 66% dan 33%; kebal dari semua serangan sampai dipecahkan dengan satu soal PR.
     // Kalau sampai Benteng, hati berkurang `castle` dan bos terdorong mundur, bukan hilang.
-    bos1: { nama: 'Kapten Slime', hp: 40, spd: 0.07, dps: 3, boss: 'slime1', scale: 2.4, open: 12, castle: 2 },
-    bos2: { nama: 'Kapten Elang', hp: 55, spd: 0.08, dps: 3, boss: 'burung', scale: 1.7, open: 12, castle: 2 },
-    bos3: { nama: 'Kapten Ulat', hp: 70, spd: 0.075, dps: 3.5, boss: 'slime3', scale: 2.4, open: 11, castle: 2 },
-    bos4: { nama: 'Raja Kabut', hp: 90, spd: 0.08, dps: 4, boss: 'prof', scale: 2.2, open: 10, castle: 2 },
+    bos1: { nama: 'Kapten Slime', hp: 40, spd: 0.07, dps: 3, boss: 'slime1', scale: 2.4, castle: 2 },
+    bos2: { nama: 'Kapten Elang', hp: 55, spd: 0.08, dps: 3, boss: 'burung', scale: 1.7, castle: 2 },
+    bos3: { nama: 'Kapten Ulat', hp: 70, spd: 0.075, dps: 3.5, boss: 'slime3', scale: 2.4, castle: 2 },
+    bos4: { nama: 'Raja Kabut', hp: 90, spd: 0.08, dps: 4, boss: 'prof', scale: 2.2, castle: 2 },
   };
 
   // Gelombang: grup { m: jenis, n: jumlah, start: detik sejak gelombang mulai, gap: jeda antar monster }.

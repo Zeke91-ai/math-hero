@@ -7,7 +7,7 @@ const ok = (c, m) => { if (!c) { bad++; console.error('GAGAL: ' + m); } else con
 function seeded(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
 const mk = (waves, extra) => S.create(Object.assign({ id: 99, nama: 't', tema: 'padang', startStars: 2000, skyEvery: 999, skyValue: 0, restTime: 1, loadout: [], waves }, extra), seeded(5));
 const run = (g, sec, dt = 0.05) => { for (let t = 0; t < sec; t += dt) S.update(g, dt); };
-const addM = (g, kind, col, y) => { const d = D.MONSTERS[kind]; const m = { id: g.nextId++, kind, col, y, hp: d.hp, max: d.hp, hurt: 0, atk: null, slow: 0, shield: !!d.boss, openT: 0, healT: d.heal ? d.heal.every : 0, jumped: false }; g.monsters.push(m); return m; };
+const addM = (g, kind, col, y) => { const d = D.MONSTERS[kind]; const m = { id: g.nextId++, kind, col, y, hp: d.hp, max: d.hp, hurt: 0, atk: null, slow: 0, shield: false, gate: 0, openT: 0, healT: d.heal ? d.heal.every : 0, jumped: false }; g.monsters.push(m); return m; };
 const quiet = (g) => { g.phase = 'wave'; g.spawns = []; g.waveT = 0; };
 
 // ROSTER dan D.UNITS sinkron, semua pasukan punya biaya sama.
@@ -45,15 +45,22 @@ ok(hurt.hp > 3, 'tabib menyembuhkan monster di dekatnya (hp ' + hurt.hp + ')');
 const dpsOf = (lv) => { const gg = mk([[]], { upg: { pemanah: lv } }); quiet(gg); S.place(gg, 'pemanah', 2, 5); const mm = addM(gg, 'raksasa', 2, 1.5); run(gg, 4); return mm.max - mm.hp; };
 ok(dpsOf(3) > dpsOf(1) * 1.5, 'upgrade pemanah menambah kerusakan');
 
-// Bos: perisai menolak semua serangan.
+// Bos: awalnya tanpa perisai, perisai naik di 66% dan 33% HP, menolak semua serangan sampai soal PR dijawab.
 g = mk([[]]); quiet(g); for (const c of [0, 1, 2, 3, 4]) S.place(g, 'pemanah', c, 5); S.place(g, 'meriam', 2, 6);
-const boss = addM(g, 'bos1', 2, 1.2); run(g, 5);
-ok(boss.shield && boss.hp === boss.max, 'Perisai Rumus menahan semua serangan (hp ' + boss.hp + ')');
-S.usePower(Object.assign(g, { power: { key: 'meteor', cd: 0 } })); ok(boss.hp === boss.max, 'meteor juga ditahan');
+const boss = addM(g, 'bos1', 2, 1.2);
+ok(!boss.shield && !S.shieldedBoss(g), 'bos mulai tanpa perisai');
+for (let i = 0; i < 400 && !boss.shield; i++) S.update(g, 0.05);
+ok(boss.shield && Math.abs(boss.hp / boss.max - 0.66) < 0.02, 'perisai pertama naik di 66% HP (hp ' + (boss.hp / boss.max).toFixed(2) + ')');
+const hp1 = boss.hp; run(g, 5);
+ok(boss.shield && boss.hp === hp1, 'Perisai Rumus menahan semua serangan (hp ' + boss.hp + ')');
+S.usePower(Object.assign(g, { power: { key: 'meteor', cd: 0 } })); ok(boss.hp === hp1, 'meteor juga ditahan');
 ok(S.shieldedBoss(g) === boss, 'shieldedBoss menunjuk bos berperisai');
 ok(S.breakShield(g, boss.id) && !boss.shield, 'soal PR benar memecahkan perisai');
-run(g, 3); ok(boss.hp < boss.max, 'bos terluka saat perisai pecah (hp ' + boss.hp + ')');
-run(g, D.MONSTERS.bos1.open + 1); ok(boss.shield || boss.hp <= 0, 'perisai muncul lagi setelah waktu terbuka habis');
+for (let i = 0; i < 800 && !boss.shield; i++) S.update(g, 0.05);
+ok(boss.shield && Math.abs(boss.hp / boss.max - 0.33) < 0.02, 'perisai kedua naik di 33% HP (hp ' + (boss.hp / boss.max).toFixed(2) + ')');
+S.breakShield(g, boss.id); run(g, 8); ok(boss.hp < 0.33 * boss.max - 0.01, 'sesudah perisai kedua pecah bos terluka lagi (hp ' + boss.hp + ')');
+for (let i = 0; i < 2000 && boss.hp > 0; i++) S.update(g, 0.05);
+ok(boss.hp <= 0 && boss.gate === 2, 'bos mati tanpa perisai ketiga');
 
 // Pertarungan bos penuh lewat bot: tiap perisai muncul, bot "menjawab" soal.
 function fightBoss(kind, seed) {
@@ -70,7 +77,7 @@ function fightBoss(kind, seed) {
   }
   return { phase: gg.phase, breaks, hearts: gg.hearts };
 }
-for (const k of ['bos1', 'bos2', 'bos3', 'bos4']) { const r = fightBoss(k, 11); ok(r.phase === 'won' && r.breaks >= 1, k + ' bisa dimenangkan lewat perisai (pecah ' + r.breaks + 'x, hati ' + r.hearts + ')'); }
+for (const k of ['bos1', 'bos2', 'bos3', 'bos4']) { const r = fightBoss(k, 11); ok(r.phase === 'won' && r.breaks === 2, k + ' bisa dimenangkan lewat perisai (pecah ' + r.breaks + 'x, hati ' + r.hearts + ')'); }
 // Tanpa memecahkan perisai bos tidak pernah kalah-tapi-juga-tidak-mati: pasukan tak berguna.
 g = mk([[{ m: 'bos1', n: 1, start: 1, gap: 1 }]]); for (const c of [0, 1, 2, 3, 4]) S.place(g, 'pemanah', c, 5); run(g, 800);
 ok(g.phase === 'lost', 'tanpa memecahkan perisai Benteng jatuh (hati ' + g.hearts + ')');
