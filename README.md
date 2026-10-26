@@ -112,12 +112,12 @@ Uji mode ini: `python tests/mode_statis.py` (server statis murni di sub-folder `
 | Permainan | Gaya | Cara main | Konsep yang ditekankan |
 |---|---|---|---|
 | Lompat Bilangan | platformer | joystick melompat satu batu bernomor, A = +10 (puluhan), B = "Di sini!" | tambah = maju, kurang = mundur, kali = lompatan sama besar, puluhan dulu lalu satuan, pecahan di garis bilangan. Tiap lompatan meninggalkan busur berlabel (+1, +10). |
-| Lari Angka | pelari otomatis | A = lompat (bisa 2x) | kumpulkan bola sampai TEPAT target ("butuh berapa lagi?"), kelipatan, ekspresi yang hasilnya sama |
+| Lari Angka | pelari otomatis | di tiap titik pilihan ada dua bola (bawah dan atas), minimal satu benar. Bola bawah terpilih otomatis (cincin kuning); A = pilih bola atas | kumpulkan bola sampai TEPAT target ("butuh berapa lagi?"), kelipatan, ekspresi yang hasilnya sama. Bos tidak menembak; ia mendekat kalau jawaban salah (meter "Jarak raksasa") |
 | Meteor Angka | penembak vertikal | joystick geser, B = lempar bintang | pasangan 10, kelipatan, genap/ganjil, hasil bagi, pecahan senilai 1/2 |
-| Balap Hitung | balap pseudo-3D 3 lajur | joystick pindah lajur, A = lompati batu | kelancaran berhitung dan membandingkan (<, =, >); jawaban benar = turbo |
+| Balap Hitung | balap pseudo-3D 3 lajur | tombol panah ◀ ▶ (satu ketukan = satu lajur; mengetuk sisi kiri/kanan layar juga bisa), gerbang di lajurmu ditandai kuning | kelancaran berhitung dan membandingkan (<, =, >); jawaban benar = turbo |
 | Timbangan Ajaib | teka-teki | ketuk beban | tanda "=" artinya sama berat; kotak misteri yang sama (dasar aljabar) |
 | Kebun Kotak | teka-teki | tombol + / - untuk baris dan isi | perkalian sebagai susunan baris, pembagian ke baris, faktor, sifat tukar |
-| Bagi Rata | jelajah top-down | joystick jalan, B = ambil/beri, A = ambil kembali | pembagian sebagai membagikan satu-satu bergiliran, sisa |
+| Bagi Rata | jelajah top-down | joystick jalan; label tombol berubah sesuai tempat: di tumpukan A dan B = Ambil, di slime = Beri 1, di peti = Simpan, Tarik 1 = ambil kembali | pembagian sebagai membagikan satu-satu bergiliran, sisa |
 | Pasar Koin | warung | ketuk koin dan uang kertas | nilai uang dan nilai tempat (ribuan, ratusan), kembalian |
 | Pizza Pecahan | dapur | ketuk tombol potong lalu ketuk potongan | penyebut = jumlah potongan sama besar, pembilang = yang diambil, membandingkan, senilai |
 
@@ -134,6 +134,7 @@ Setiap level dibuka dengan **kartu konsep** beranimasi. Jawaban salah membuka **
 ## Kontrol
 
 - **Mode aksi** memakai joystick (kiri bawah) dan tombol A/B (kanan bawah). Label di bawah huruf A/B menunjukkan fungsinya di mode itu.
+- Di Balap Hitung, joystick diganti dua tombol panah di layar.
 - **Mode teka-teki** cukup diketuk.
 - Di laptop: panah/WASD = joystick, Z atau Spasi = A, X atau Enter = B, Esc atau P = jeda.
 - Tombol jeda (kiri atas) berisi Lanjut, Ulangi level, Ke peta, serta Musik dan Efek suara.

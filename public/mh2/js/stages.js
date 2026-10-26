@@ -1,6 +1,8 @@
 // Math Hero 2: peta petualangan. 6 dunia (stage), tiap dunia 5 level; level ke-5 selalu bos.
 // Tiap level memilih mode permainan (lihat js/modes) dan konfigurasi soal (lihat concepts.js).
 // Urutan materi mengikuti kelas 1 sampai 4 SD: tambah-kurang, puluhan dan uang, perkalian, pembagian, pecahan, campuran.
+// Di level yang menuntut kegesitan (Lari Angka, Meteor Angka, Balap Hitung) angkanya sengaja kecil: tangan dan mata
+// sudah sibuk, jadi tantangannya ada di permainan, bukan di besarnya hitungan.
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
   else root.MH2Stages = factory();
@@ -29,9 +31,9 @@
       levels: [
         { nama: 'Lompat Puluhan', mode: 'numline', tasks: 3, cfg: { kind: 'tens', max: 100, bMin: 12, bMax: 35 } },
         { nama: 'Warung Pantai', mode: 'market', tasks: 4, cfg: { kind: 'pay', maxDenom: 1000, min: 300, max: 2500 } },
-        { nama: 'Balap Kelinci', mode: 'racer', tasks: 6, cfg: { op: 'mix', ops: ['add', 'tens', 'sub'], aMax: 18, bMax: 9, rival: 'kelinci' } },
+        { nama: 'Balap Kelinci', mode: 'racer', tasks: 6, cfg: { op: 'mix', ops: ['add', 'tens', 'sub'], aMax: 12, bMax: 6, rival: 'kelinci' } },
         { nama: 'Timbangan Puluhan', mode: 'balance', tasks: 4, cfg: { kind: 'tens' } },
-        { nama: 'Babi Hutan Kebut', mode: 'racer', boss: true, tasks: 8, cfg: { op: 'mix', ops: ['compare', 'tens', 'add'], aMin: 10, aMax: 99, rival: 'babi', mustWin: true } },
+        { nama: 'Babi Hutan Kebut', mode: 'racer', boss: true, tasks: 8, cfg: { op: 'mix', ops: ['compare', 'tens'], cMin: 10, cMax: 60, rival: 'babi', mustWin: true } },
       ],
     },
     {
@@ -44,7 +46,7 @@
         { nama: 'Lompat Kelipatan', mode: 'numline', tasks: 4, cfg: { kind: 'skip', sMin: 2, sMax: 5, nMin: 2, nMax: 5 } },
         { nama: 'Hujan Kelipatan', mode: 'shooter', tasks: 3, tema: 'langit', cfg: { waves: [{ kind: 'multiple', k: 2, need: 5 }, { kind: 'multiple', k: 5, need: 5 }, { kind: 'multiple', k: 3, need: 5 }] } },
         { nama: 'Persegi Ajaib', mode: 'garden', tasks: 2, cfg: { kind: 'factors', totals: [12, 16, 18, 20, 24], need: 3 } },
-        { nama: 'Ulat Raksasa', mode: 'runner', boss: true, tasks: 4, cfg: { kind: 'equal', values: [12, 16, 18, 20, 24], need: 3, boss: { sprite: 'slime3', hp: 4 } } },
+        { nama: 'Ulat Raksasa', mode: 'runner', boss: true, tasks: 4, cfg: { kind: 'equal', values: [6, 8, 10, 12], need: 3, boss: { sprite: 'slime3', hp: 4 } } },
       ],
     },
     {
@@ -57,7 +59,7 @@
         { nama: 'Kotak Misteri', mode: 'balance', tasks: 4, cfg: { kind: 'groups', nMax: 4, vMax: 6 } },
         { nama: 'Kebun Bagi', mode: 'garden', tasks: 4, cfg: { kind: 'rows', rMax: 5, cMax: 6 } },
         { nama: 'Sisa di Peti', mode: 'share', tasks: 3, cfg: { gMin: 2, gMax: 4, eMin: 2, eMax: 4, rem: true } },
-        { nama: 'Burung Kacau', mode: 'shooter', boss: true, tasks: 5, tema: 'gua', cfg: { waves: [{ kind: 'divide' }], boss: { sprite: 'burung', hp: 5, warna: '#8b5cf6' } } },
+        { nama: 'Burung Kacau', mode: 'shooter', boss: true, tasks: 5, tema: 'gua', cfg: { waves: [{ kind: 'divide', dMax: 5, qMax: 5 }], boss: { sprite: 'burung', hp: 5, warna: '#8b5cf6' } } },
       ],
     },
     {
@@ -79,16 +81,16 @@
       cerita: ['Lima kristal sudah kembali!', 'Kristal terakhir dijaga Profesor Kacau di bentengnya.', 'Pakai semua jurus yang sudah kamu pahami!'],
       bos: { nama: 'Profesor Kacau', sprite: 'prof', ejek: 'Muahaha! Tanpa kristal, 2 + 2 = 5 selamanya!' },
       levels: [
-        { nama: 'Balap Benteng', mode: 'racer', tasks: 8, cfg: { op: 'mix', ops: ['mul', 'div', 'add', 'sub'], aMax: 50, bMax: 30, aMin: 2, rival: 'rubah' } },
+        { nama: 'Balap Benteng', mode: 'racer', tasks: 8, cfg: { op: 'mix', ops: ['mul', 'div'], mulA: 5, mulB: 5, dMax: 5, qMax: 5, rival: 'rubah' } },
         { nama: 'Toko Kembalian', mode: 'market', tasks: 4, cfg: { kind: 'change', paid: [2000, 5000, 10000], maxDenom: 5000 } },
-        { nama: 'Lari Kristal', mode: 'runner', tasks: 3, cfg: { kind: 'sum', tMin: 15, tMax: 30, orbMax: 9 } },
+        { nama: 'Lari Kristal', mode: 'runner', tasks: 3, cfg: { kind: 'sum', tMin: 10, tMax: 20, orbMax: 6 } },
         { nama: 'Timbangan Dua Langkah', mode: 'balance', tasks: 4, cfg: { kind: 'twostep' } },
         {
           nama: 'Profesor Kacau', boss: true, final: true, mode: 'shooter', tasks: 1,
           phases: [
-            { mode: 'shooter', tasks: 4, tema: 'angkasa', cfg: { waves: [{ kind: 'multiple', kMin: 3, kMax: 9 }], boss: { sprite: 'prof', hp: 4, warna: '#b38cff' } }, judul: 'Babak 1: Hujan Meteor' },
+            { mode: 'shooter', tasks: 4, tema: 'angkasa', cfg: { waves: [{ kind: 'multiple', kMin: 2, kMax: 5 }], boss: { sprite: 'prof', hp: 4, warna: '#b38cff' } }, judul: 'Babak 1: Hujan Meteor' },
             { mode: 'balance', tasks: 2, cfg: { kind: 'twostep' }, judul: 'Babak 2: Timbangan Kacau' },
-            { mode: 'racer', tasks: 6, cfg: { op: 'mix', ops: ['mul', 'div', 'compare'], aMin: 20, aMax: 99, rival: 'prof', mustWin: true }, judul: 'Babak 3: Kejar Profesor!' },
+            { mode: 'racer', tasks: 6, cfg: { op: 'mix', ops: ['mul', 'div', 'compare'], mulA: 5, mulB: 5, dMax: 5, qMax: 5, cMin: 20, cMax: 99, rival: 'prof', mustWin: true }, judul: 'Babak 3: Kejar Profesor!' },
           ],
         },
       ],

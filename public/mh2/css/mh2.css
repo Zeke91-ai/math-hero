@@ -39,6 +39,14 @@ html, body {
 #btn-a { right: 14px; background: #4b9cff; }
 #btn-b { right: 112px; bottom: 54px; background: #ffb347; }
 #controls.noa #btn-a, #controls.nob #btn-b { display: none; }
+/* Tombol panah kiri/kanan (pengganti joystick untuk mode berlajur seperti Balap). */
+.pad.arrow { display: none; background: #8b5cf6; bottom: 30px; }
+#controls.arrows .pad.arrow { display: flex; }
+#controls.arrows #joy { display: none; }
+#btn-kiri { left: 14px; }
+#btn-kanan { left: 112px; }
+.pad.arrow i { width: 30px; height: 34px; background: #fff; clip-path: polygon(0 50%, 100% 0, 100% 100%); filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
+#btn-kanan i { clip-path: polygon(0 0, 100% 50%, 0 100%); }
 #controls.noa #btn-b { right: 14px; bottom: 30px; }
 
 #loading {
