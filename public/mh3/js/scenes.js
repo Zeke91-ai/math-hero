@@ -52,6 +52,7 @@
         const n = (this.dbg = (this.dbg || 0) + 1) - 1;
         window.MH3.homework.open({ grade: 2 + (n % 4), tier: n % 4, title: 'PR kelas ' + (2 + (n % 4)) }, (r) => M.toast(r.status === 'later' ? 'PR ditunda' : 'PR selesai: ' + r.stars + ' bintang', 2500));
       } });
+      if (M.debug) M.button(g, { id: 'debugdef', x: 10, y: 94, w: 130, h: 34, label: 'Debug: Bertahan 1', color: 'orange', size: 13, onTap: () => M.go('defense', { level: 1 }) });
       const on = M.audio.prefs.music;
       M.drawToast(g, 250);
       M.button(g, { id: 'suara', x: VW - 140, y: 10, w: 42, h: 34, color: on ? 'purple' : 'gray', icon: on ? 'sound' : 'mute', onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
