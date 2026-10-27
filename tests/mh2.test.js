@@ -180,3 +180,16 @@ test('data stage: 6 stage x 5 level, id unik, mode terdaftar, soal bisa dibuat',
   }
   assert.equal(ALL_LEVELS.length, 30);
 });
+
+test('balap: perbandingan sama/kurang/lebih selalu punya jawaban benar (termasuk "36 ? 36" -> "=")', () => {
+  const seen = { '<': 0, '=': 0, '>': 0 };
+  for (let i = 0; i < 3000; i++) {
+    const q = C.race({ op: 'compare', cMin: 10, cMax: 60 });
+    const [a, , b] = q.label.split(' ').map((s) => (isNaN(s) ? s : Number(s)));
+    const want = a < b ? '<' : a > b ? '>' : '=';
+    assert.equal(q.answer, want, q.label);
+    assert.deepEqual([...q.choices].sort(), ['<', '=', '>']);
+    seen[want]++;
+  }
+  for (const k of Object.keys(seen)) assert.ok(seen[k] > 100, `jenis ${k} jarang muncul: ${JSON.stringify(seen)}`);
+});
