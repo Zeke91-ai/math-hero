@@ -22,6 +22,9 @@
     };
   }
 
+  // ---------- Papan Juara ----------
+  window.MHJuara.install(M, { board: 'mh3', back: 'title' });
+
   // ---------- Judul ----------
   const LOGO_COLORS = ['#ffffff', '#ffd54a'];
   M.register('title', {
@@ -60,6 +63,7 @@
         M.hero(g, k, 'run', t + i * 0.3, x, gy, { scale: 2 });
       });
       M.button(g, { id: 'main', x: VW / 2 - 110, y: VH - 260, w: 220, h: 64, label: 'MAIN!', color: 'pink', size: 30, onTap: () => M.go('slots') });
+      M.button(g, { id: 'juara', x: VW / 2 - 110, y: VH - 184, w: 220, h: 42, label: 'Papan Juara', color: 'yellow', textColor: '#2b1d52', size: 18, icon: 'trophy', onTap: () => M.go('juara') });
       M.button(g, { id: 'seri', x: 10, y: 10, w: 130, h: 44, label: 'Seri Math Hero', color: 'purple', size: 13, onTap: () => { location.href = '../'; } });
       M.button(g, { id: 'kredit', x: VW - 92, y: 10, w: 82, h: 44, label: 'Kredit', color: 'purple', size: 13, onTap: () => M.go('credits') });
       if (M.debug) M.button(g, { id: 'debugpr', x: 10, y: 62, w: 130, h: 34, label: 'Debug: PR', color: 'orange', size: 13, onTap: () => {
@@ -222,9 +226,9 @@
   // Hasil level (dari papan Bertahan atau Kejar). Menang: catat bintang, cerita sesudah, penduduk bergabung, lanjut ke peta.
   function finishLevel(L, res) {
     if (!res || !res.win) { M.go('map', { stage: L.world }); return; }
-    const r = S.record(L.id, Math.max(1, res.stars || 1), (res.hearts || 0) * 100 + (res.collected || 0) * 10);
+    const r = S.record(L.id, Math.max(1, res.stars || 1), (res.hearts || 0) * 100 + (res.collected || 0) * 10 + (res.bonus || 0));
     // Papan skor bersama (opsional): total skor terbaik semua level.
-    if (window.Scores && S.active) window.Scores.submit('math-hero', 'mh3', S.active.nama, S.totalScore(), { level: L.id });
+    if (window.Scores && S.active) window.Scores.submit('math-hero', 'mh3', S.active.nama, S.totalScore(), { level: L.id, hero: S.active.hero, stars: S.totalStars() });
     const steps = [];
     if (r.first) {
       steps.push({ lines: ST.after(L), seen: 'pas' + L.id, world: L.world });

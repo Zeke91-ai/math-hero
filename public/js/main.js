@@ -16,7 +16,8 @@
   const controls = document.getElementById('controls');
   const btnPause = document.getElementById('btn-pause');
 
-  const MAX_HEALTH = 100, START_LIVES = 3, LEVEL_BONUS = 200;
+  const MAX_HEALTH = 100, START_LIVES = 3;
+  const TB = window.TimeBonus; // bonus level menyusut menurut waktu; kecepatannya diatur di js/timebonus.js
   const BEST_KEY = 'mathHero.highScore', HERO_KEY = 'mathHero.hero';
   const HEROES = ['hero1', 'hero2', 'hero3'];
 
@@ -117,6 +118,7 @@
     W.goal = Object.assign({}, L.goal, { won: false, t: 0 });
     W.cp = { x: L.start.x, y: L.start.y };
     W.startStats = Object.assign({}, game.stats);
+    W.bonus = TB.forGame('mh1');
     Ent.init(W, L);
     spawnPlayer(W.cp, true);
     P.face = 1;
@@ -422,7 +424,8 @@
     if (W.clearing) return;
     W.clearing = true;
     Sfx.setMusic(null);
-    game.score += LEVEL_BONUS;
+    const bonus = W.bonus.value();
+    game.score += bonus;
     const s = game.stats, b = W.startStats, L = W.L;
     document.getElementById('clear-title').textContent = `Level ${L.id} selesai!`;
     document.getElementById('clear-name').textContent = L.nama;
@@ -431,7 +434,7 @@
       `Peti soal: ${L.crates.length} dari ${L.crates.length}`,
       `Bintang: ${s.bintang - b.bintang}, permata rahasia: ${s.rahasia - b.rahasia}`,
       `Musuh dikalahkan: ${s.musuh - b.musuh}`,
-      `Bonus level: +${LEVEL_BONUS}`,
+      `Bonus level: +${bonus} (waktu ${TB.clock(W.bonus.seconds())})`,
     ].map((t) => `<li>${t}</li>`).join('');
     document.getElementById('clear-score').textContent = `Skor: ${game.score}`;
     document.getElementById('btn-next').textContent = W.levelIndex + 1 < LEVELS.length ? 'Lanjut' : 'Selesai';
@@ -495,6 +498,7 @@
   // ---------- Loop ----------
   function update(dt) {
     W.t += dt;
+    if (!W.clearing && !W.goal.won) W.bonus.tick(dt); // hanya saat main: jeda, soal terbuka, dan menu tidak memanggil update
     Ent.update(W, dt, P);
     const prevBottom = updatePlayer(dt);
     if (!game.over && !game.ended && !W.clearing) checkWorld(prevBottom);
@@ -598,7 +602,7 @@
   }
 
   function drawHud() {
-    const x = 12, y = 12, w = 176, h = 100;
+    const x = 12, y = 12, w = 176, h = 120;
     ctx.fillStyle = 'rgba(255,253,245,0.95)'; ctx.strokeStyle = '#4b2e83'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(x, y, w, h, 12); ctx.fill(); ctx.stroke();
     ctx.font = '16px ' + R.FONT; ctx.fillStyle = '#2c1a52';
@@ -612,6 +616,7 @@
     ctx.fillStyle = '#2c1a52'; ctx.fillText(`${W.crates.filter((c) => c.done).length}/${W.crates.length}`, x + 128, y + 54);
     drawIcon('icon05', '#f2b705', x + 10, y + 68, 1.4);
     ctx.fillStyle = '#2c1a52'; ctx.fillText(String(game.score), x + 40, y + 86);
+    ctx.font = '13px ' + R.FONT; ctx.fillStyle = '#7a5bb5'; ctx.fillText(`Bonus waktu ${W.bonus.value()}`, x + 10, y + 110);
   }
 
   function drawToast(now) {
@@ -625,7 +630,7 @@
     }
     if (line) lines.push(line);
     const bw = Math.min(maxW, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 24), bh = lines.length * 24 + 14;
-    const x = state.w / 2 - bw / 2, y = 124;
+    const x = state.w / 2 - bw / 2, y = 144;
     ctx.fillStyle = 'rgba(255,253,245,0.95)'; ctx.strokeStyle = '#4b2e83'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.roundRect(x, y, bw, bh, 12); ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#2c1a52'; ctx.textAlign = 'center';

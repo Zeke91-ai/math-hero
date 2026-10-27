@@ -104,7 +104,7 @@
     } catch (e) { return null; }
   }
 
-  const api = { submit, top, enabled: () => !!backend || configured(), _setBackend(b) { backend = b; backendPromise = null; } };
+  const api = { submit, top, _build: build, enabled: () => !!backend || configured(), _setBackend(b) { backend = b; backendPromise = null; } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Scores = api;
 })(typeof window !== 'undefined' ? window : globalThis);
