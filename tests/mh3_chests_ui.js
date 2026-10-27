@@ -55,7 +55,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.waitForFunction(() => MH3.defense.state().state === 'end', null, { timeout: 8000 });
   await pg.waitForTimeout(900);
   const k0 = await keys();
-  await tap(180, VH * 0.2 + 140 + 28); // Buka Peti Harta
+  await tap(180, VH * 0.2 + 164 + 28); // Buka Peti Harta
   await pg.waitForTimeout(300);
   await solveCard();
   const k1 = await keys();
@@ -63,7 +63,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.screenshot({ path: 'tests/shots/mh3_chests_def_end.png' });
 
   // ---------- Kejar ----------
-  await tap(180, VH * 0.2 + 278 + 24); // Ke judul
+  await tap(180, VH * 0.2 + 302 + 24); // Ke judul
   await pg.waitForFunction(() => MH2.sceneName === 'title', null, { timeout: 5000 });
   await pg.waitForTimeout(400);
   await tap(70, 151); await pg.waitForTimeout(700);

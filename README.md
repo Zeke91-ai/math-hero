@@ -53,7 +53,7 @@ Jika server dijalankan dengan port lain, ganti `8091` sesuai port yang tampil di
 - Injak musuh dari atas untuk mengalahkannya (kaktus dan robot). Hindari lebah kotak, tong penyeruduk, peluru meriam, gergaji, dan duri.
 - Terkena bahaya mengurangi health dan membuat pemain terpental sebentar (kebal 1,3 detik). Health habis: nyawa berkurang 1 dan pemain kembali ke bendera checkpoint terakhir dengan health penuh. Jatuh ke jurang: health berkurang 20 dan pemain kembali ke tempat aman terakhir.
 - Pemain punya 3 nyawa. Saat nyawa habis, permainan berakhir dan skor dicatat.
-- Skor: bintang 10, permata rahasia 50, injak musuh 20, peti dan pintu dan jembatan dan bos bernilai lebih besar di level lebih tinggi. Menjawab benar di percobaan pertama memberi poin penuh, setelah salah poinnya setengah. Selesai level +200.
+- Skor: bintang 10, permata rahasia 50, injak musuh 20, peti dan pintu dan jembatan dan bos bernilai lebih besar di level lebih tinggi. Menjawab benar di percobaan pertama memberi poin penuh, setelah salah poinnya setengah. Selesai level memberi bonus waktu: mulai 200 dan berkurang 1 poin tiap 5 detik main (lihat bagian Bonus waktu).
 - Semua soal pilihan ganda. Jawaban salah memunculkan penjelasan langkah dan boleh dicoba lagi.
 
 ## Menu utama
@@ -200,9 +200,13 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 
 Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
 
+# Bonus waktu (semua game)
+
+Bonus level menyusut menurut waktu main supaya papan juara menghargai kecepatan: bonus mulai dari 200 poin dan berkurang 1 poin tiap 5 detik waktu main aktif, paling rendah 0. Bonus hanya tambahan, jadi skor dasar tidak pernah berkurang karena bermain pelan. Waktu tidak dihitung saat jeda, saat tab/aplikasi tersembunyi, saat penjelasan atau cerita, dan di Math Hero 3 saat kartu PR terbuka (kartu PR sengaja tanpa batas waktu karena butuh kertas coretan). Angkanya ada di satu tabel, `GAMES` di `public/js/timebonus.js` (`base` dan `secPerPoint` untuk `mh1`, `mh2`, `mh3`); ubah di sana untuk menyetel. Bonus yang tersisa tampil kecil di layar main dan rinciannya di layar hasil. Tes: `npm run test:bonus` (hitungan) dan `node tests/bonus_ui.js` (jam di browser, Papan Juara).
+
 # Papan skor bersama (Firebase, opsional)
 
-Papan Juara Math Hero 1 bisa dibagi antar pemain lewat Firebase Firestore (paket gratis Spark cukup). Total skor terbaik Math Hero 2 dan 3 ikut tercatat di papan `mh2` dan `mh3` (belum ada layar tampilannya). Tanpa pengaturan ini game tetap jalan seperti biasa dan skor tersimpan di HP/browser masing-masing.
+Papan Juara Math Hero 1 bisa dibagi antar pemain lewat Firebase Firestore (paket gratis Spark cukup). Total skor terbaik Math Hero 2 dan 3 ikut tercatat di papan `mh2` dan `mh3`; keduanya punya layar **Papan Juara** (tombol di layar judul) yang menampilkan papan bersama, atau skor para petualang di HP itu bila offline atau belum dikonfigurasi. Tanpa pengaturan ini game tetap jalan seperti biasa dan skor tersimpan di HP/browser masing-masing.
 
 Satu proyek Firebase bisa dipakai banyak aplikasi hobi sekaligus. Semua skor ada di satu koleksi `scores`; tiap dokumen punya `appId` (alias aplikasi, contoh `math-hero`), `board` (papan di dalam aplikasi, contoh `mh1`), `name`, `score`, `createdAt`, dan `meta` (opsional). Aplikasi lain cukup menyalin `public/js/scores.js` dan `public/js/firebase-config.js`, lalu memanggil `Scores.submit('alias-aplikasi', 'papan', nama, skor, meta)` dan `Scores.top('alias-aplikasi', 'papan', 10)`.
 

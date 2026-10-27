@@ -8,6 +8,9 @@
   function backBtn(g, onTap) { M.button(g, { id: 'kembali', x: 8, y: 8, w: 44, h: 38, color: 'purple', icon: 'left', onTap }); }
   function crystalsDone() { return M.STAGES.map((st) => S.starsOf(`${st.id}-5`) > 0); }
 
+  // ---------- Papan Juara ----------
+  window.MHJuara.install(M, { board: 'mh2', back: 'title' });
+
   // ---------- Judul ----------
   const LOGO_COLORS = ['#ffffff', '#ffd54a'];
   M.register('title', {
@@ -46,6 +49,7 @@
         M.hero(g, k, 'run', t + i * 0.3, x, gy, { scale: 2 });
       });
       M.button(g, { id: 'main', x: VW / 2 - 110, y: VH - 260, w: 220, h: 64, label: 'MAIN!', color: 'pink', size: 30, onTap: () => M.go('slots') });
+      M.button(g, { id: 'juara', x: VW / 2 - 110, y: VH - 184, w: 220, h: 42, label: 'Papan Juara', color: 'yellow', textColor: '#2b1d52', size: 18, icon: 'trophy', onTap: () => M.go('juara') });
       M.button(g, { id: 'seri', x: 10, y: 10, w: 130, h: 34, label: 'Seri Math Hero', color: 'purple', size: 13, onTap: () => { location.href = '../'; } });
       M.button(g, { id: 'kredit', x: VW - 92, y: 10, w: 82, h: 34, label: 'Kredit', color: 'purple', size: 13, onTap: () => M.go('credits') });
       const on = M.audio.prefs.music;
@@ -433,11 +437,11 @@
         M.box(g, VW / 2 - 80, y + 156, 160, 24, '#ffd54a', { line: '#2b1d52' });
         M.text(g, 'Skor terbaik baru!', VW / 2, y + 168, { size: 13, align: 'center', color: '#2b1d52', outline: false });
       }
-      const lines = [`Benar: ${p.correct}`, `Salah: ${p.mistakes}`, `Hati tersisa: ${p.hearts}`];
-      lines.forEach((l, i) => M.text(g, l, VW / 2, y + 200 + i * 22, { size: 15, align: 'center', color: '#2b1d52', outline: false }));
+      const lines = [`Benar: ${p.correct}`, `Salah: ${p.mistakes}`, `Hati tersisa: ${p.hearts}`, `Bonus waktu: +${p.bonus} (${window.TimeBonus.clock(p.seconds)})`];
+      lines.forEach((l, i) => M.text(g, l, VW / 2, y + 196 + i * 20, { size: 15, align: 'center', color: '#2b1d52', outline: false }));
       const tip = p.stars === 3 ? 'Sempurna! Kamu paham konsepnya.' : p.stars === 2 ? 'Hebat! Coba lagi tanpa salah untuk 3 bintang.' : 'Bagus! Baca penjelasannya, lalu coba lagi.';
-      M.text(g, tip, VW / 2, y + 274, { size: 14, align: 'center', color: '#6b4fa8', outline: false, maxW: w - 30 });
-      let yy = y + 300;
+      M.text(g, tip, VW / 2, y + 282, { size: 14, align: 'center', color: '#6b4fa8', outline: false, maxW: w - 30 });
+      let yy = y + 304;
       if (this.crystal) {
         M.art(g, 'kristal', VW / 2 - 22, yy + Math.sin(M.t * 3) * 4, 4);
         M.text(g, `Kristal ke-${this.stage.id} kembali!`, VW / 2, yy + 72, { size: 16, align: 'center', color: '#2a9fd6', outline: false });

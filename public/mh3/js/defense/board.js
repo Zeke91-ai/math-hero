@@ -150,6 +150,7 @@
     M.text(g, `Gelombang ${Math.max(1, w)}/${gm.level.waves.length}`, M.VW / 2 + 22, 22, { size: 15, align: 'center' });
     M.text(g, S.level.nama, M.VW / 2 + 22, 43, { size: 13, align: 'center', color: '#b8f4ff' });
     M.button(g, { id: 'jeda', x: M.VW - 46, y: 6, w: 38, h: 38, color: 'purple', icon: 'pause', onTap: () => { if (S.state === 'play') S.state = 'pause'; } });
+    M.text(g, `Bonus ${S.bonus.value()}`, M.VW - 8, 49, { size: 11, align: 'right', color: '#cbbcff' });
   }
   function drawTray(g) {
     const gm = S.g, ids = S.level.loadout, n = ids.length + (gm.power ? 1 : 0);
@@ -215,15 +216,16 @@
   function drawEnd(g) {
     const gm = S.g, won = gm.phase === 'won', k = M.ease(S.endT * 2);
     g.fillStyle = `rgba(29,20,56,${0.7 * k})`; g.fillRect(0, 0, M.VW, M.VH);
-    const x = 30, y = M.VH * 0.2, w = M.VW - 60, h = won ? 380 : 270;
+    const x = 30, y = M.VH * 0.2, w = M.VW - 60, h = won ? 404 : 270;
     M.panel(g, x, y, w, h, { title: won ? 'Benteng selamat!' : 'Benteng jatuh...' });
     if (won) {
       M.stars(g, M.VW / 2, y + 40, D.stars(gm.hearts), 4);
       M.text(g, `Sisa hati: ${gm.hearts} dari ${Sim.HEARTS}`, M.VW / 2, y + 112, { size: 16, align: 'center', color: '#2b1d52', outline: false });
-      if (S.keys == null) M.button(g, { id: 'harta', x: x + 30, y: y + 140, w: w - 60, h: 56, label: 'Buka Peti Harta', color: 'yellow', size: 20, icon: 'chest', onTap: openTreasure });
-      else M.text(g, S.keys ? `Dapat ${S.keys} Kunci Kristal!` : 'Peti Harta ditunda.', M.VW / 2, y + 168, { size: 18, align: 'center', color: '#8a5a00', outline: false });
-      M.button(g, { id: 'ulang', x: x + 30, y: y + 216, w: w - 60, h: 48, label: 'Main lagi', color: 'green', onTap: () => M.go('defense', S.params) });
-      M.button(g, { id: 'lanjutend', x: x + 30, y: y + 278, w: w - 60, h: 48, label: S.onEnd ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
+      M.text(g, `Bonus waktu: +${S.bonus.value()} (${window.TimeBonus.clock(S.bonus.seconds())})`, M.VW / 2, y + 136, { size: 14, align: 'center', color: '#2b1d52', outline: false });
+      if (S.keys == null) M.button(g, { id: 'harta', x: x + 30, y: y + 164, w: w - 60, h: 56, label: 'Buka Peti Harta', color: 'yellow', size: 20, icon: 'chest', onTap: openTreasure });
+      else M.text(g, S.keys ? `Dapat ${S.keys} Kunci Kristal!` : 'Peti Harta ditunda.', M.VW / 2, y + 192, { size: 18, align: 'center', color: '#8a5a00', outline: false });
+      M.button(g, { id: 'ulang', x: x + 30, y: y + 240, w: w - 60, h: 48, label: 'Main lagi', color: 'green', onTap: () => M.go('defense', S.params) });
+      M.button(g, { id: 'lanjutend', x: x + 30, y: y + 302, w: w - 60, h: 48, label: S.onEnd ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
     } else {
       M.text(g, 'Jangan menyerah! Coba taruh lebih banyak pasukan.', M.VW / 2, y + 62, { size: 15, align: 'center', color: '#2b1d52', outline: false, maxW: w - 40 });
       M.button(g, { id: 'ulang', x: x + 30, y: y + 112, w: w - 60, h: 52, label: 'Coba lagi', color: 'green', onTap: () => M.go('defense', S.params) });
@@ -232,7 +234,7 @@
   }
   function finish() {
     const gm = S.g, cb = S.onEnd;
-    if (cb) cb({ win: gm.phase === 'won', stars: gm.phase === 'won' ? D.stars(gm.hearts) : 0, hearts: gm.hearts, keys: S.keys || 0, level: S.level.id });
+    if (cb) cb({ win: gm.phase === 'won', stars: gm.phase === 'won' ? D.stars(gm.hearts) : 0, hearts: gm.hearts, keys: S.keys || 0, bonus: gm.phase === 'won' ? S.bonus.value() : 0, seconds: S.bonus.seconds(), level: S.level.id });
     else M.go('title');
   }
 
@@ -242,7 +244,7 @@
       layout();
       // p.def = definisi level lengkap dari peta (nama, tema, tier, loadout, startStars, upg); tanpanya level data apa adanya.
       const level = p.def || D.level(p.level || 1);
-      S = { level, params: p, g: Sim.create(level), state: 'play', sel: null, beams: [], lastTangkis: -9, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd };
+      S = { level, params: p, g: Sim.create(level), state: 'play', sel: null, beams: [], lastTangkis: -9, shake: 0, banner: null, endT: 0, keys: null, onEnd: p.onEnd, bonus: window.TimeBonus.forGame('mh3') };
       pickDefaults();
       M.audio.music('padang');
     },
@@ -259,6 +261,7 @@
       if (S.state === 'end') { S.endT += dt; return; }
       if (S.state !== 'play') return;
       if (M.input.pause) { S.state = 'pause'; return; }
+      S.bonus.tick(dt); // hanya saat state 'play': kartu PR (overlay), jeda, pilih kekuatan, dan layar hasil tidak menghitung
       Sim.update(gm, dt); Sim.tickPower(gm, dt);
       for (const e of gm.events) handle(e);
       gm.events.length = 0;

@@ -17,6 +17,7 @@
   M.starsFor = (mistakes) => (mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1);
 
   let S = null; // keadaan level yang sedang dimainkan
+  M.playState = () => S; // untuk uji
 
   function phasesOf(L) { return L.phases || [L]; }
 
@@ -136,15 +137,16 @@
   function finishLevel() {
     const L = S.level;
     const stars = M.starsFor(S.mistakes);
-    const score = S.score + 200 + S.hearts * 50 + stars * 100;
+    const bonus = S.bonus.value();
+    const score = S.score + bonus + S.hearts * 50 + stars * 100;
     const firstClear = M.save.starsOf(L.id) === 0;
     const starsBefore = M.save.totalStars();
     const rec = M.save.record(L.id, stars, score);
     // Papan skor bersama (opsional): total skor terbaik semua level.
-    if (rec.newBest && window.Scores && M.save.active) window.Scores.submit('math-hero', 'mh2', M.save.active.nama, M.save.totalScore(), { level: L.id });
+    if (rec.newBest && window.Scores && M.save.active) window.Scores.submit('math-hero', 'mh2', M.save.active.nama, M.save.totalScore(), { level: L.id, hero: M.save.active.hero, stars: M.save.totalStars() });
     // Pahlawan yang baru terbuka karena tambahan bintang ini.
     const unlocked = M.HEROES.filter((h) => h.need > starsBefore && h.need <= M.save.totalStars());
-    M.go('result', { level: L, stars, score, mistakes: S.mistakes, correct: S.correct, hearts: S.hearts, newBest: rec.newBest, firstClear, unlocked });
+    M.go('result', { level: L, stars, score, bonus, seconds: S.bonus.seconds(), mistakes: S.mistakes, correct: S.correct, hearts: S.hearts, newBest: rec.newBest, firstClear, unlocked });
   }
 
   // ---------- HUD ----------
@@ -161,6 +163,7 @@
       M.box(g, x0 + i * dw, 18, dw - 3, 14, done ? '#ffd54a' : '#4b3a7a', { border: 2, shade: false });
     }
     M.text(g, M.fmt(S.score), M.VW - 10, 25, { size: 18, align: 'right', color: '#ffd54a', font: M.NUMFONT });
+    M.text(g, `Bonus ${S.bonus.value()}`, M.VW - 10, 44, { size: 11, align: 'right', color: '#cbbcff' });
     if (phasesOf(S.level).length > 1) M.text(g, `Babak ${S.phase + 1}/${phasesOf(S.level).length}`, x0, 44, { size: 11, color: '#cbbcff' });
   }
 
@@ -315,7 +318,7 @@
   // ---------- Adegan ----------
   M.register('play', {
     enter(p) {
-      S = { level: p.level, hearts: HEARTS, score: 0, mistakes: 0, correct: 0, time: 0, shake: 0, hint: null };
+      S = { level: p.level, hearts: HEARTS, score: 0, mistakes: 0, correct: 0, time: 0, shake: 0, hint: null, bonus: window.TimeBonus.forGame('mh2') };
       startPhase(0);
     },
     exit() { M.audio.setPaused(false); },
@@ -337,6 +340,7 @@
       if (S.state !== 'play') return;
       if (M.input.pause) { openPause(); return; }
       S.time += dt;
+      S.bonus.tick(dt); // hanya saat state 'play': intro, penjelasan, jeda, dan layar hasil tidak menghitung
       S.shake = Math.max(0, S.shake - dt);
       if (S.inst && S.inst.update) S.inst.update(dt);
     },
