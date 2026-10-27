@@ -4,8 +4,10 @@
 // Selama masih berisi "ISI_...", papan skor online mati dan game memakai skor lokal di HP/browser. Lihat README bagian "Papan skor bersama".
 // JANGAN pernah menaruh kunci akun layanan (service account) atau rahasia lain di file ini.
 window.SCORES_CONFIG = {
-  apiKey: 'ISI_API_KEY',
-  authDomain: 'ISI_PROJECT_ID.firebaseapp.com',
-  projectId: 'ISI_PROJECT_ID',
-  appId: 'ISI_APP_ID_FIREBASE',
+  apiKey: 'AIzaSyC1SFto0DhpR6JEBeI-XE2GGKvwK-9LvZo',
+  authDomain: 'anything-hifu.firebaseapp.com',
+  projectId: 'anything-hifu',
+  appId: '1:805941619945:web:e18199d5cbc6173f7f1478',
+  storageBucket: "anything-hifu.firebasestorage.app",
+  messagingSenderId: "805941619945",
 };
