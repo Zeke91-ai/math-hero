@@ -140,6 +140,8 @@
     const firstClear = M.save.starsOf(L.id) === 0;
     const starsBefore = M.save.totalStars();
     const rec = M.save.record(L.id, stars, score);
+    // Papan skor bersama (opsional): total skor terbaik semua level.
+    if (rec.newBest && window.Scores && M.save.active) window.Scores.submit('math-hero', 'mh2', M.save.active.nama, M.save.totalScore(), { level: L.id });
     // Pahlawan yang baru terbuka karena tambahan bintang ini.
     const unlocked = M.HEROES.filter((h) => h.need > starsBefore && h.need <= M.save.totalStars());
     M.go('result', { level: L, stars, score, mistakes: S.mistakes, correct: S.correct, hearts: S.hearts, newBest: rec.newBest, firstClear, unlocked });

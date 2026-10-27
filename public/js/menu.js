@@ -125,6 +125,8 @@
       const w = window.__mathHero.world;
       api('POST', '/api/scores', { playerId: player.id, skor: g.score, area: w.areaIndex + 1, hasil, hero: g.hero }).catch(() => {});
       api('DELETE', `/api/progress/${player.id}`).catch(() => {});
+      // Papan skor bersama (opsional, lihat js/scores.js): gagal atau belum dikonfigurasi tidak mengganggu game.
+      if (window.Scores) window.Scores.submit('math-hero', 'mh1', player.nama, g.score, { area: w.areaIndex + 1, hasil, hero: g.hero || 0 });
     },
   };
 
@@ -285,7 +287,14 @@
   // ---------- Papan Juara ----------
   async function openHighscore() {
     say('');
-    const d = await api('GET', '/api/highscores');
+    let d = await api('GET', '/api/highscores');
+    let online = false;
+    // Utamakan papan bersama; jika offline atau belum dikonfigurasi, tampilkan skor di HP ini.
+    const shared = window.Scores ? await window.Scores.top('math-hero', 'mh1', 10) : null;
+    if (shared) {
+      online = true;
+      d = { scores: shared.map((r) => ({ nama: r.name, skor: r.score, area: r.meta.area || 1, hasil: r.meta.hasil || 'kalah', hero: r.meta.hero || null })) };
+    }
     const list = $('hs-list');
     list.innerHTML = '';
     stopTimers();
@@ -328,6 +337,7 @@
     };
     window.Assets.onReady(() => { paint(); if (avatars.length) hsTimer = setInterval(paint, 100); });
     showPanel('hs');
+    if (window.Scores && window.Scores.enabled()) say(online ? '' : 'Tidak terhubung. Menampilkan skor di HP ini.');
   }
 
   buildKeys();

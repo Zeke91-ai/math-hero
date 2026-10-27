@@ -223,6 +223,8 @@
   function finishLevel(L, res) {
     if (!res || !res.win) { M.go('map', { stage: L.world }); return; }
     const r = S.record(L.id, Math.max(1, res.stars || 1), (res.hearts || 0) * 100 + (res.collected || 0) * 10);
+    // Papan skor bersama (opsional): total skor terbaik semua level.
+    if (window.Scores && S.active) window.Scores.submit('math-hero', 'mh3', S.active.nama, S.totalScore(), { level: L.id });
     const steps = [];
     if (r.first) {
       steps.push({ lines: ST.after(L), seen: 'pas' + L.id, world: L.world });
