@@ -200,6 +200,29 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 
 Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
 
+# Papan skor bersama (Firebase, opsional)
+
+Papan Juara Math Hero 1 bisa dibagi antar pemain lewat Firebase Firestore (paket gratis Spark cukup). Total skor terbaik Math Hero 2 dan 3 ikut tercatat di papan `mh2` dan `mh3` (belum ada layar tampilannya). Tanpa pengaturan ini game tetap jalan seperti biasa dan skor tersimpan di HP/browser masing-masing.
+
+Satu proyek Firebase bisa dipakai banyak aplikasi hobi sekaligus. Semua skor ada di satu koleksi `scores`; tiap dokumen punya `appId` (alias aplikasi, contoh `math-hero`), `board` (papan di dalam aplikasi, contoh `mh1`), `name`, `score`, `createdAt`, dan `meta` (opsional). Aplikasi lain cukup menyalin `public/js/scores.js` dan `public/js/firebase-config.js`, lalu memanggil `Scores.submit('alias-aplikasi', 'papan', nama, skor, meta)` dan `Scores.top('alias-aplikasi', 'papan', 10)`.
+
+## Langkah pengaturan (sekitar 10 menit)
+
+1. Buka <https://console.firebase.google.com>, klik **Add project**, beri nama (misal `hobi-skor`). Google Analytics boleh dimatikan.
+2. Menu **Build > Firestore Database > Create database**. Pilih lokasi terdekat (misal `asia-southeast2` Jakarta), mulai dalam mode **production**.
+3. Tab **Rules**: hapus isinya, tempel seluruh isi [`docs/firestore.rules`](docs/firestore.rules), lalu **Publish**.
+4. Ikon `</>` di **Project overview** untuk mendaftarkan **Web app** (tanpa Firebase Hosting). Salin nilai `apiKey`, `authDomain`, `projectId`, `appId` ke `public/js/firebase-config.js`. Nilai ini memang publik, tetapi jangan pernah menaruh kunci akun layanan (service account) di repo.
+5. Buka Papan Juara di game sekali. Konsol browser (F12) menampilkan galat "The query requires an index" dengan tautan; klik tautannya, lalu **Create index** (appId naik, board naik, score turun). Tunggu beberapa menit sampai statusnya Enabled.
+6. Opsional tetapi disarankan: di <https://console.cloud.google.com> > **APIs & Services > Credentials**, buka API key milik web app, pilih **Websites** pada Application restrictions, dan isi alamat situs game (misal `https://namakamu.github.io/*`). Tambahkan `http://localhost:*` bila ingin tetap bisa mencoba di laptop.
+
+## Batasan keamanan
+
+Aturan Firestore hanya mengizinkan membaca dan **menambah** skor yang bentuknya valid (kolom, tipe, panjang nama, `appId` berupa alias huruf kecil maksimal 32 karakter, skor 0 sampai 1.000.000, waktu dari server). Tidak ada yang bisa mengubah atau menghapus skor, dan koleksi lain tertutup. Namun skor dikirim dari browser, jadi orang yang paham teknis tetap bisa memalsukan skor atau membanjiri koleksi. Itu wajar untuk game hobi; jangan dipakai untuk lomba berhadiah. Jika perlu, hapus dokumen nakal lewat konsol Firebase. Untuk membatasi biaya, atur **Usage and billing > Budget alert**; paket gratis memberi 20 ribu tulis dan 50 ribu baca per hari.
+
+## Tes
+
+`npm run test:scores` menguji modul klien dengan backend palsu (tanpa jaringan).
+
 # Umum
 
 ## Lisensi dan atribusi

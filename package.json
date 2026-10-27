@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "test:scores": "node tests/scores.test.js",
     "test:mh2": "node tests/mh2.test.js",
     "test:mh3": "node tests/mh3_homework.test.js && node tests/mh3_defense.test.js && node tests/mh3_units.test.js && node tests/mh3_plat.test.js && node tests/mh3_progress.test.js && node tests/mh3_adapt.test.js",
     "test": "node tests/mh2.test.js && node tests/math.test.js && node tests/bot_sanity.js && node scripts/cek_level.js && python tests/playthrough.py && python tests/menu.py && python tests/pose_b.py && python tests/lompat2x.py && python tests/nama_highscore.py && python tests/halaman_awal.py && python tests/mode_statis.py && python tests/mh2_playthrough.py"

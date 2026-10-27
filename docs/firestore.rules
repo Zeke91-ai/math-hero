@@ -1,0 +1,30 @@
+rules_version = '2';
+// Aturan Firestore untuk papan skor bersama banyak aplikasi (koleksi "scores"). Tempel di konsol Firebase: Firestore Database > Rules > Publish.
+// Siapa pun boleh membaca dan menambah skor yang valid; tidak ada yang boleh mengubah atau menghapus. Semua koleksi lain tertutup.
+// Batas: skor dikirim dari browser, jadi orang teknis tetap bisa memalsukan skor atau membanjiri koleksi. Cocok untuk game hobi, bukan kompetisi serius.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /scores/{id} {
+      allow get: if true;
+      allow list: if request.query.limit <= 100;
+      allow update, delete: if false;
+      allow create: if
+        request.resource.data.keys().hasOnly(['appId', 'board', 'name', 'score', 'createdAt', 'meta'])
+        && request.resource.data.keys().hasAll(['appId', 'board', 'name', 'score', 'createdAt'])
+        && request.resource.data.appId is string
+        && request.resource.data.appId.matches('^[a-z][a-z0-9-]{1,31}$')
+        && request.resource.data.board is string
+        && request.resource.data.board.matches('^[a-z0-9_.-]{1,32}$')
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 16
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0 && request.resource.data.score <= 1000000
+        && request.resource.data.createdAt == request.time
+        && (!('meta' in request.resource.data)
+            || (request.resource.data.meta is map && request.resource.data.meta.size() <= 8));
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
