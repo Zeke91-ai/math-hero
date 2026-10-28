@@ -56,3 +56,5 @@ Level yang dibuat generator (`levelgen.js`, lihat `LEVELGEN.md`) dan soal dari b
 1. Tambah satu baris di `TimeBonus.GAMES` untuk mode itu, lalu pakai `TimeBonus.forGame(id)` dan panggil `tick(dt)` hanya saat game berjalan.
 2. Saat putaran selesai, kirim `Scores.submit('math-hero', 'mh3-kejar', nama, skorTotal, { seed, tingkat, level })`. Kunci `meta` dibatasi 8 dan nilainya sederhana, jadi seed dan tingkat cukup untuk mengulang level yang sama.
 3. Tampilkan lewat `MHJuara.install(M, { board: 'mh3-kejar' })`; papan baru tidak butuh perubahan aturan Firestore (papan hanya string `board`).
+
+Contoh penerapan: Kejar tanpa batas MH3 (`mh3/js/plat/endless.js`, `plat/scene.js`): papan `mh3-kejar`, baris `'mh3-kejar'` di `TimeBonus.GAMES`, dan `MHJuara.install(M, { board: 'mh3-kejar', scene: 'juarakejar', title: 'Juara Kejar', note: true, local })` (opsi `scene`, `title`, `note`, `local` memungkinkan beberapa papan dalam satu seri).

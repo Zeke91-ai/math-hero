@@ -116,7 +116,7 @@
     opts = opts || {};
     const L = parse(def);
     const g = {
-      def, L, t: 0, phase: 'play', hearts: HEARTS, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
+      def, L, t: 0, phase: 'play', hearts: opts.hearts || HEARTS, endless: !!opts.endless, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
       cp: { x: L.start.x, y: L.start.y, levers: L.levers.map(() => false) }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
       skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], balls: [], slam: 0, lunge: null, glide: false, throwT: 0, shield: null, nearLever: null,
       climb: false, boost: 0, dash: null, pipe: null, pipeCool: 0, ride: null, pushing: false, chans: [false, false, false],
@@ -140,10 +140,21 @@
       g.shield.ready = false; g.shield.t = SHIELD_BACK; g.invuln = INVULN; g.events.push({ type: 'shieldBreak' }); return;
     }
     g.hearts--; g.hurts++; g.invuln = INVULN; g.events.push({ type: 'hurt', why });
-    if (g.hearts <= 0) {
+    if (g.hearts <= 0 && g.endless) {
+      // Tanpa batas: hati tidak pernah pulih, habis = putaran berakhir.
+      g.hearts = 0; g.phase = 'dead'; g.events.push({ type: 'dead' });
+    } else if (g.hearts <= 0) {
       // Habis hati: ulang dari checkpoint terakhir dengan hati penuh. Level tidak pernah macet.
       g.deaths++; g.hearts = HEARTS; respawn(g); g.invuln = INVULN + 0.6; g.events.push({ type: 'respawn' });
     } else if (why === 'jatuh') respawn(g);
+  }
+
+  // Tanpa batas: jawaban salah di kartu PR mengurangi hati (tidak bisa pulih). Mengembalikan true bila hati habis.
+  function loseHearts(g, n) {
+    if (g.phase !== 'play' || !(n > 0)) return false;
+    g.hearts = Math.max(0, g.hearts - n); g.hurts++; g.events.push({ type: 'hurt', why: 'soal' });
+    if (g.hearts <= 0) { g.phase = 'dead'; g.events.push({ type: 'dead' }); return true; }
+    return false;
   }
 
   function grantPower(g, key) {
@@ -532,5 +543,5 @@
 
   // K: nilai lontaran untuk pemeriksa level (levelcheck.fromKejar).
   const K = { springVy: SPRING, dashVx: DASH, dashVy: DASH_VY, dashT: DASH_T, djump: true };
-  return { HEARTS, SKILLS, K, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
+  return { HEARTS, SKILLS, K, parse, create, update, hurt, grantPower, loseHearts, rating, place, solveQuiz };
 });

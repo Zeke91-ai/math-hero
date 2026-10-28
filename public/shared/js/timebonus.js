@@ -10,6 +10,7 @@
     mh1: { base: 200, secPerPoint: 5 },
     mh2: { base: 200, secPerPoint: 5 },
     mh3: { base: 200, secPerPoint: 5 },
+    'mh3-kejar': { base: 200, secPerPoint: 5 },   // Kejar tanpa batas: bonus tiap putaran
   };
 
   // Bonus tersisa setelah `seconds` detik main aktif.
