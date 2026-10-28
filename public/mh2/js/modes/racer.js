@@ -64,7 +64,21 @@
       const yOf = (p) => horizon() + p * (bottom() - horizon());
       const cxOf = (p) => M.VW / 2 + R.curve * Math.pow(1 - p, 2) * 120 - R.laneX * 110 * p;
 
+      const laneScreen = (lane, p) => cxOf(p) + lane * 100 * p;
       function nextGate() { return R.gates.find((gt) => !gt.done); }
+      // Ketukan di layar: kalau mengenai papan jawaban pada gerbang yang tampak, kart pindah ke lajur gerbang itu
+      // (anak biasanya mengetuk jawabannya langsung). Di luar gerbang, ketukan = geser satu lajur kiri/kanan.
+      function gateLaneAt(x, y) {
+        const gt = nextGate();
+        if (!gt) return null;
+        const d = gt.z - R.pos;
+        if (d > FAR) return null;
+        const p = pOf(d), gy = yOf(p), h = 54 * p, top = gy - h - 46 * p - 24, bot = gy - 46 * p + 24;
+        if (p < 0.12 || y < top || y > bot) return null;
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < 3; i++) { const dx = Math.abs(x - laneScreen(i - 1, p)); if (dx < bd) { bd = dx; best = i - 1; } }
+        return best;
+      }
       function passGate(gt) {
         gt.done = true;
         const pick = gt.q.choices[R.lane + 1];
@@ -92,7 +106,12 @@
           const i = gt.q.choices.indexOf(gt.q.answer);
           R.lane = (wrong ? (i + 1) % 3 : i) - 1; R.pos = gt.z - 10;
         },
-        tap(x, y) { if (y > M.HUD_H + 110) steer(x < M.VW / 2 ? -1 : 1); },
+        tap(x, y) {
+          if (y <= M.HUD_H + 110 || R.finished) return;
+          const gl = gateLaneAt(x, y);
+          if (gl === null) steer(x < M.VW / 2 ? -1 : 1);
+          else if (gl !== R.lane) { R.lane = gl; M.sfx('klik'); }
+        },
         update(dt) {
           const I = M.input;
           if (R.finished) {
@@ -149,7 +168,6 @@
             g.fillStyle = band ? '#62677d' : '#5a5f74'; g.fillRect(Math.round(cx - rw), y, Math.round(rw * 2), 2);
             if (band) { g.fillStyle = '#d6d9e8'; g.fillRect(Math.round(cx - rw / 3 - 2 * p), y, Math.max(1, Math.round(4 * p)), 2); g.fillRect(Math.round(cx + rw / 3 - 2 * p), y, Math.max(1, Math.round(4 * p)), 2); }
           }
-          const laneScreen = (lane, p) => cxOf(p) + lane * 100 * p;
           // Benda di jalan, dari yang terjauh.
           const items = [];
           for (const gt of R.gates) if (!gt.done) items.push({ z: gt.z, kind: 'gate', o: gt });
@@ -159,7 +177,8 @@
           items.sort((a, b) => b.z - a.z);
           for (const it of items) {
             const d = it.z - R.pos;
-            if (d < Z0 * 0.7 || d > FAR) continue;
+            // Gerbang tetap tampak sampai dinilai, supaya anak tidak kehilangan jawaban yang sedang dituju.
+            if (d > FAR || d < (it.kind === 'gate' ? 0 : Z0 * 0.7)) continue;
             const p = pOf(d), y = yOf(p);
             if (it.kind === 'gate') {
               it.o.q.choices.forEach((v, i) => {

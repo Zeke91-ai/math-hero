@@ -57,7 +57,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.screenshot({ path: 'tests/shots/mh3_plat_end.png' });
   let got = null;
   await pg.evaluate(() => { window.__r = null; MH3.plat.state().params.onEnd = (r) => { window.__r = r; }; });
-  await pg.touchscreen.tap(180 * s, (851 * 0 + (await pg.evaluate(() => MH2.VH)) * 0.2 + 236 + 26) * s);
+  await pg.touchscreen.tap(180 * s, (851 * 0 + (await pg.evaluate(() => MH2.VH)) * 0.2 + 280 + 26) * s);
   await pg.waitForTimeout(300);
   got = await pg.evaluate(() => window.__r);
   ok(got && got.win === true && got.stars >= 1, 'tombol Lanjut mengirim hasil (bintang ' + (got && got.stars) + ')');
