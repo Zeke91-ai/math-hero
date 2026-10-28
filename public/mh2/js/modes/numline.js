@@ -59,6 +59,7 @@
   };
 
   M.Modes.numline = {
+    scratch: true, // teka-teki tanpa jam dan tanpa bahaya: boleh pakai kertas coret
     nama: 'Lompat Bilangan',
     concept(cfg) {
       const c = CONCEPTS[cfg.kind];

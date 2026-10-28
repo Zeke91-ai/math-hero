@@ -37,6 +37,7 @@
   };
 
   M.Modes.market = {
+    scratch: true, // teka-teki tanpa jam dan tanpa bahaya: boleh pakai kertas coret
     nama: 'Pasar Koin',
     concept(cfg) {
       const c = CONCEPTS[cfg.kind];

@@ -56,6 +56,7 @@
   };
 
   M.Modes.balance = {
+    scratch: true, // teka-teki tanpa jam dan tanpa bahaya: boleh pakai kertas coret
     nama: 'Timbangan Ajaib',
     concept(cfg) {
       const c = CONCEPTS[cfg.kind];

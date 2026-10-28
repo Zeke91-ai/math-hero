@@ -14,6 +14,7 @@
   };
 
   M.Modes.share = {
+    scratch: true, // teka-teki tanpa jam dan tanpa bahaya: boleh pakai kertas coret
     nama: 'Bagi Rata',
     concept(cfg) {
       const c = cfg.rem ? CONCEPTS.rem : CONCEPTS.base;

@@ -4,7 +4,7 @@ Folder ini dipakai bersama oleh Math Hero 1, 2, dan 3. Isinya hanya hal yang mem
 
 ## Isi
 
-- `js/scratchpad.js`: kertas coret-coret (`window.Scratchpad`).
+- `js/scratchpad.js`: kertas coret-coret (`window.Scratchpad`): pulau seret + lembar bawah. Game memanggil `Scratchpad.setAvailable(bool)` tiap frame saat anak mengerjakan soal yang menghentikan waktu, dan `Scratchpad.clear()` saat soal baru.
 - `js/credits.js`: data kredit bersama dan helper (`window.MathHeroCredits`).
 - `vendor/gsap/`: GSAP 3.15.0 (`gsap.min.js`, `Draggable.min.js`) dari paket npm resmi, disalin apa adanya, lisensi di `LICENSE.txt` (Standard "no charge"). Di-vendor lokal karena game dimainkan lewat LAN atau offline, bukan CDN.
 

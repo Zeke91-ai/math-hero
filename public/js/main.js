@@ -164,6 +164,7 @@
   function ask(spec, onCorrect, onWrongExtra) {
     let attempts = 0;
     const q = window.MathQuiz.generate(spec.op, spec.lv);
+    window.Scratchpad.clear();
     window.Quiz.open(q, () => {
       game.stats.soalBenar++;
       Sfx.play('benar');
@@ -667,13 +668,6 @@
     }
   }
 
-  // Kertas coret-coret menjeda permainan selama terbuka, lalu melanjutkan bila tadinya tidak dijeda.
-  let padPaused = false;
-  window.Scratchpad.init({
-    onOpen() { if (!game.inMenu && !state.paused) { window.Input.pausePressed = true; padPaused = true; } },
-    onClose() { if (padPaused) { padPaused = false; if (state.paused) window.Input.pausePressed = true; } },
-  });
-
   function handlePause() {
     if (window.Input.pausePressed) {
       window.Input.pausePressed = false;
@@ -687,6 +681,8 @@
   function frame(ts) {
     if (!state.running) return;
     handlePause();
+    // Pulau kertas coret hanya ada selama soal terbuka (waktu sudah berhenti, jadi game tidak dijeda).
+    window.Scratchpad.setAvailable(window.Quiz.isOpen());
     const dt = Math.min((ts - state.last) / 1000, 0.033);
     state.last = ts;
     const frozen = state.paused || game.over || game.ended || game.inMenu || W.clearing;

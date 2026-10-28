@@ -1,5 +1,5 @@
 // Uji kartu PR Math Hero 3 di layar sentuh 393x851:  node tests/mh3_homework_ui.js
-// Membuka kartu dari tombol debug, menguji salah/benar, petunjuk, coret, Nanti, dan simpan PR terbuka.
+// Membuka kartu dari tombol debug, menguji salah/benar, petunjuk, pulau coret, Nanti, dan simpan PR terbuka.
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..', 'public');
@@ -28,23 +28,20 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   const ans = await pg.evaluate(() => { const p = MH3Homework.generate(MH3.homework.pending().id, MH3.homework.pending().seed, MH3.homework.pending().tier); return [p.form, p.answer]; });
   const keyOf = { 0: [1, 3], 1: [0, 0], 2: [1, 0], 3: [2, 0], 4: [0, 1], 5: [1, 1], 6: [2, 1], 7: [0, 2], 8: [1, 2], 9: [2, 2] };
   const kb = await pg.evaluate(() => { const r = MH2.VH; return r; });
-  // posisi tombol dihitung dari tata letak: pakai kunci keyboard fisik untuk jawaban, ketuk untuk OK/Petunjuk/Coret.
+  // posisi tombol dihitung dari tata letak: pakai kunci keyboard fisik untuk jawaban, ketuk untuk OK/Petunjuk.
   await pg.keyboard.type('7'); await pg.keyboard.press('Enter');
   await pg.waitForTimeout(200);
   ok((await pg.evaluate(() => MH3.homework.pending().wrong)) >= 1 || true, 'jawaban salah ditangani');
   await pg.screenshot({ path: 'tests/shots/mh3_pr_wrong.png' });
   const pend = () => pg.evaluate(() => MH3.homework.pending());
-  // Tombol bawah (koordinat logis): Petunjuk, Coret, Nanti.
+  // Tombol bawah (koordinat logis): Petunjuk, Nanti.
   await tap(64, 670); await pg.waitForTimeout(150);
   ok((await pend()).hints === 1, 'petunjuk 1 tercatat');
   await pg.screenshot({ path: 'tests/shots/mh3_pr_hint.png' });
   await tap(180, 722); // Mengerti
-  // Kanvas coret.
-  await tap(182, 670); await pg.waitForTimeout(150);
-  await pg.mouse.move(100, 400); await pg.mouse.down(); await pg.mouse.move(250, 480, { steps: 6 }); await pg.mouse.up();
-  await pg.waitForTimeout(100);
+  // Kertas coret: pulau melayang menggantikan mode Coret di kartu (detail ada di tests/scratchpad_ui.js).
+  ok(await pg.evaluate(() => Scratchpad.isAvailable()), 'pulau kertas coret tersedia selama kartu PR dikerjakan');
   await pg.screenshot({ path: 'tests/shots/mh3_pr_scratch.png' });
-  await tap(294, 738); // Selesai
   // Jawab benar dengan keyboard lalu lihat ringkasan.
   const right = await pg.evaluate(() => { const v = MH3.homework.pending(); const p = MH3Homework.generate(v.id, v.seed, v.tier); return p.form === 'int' ? String(p.answer) : null; });
   await pg.keyboard.press('Backspace');
