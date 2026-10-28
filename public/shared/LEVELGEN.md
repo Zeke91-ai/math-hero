@@ -37,7 +37,8 @@ punya platform gerak, papan rapuh, gergaji, meriam, dan gerbang; fisikanya (`sha
 | `B` | Kotak dorong | Didorong dengan berjalan ke arahnya, jatuh oleh gravitasi, bisa dipijak dan menekan tombol. | `box1_idle`, animasi `*_push` hero. |
 | `_` `,` `;` | Tombol injak kanal 1/2/3 | Aktif selama ditekan hero atau kotak. Membuka gerbang dengan warna sama. | Digambar prosedural (alas + tombol warna kanal). |
 | `t` `y` `u` | Tuas kanal 1/2/3 | Ditarik dengan tombol B saat berdiri di dekatnya (label B berganti "Tarik"); tekan B lagi untuk mematikan. Membuka gerbang sewarna yang terdekat selama menyala. Bola api Pinki juga membalik tuas dari jauh. | Digambar prosedural (batang + kenop warna kanal). |
-| `1` `2` `3` | Gerbang kanal 1/2/3 | Padat sampai kanalnya aktif. Maksimal 3 kanal warna per level (merah, biru, kuning). Tidak menutup di atas hero atau kotak. | Balok bergaris dari `tileset` + warna kanal. |
+| `1` `2` `3` | Gerbang kanal 1/2/3 | Padat sampai kanalnya aktif. Maksimal 3 kanal warna per level (merah, biru, kuning). Tidak menutup di atas hero atau kotak. | Kolom gerbang: jeruji yang terangkat. Sel tunggal: blok saklar (padat, garis putus-putus saat terbuka). |
+| `4` `5` `6` | Blok saklar terbalik kanal 1/2/3 | Kebalikan gerbang: hilang selama tuasnya mati, padat saat tuas menyala. Dipadukan dengan gerbang biasa, satu tarikan tuas menukar jalan (contoh ruang `saklar_jembatan`: anak tangga hilang, jembatan muncul). Kembali ke checkpoint mengembalikan tuas ke keadaan saat checkpoint diambil. | Blok warna kanal dengan belah ketupat putih. |
 | `x` | Blok retak | Bisa dihancurkan dengan skill Dudu atau kotak yang jatuh. Hanya menutup jalan pintas atau harta, tidak pernah jalan utama. | `box2_break`. |
 | `o` `O` | Gergaji (diam, bolak-balik) | Melukai seperti duri. Hanya tier 2 ke atas. | `trap2`. |
 

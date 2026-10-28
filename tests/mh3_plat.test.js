@@ -59,7 +59,7 @@ for (const lv of Lv.LEVELS) {
 }
 // Generator: banyak seed acak di tiap tier lulus pemeriksa level, dan tier tinggi lebih banyak naik/turun.
 {
-  const all = ['tangga', 'per', 'kotak', 'tuas', 'pipa', 'lift', 'gerak', 'rapuh', 'samping', 'gergaji', 'gergaji_gerak'];
+  const all = ['tangga', 'per', 'kotak', 'tuas', 'pipa', 'lift', 'gerak', 'rapuh', 'samping', 'saklar', 'gergaji', 'gergaji_gerak'];
   const vert = [0, 0, 0, 0];
   for (let tier = 0; tier < 4; tier++) {
     for (let s = 1; s <= 6; s++) {

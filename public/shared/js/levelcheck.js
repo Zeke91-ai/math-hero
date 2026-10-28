@@ -34,7 +34,7 @@
       if (m.axis === 'x') for (let x = m.x0; x <= m.x1; x += T / 2) mark(x, m.y0, m.w);
       else for (let y = m.y0; y <= m.y1; y += T) mark(m.x0, y, m.w);
     }
-    for (const gt of L.gates || []) tiles[gt.r * L.cols + gt.c] = (L.open && L.open[gt.link !== undefined ? gt.link : gt.ch]) ? 0 : 1;
+    for (const gt of L.gates || []) tiles[gt.r * L.cols + gt.c] = (!!(L.open && L.open[gt.link !== undefined ? gt.link : gt.ch]) !== !!gt.inv) ? 0 : 1;
     for (const p of L.pilih) for (const c of p.cols) mark(c * T, p.y, p.w * T);
     return Object.assign({}, L, { tiles });
   }
@@ -85,27 +85,47 @@
   const touches = (s, o) => s.x + C.PW / 2 > o.x && s.x - C.PW / 2 < o.x + o.w && s.feet > o.y && s.feet - C.PH < o.y + o.h;
 
   function reach(Lraw, allowDouble) {
-    // Gerbang: ulangi pencarian setiap kali tuas/tombol baru tersentuh. Gerbang membuka bila tuas/tombol yang
-    // terhubung dengannya (gate.link = switch.key, dari sim) tersentuh; tanpa key memakai kanal warna.
-    const open = {};
-    for (;;) {
-      const states = reachOnce(Object.assign({}, Lraw, { open }), allowDouble);
-      let more = false;
-      for (const sw of Lraw.switches || []) {
-        const k = sw.key !== undefined ? sw.key : sw.ch;
-        if (open[k]) continue;
-        if (states.some((s) => touches(s, sw))) { open[k] = true; more = true; }
+    // Gerbang: gerbang biasa membuka bila tuas/tombol yang terhubung dengannya (gate.link = switch.key, dari sim)
+    // menyala; tanpa key memakai kanal warna. Gerbang terbalik (inv) sebaliknya.
+    // Keadaan saklar ditelusuri seperti graf: tuas/tombol yang hanya membuka gerbang biasa dinyalakan sekaligus begitu
+    // tersentuh (menyalakannya tidak pernah menutup jalan). Tuas yang memegang gerbang terbalik dibalik satu per satu,
+    // dan pencarian berikutnya dimulai dari tempat tuas itu (anak sedang berdiri di sana).
+    const sws = Lraw.switches || [], kOf = (o) => (o.key !== undefined ? o.key : o.ch);
+    const inv = new Set((Lraw.gates || []).filter((gt) => gt.inv).map((gt) => (gt.link !== undefined ? gt.link : gt.ch)));
+    const pkey = (s) => Math.round(s.x / 8) + '_' + Math.round(s.feet);
+    const configs = new Map(), work = [], all = new Map();
+    const push = (open, seeds) => {
+      const id = Object.keys(open).filter((k) => open[k]).sort().join(',');
+      let c = configs.get(id);
+      if (!c) { c = { open, seeds: [], keys: new Set(), ran: 0 }; configs.set(id, c); }
+      for (const sd of seeds) { const k = pkey(sd); if (!c.keys.has(k)) { c.keys.add(k); c.seeds.push(sd); } }
+      if (c.seeds.length > c.ran) work.push(c);
+    };
+    push({}, [{ x: Lraw.start.x, feet: Lraw.start.y }]);
+    while (work.length) {
+      const c = work.pop();
+      if (c.ran === c.seeds.length) continue;
+      c.ran = c.seeds.length;
+      const states = reachOnce(Object.assign({}, Lraw, { open: c.open }), allowDouble, c.seeds);
+      for (const st of states) all.set(pkey(st), st);
+      const grow = {};
+      for (const sw of sws) {
+        const k = kOf(sw), at = states.find((st) => touches(st, sw));
+        if (!at) continue;
+        if (inv.has(k)) push(Object.assign({}, c.open, { [k]: !c.open[k] }), [at]);
+        else if (!c.open[k]) grow[k] = at;
       }
-      if (!more) return states;
+      if (Object.keys(grow).length) push(Object.assign({}, c.open, Object.fromEntries(Object.keys(grow).map((k) => [k, true]))), c.seeds.concat(Object.values(grow)));
     }
+    return [...all.values()];
   }
 
-  function reachOnce(Lraw, allowDouble) {
+  function reachOnce(Lraw, allowDouble, seeds) {
     const L = prepare(Lraw);
     const key = (s) => Math.round(s.x / 8) + '_' + Math.round(s.feet);
-    const start = { x: L.start.x, feet: L.start.y };
-    const seen = new Map([[key(start), start]]);
-    const queue = [start];
+    const starts = seeds || [{ x: L.start.x, feet: L.start.y }];
+    const seen = new Map(starts.map((s) => [key(s), s]));
+    const queue = starts.slice();
     const plans = plansFor(allowDouble);
     const add = (n) => { if (!n) return; const k = key(n); if (!seen.has(k)) { seen.set(k, n); queue.push(n); } };
     const dirs = [-1, 0, 1];

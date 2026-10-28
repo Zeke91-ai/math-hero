@@ -40,7 +40,11 @@
     else if (e.type === 'pipeIn' || e.type === 'pipeOut') a.sfx('hop');
     else if (e.type === 'lever' || e.type === 'plate') a.sfx('klik');
     else if (e.type === 'gateOpen') {
-      a.sfx('naik'); say('Gerbang terbuka!', 1500, '#e3ffe6');
+      a.sfx('naik');
+      // blok saklar ada di dekat tuasnya dan terlihat berubah: tanpa pesan dan tanpa tengok kamera
+      const gt = S.g.L.gates.find((o) => o.c === e.c && o.r === e.r);
+      if (gt && blockGate(S.g.L, gt)) return;
+      say('Gerbang terbuka!', 1500, '#e3ffe6');
       // gerbang di luar layar: tengok sebentar supaya anak melihat apa yang dibuka tuas/tombolnya
       const vw = M.VW / SC, vh = viewH() / SC, gx = e.x + T / 2, gy = e.y + T;
       if (gx < S.cam.x || gx > S.cam.x + vw || gy < S.cam.y || gy > S.cam.y + vh) S.pan = { x: gx, y: gy, t: 2.2 };
@@ -155,10 +159,33 @@
   }
   // Gerbang: jeruji tebal berwarna kanal di dalam bingkai gelap. Saat terbuka jeruji naik masuk ke kepala gerbang
   // (animasi gt.anim 0..1), jadi anak melihat gerbang mana yang dibuka tuas/tombolnya.
+  // Blok saklar: gerbang terbalik, atau sel gerbang tunggal (tanpa sel gerbang sejenis di atas/bawahnya).
+  const blockGate = (L, o) => o.inv || !L.gates.some((q) => q !== o && q.c === o.c && Math.abs(q.r - o.r) === 1 && q.ch === o.ch && !q.inv === !o.inv);
   function drawGate(g, gt, L) {
     const x = gt.c * T, y = gt.r * T, col = CH_COL[gt.ch], dk = CH_DARK[gt.ch];
     gt.anim = gt.anim === undefined ? (gt.open ? 1 : 0) : gt.anim + ((gt.open ? 1 : 0) - gt.anim) * Math.min(1, M.dt * 4);
-    const k = gt.anim, top = !L.gates.some((o) => o.c === gt.c && o.r === gt.r - 1 && o.ch === gt.ch);
+    const k = gt.anim, same = (o) => o.c === gt.c && o.ch === gt.ch && !o.inv === !gt.inv;
+    const top = !L.gates.some((o) => same(o) && o.r === gt.r - 1);
+    // Blok saklar (gerbang terbalik, atau sel gerbang tunggal yang melayang): padat berwarna saat tertutup,
+    // garis putus-putus saat terbuka. Gerbang biasa setinggi 2 sel atau lebih: jeruji yang terangkat.
+    if (blockGate(L, gt)) {
+      g.save();
+      if (k < 0.99) {
+        g.globalAlpha = 1 - k;
+        M.box(g, x + 1, y + 1, T - 2, T - 2, col, { line: '#1d1438', shade: true });
+        g.fillStyle = dk; g.fillRect(x + 5, y + 5, T - 10, T - 10);
+        g.fillStyle = col; g.fillRect(x + 7, y + 7, T - 14, T - 14);
+        g.fillStyle = '#fff';
+        if (gt.inv) { g.beginPath(); g.moveTo(x + T / 2, y + 9); g.lineTo(x + T - 9, y + T / 2); g.lineTo(x + T / 2, y + T - 9); g.lineTo(x + 9, y + T / 2); g.fill(); }
+        else g.fillRect(x + 10, y + T / 2 - 2, T - 20, 4);
+      }
+      if (k > 0.01) {
+        g.globalAlpha = k * 0.8; g.strokeStyle = col; g.lineWidth = 2; g.setLineDash([4, 4]);
+        g.strokeRect(x + 3, y + 3, T - 6, T - 6);
+      }
+      g.restore();
+      return;
+    }
     g.fillStyle = 'rgba(29,20,56,0.35)'; g.fillRect(x, y, T, T);
     const h = Math.round(T * (1 - k));
     if (h > 0) {
@@ -171,6 +198,19 @@
     if (top) {
       M.box(g, x - 4, y - 8, T + 8, 10, '#3a3346', { line: '#1d1438', shade: false });
       g.fillStyle = col; g.fillRect(x + T / 2 - 5, y - 6, 10, 6);
+    }
+  }
+  // Duri: tiga paku perak tajam berujung merah di atas alas gelap, sedikit lebih tinggi dari kotak lukanya supaya
+  // terlihat jelas berbahaya.
+  function drawSpike(g, s) {
+    const by = s.y + s.h, ty = s.y - 6, w = s.w / 3;
+    g.fillStyle = '#2b1d52'; g.fillRect(s.x - 2, by - 5, s.w + 4, 5);
+    g.lineWidth = 2; g.strokeStyle = '#1d1438';
+    for (let i = 0; i < 3; i++) {
+      const x0 = s.x + i * w, mx = x0 + w / 2;
+      g.fillStyle = '#e8ecf5'; g.beginPath(); g.moveTo(x0, by - 4); g.lineTo(mx, ty); g.lineTo(x0 + w, by - 4); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = '#9aa0b8'; g.beginPath(); g.moveTo(mx, ty); g.lineTo(x0 + w, by - 4); g.lineTo(mx, by - 4); g.closePath(); g.fill();
+      g.fillStyle = '#ff3b5c'; g.beginPath(); g.moveTo(mx, ty); g.lineTo(mx + w * 0.22, ty + 8); g.lineTo(mx - w * 0.22, ty + 8); g.closePath(); g.fill();
     }
   }
   function drawSwitches(g, L) {
@@ -256,7 +296,7 @@
     drawSwitches(g, L);
     for (const b of gm.boxes) M.spr1(g, 'box1_idle', 0, b.x + b.w / 2, b.y + b.h, { scale: 1.36 });
     for (const s of L.saws) M.spr1(g, 'trap2', Math.floor(M.t * 14) % 7, s.cx, s.cy, { scale: 1, anchor: 'center' });
-    for (const s of L.spikes) { g.fillStyle = '#cfd3e6'; for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(s.x + i * 8.6, s.y + s.h); g.lineTo(s.x + i * 8.6 + 4.3, s.y); g.lineTo(s.x + i * 8.6 + 8.6, s.y + s.h); g.fill(); } }
+    for (const s of L.spikes) drawSpike(g, s);
     for (const c of L.checkpoints) { g.fillStyle = '#3a3346'; g.fillRect(c.x - 2, c.y - 46, 4, 46); g.fillStyle = c.got ? '#5fd068' : '#ff6b6b'; g.fillRect(c.x + 2, c.y - 46, 20, 14); }
     for (const ch of L.chests) {
       if (ch.got) continue;
@@ -374,7 +414,7 @@
     tangga: 'Tangga! Tekan ▲ untuk naik, ▼ untuk turun.', per: 'Per! Injak untuk melambung tinggi.', samping: 'Per samping! Lewati untuk melesat jauh.',
     pipa: 'Pipa! Masuk dari mulut hijau.', gerak: 'Papan bergerak! Tunggu, lalu lompat naik.', lift: 'Lift! Berdiri di atasnya untuk naik.',
     rapuh: 'Papan rapuh! Cepat lewat, nanti runtuh.', kotak: 'Kotak! Dorong ke tombol.', tombol: 'Tombol! Injak, atau taruh kotak di atasnya.',
-    tuas: 'Tuas! Berdiri di dekatnya, tekan B untuk menarik. Tekan B lagi untuk mengembalikan.', gerbang: 'Gerbang tertutup! Cari tuas atau tombol yang warnanya sama.', macet: 'Tombol macet! Injak, lalu jawab soalnya.', macetTuas: 'Tuas macet! Tekan B di dekatnya, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
+    tuas: 'Tuas! Berdiri di dekatnya, tekan B untuk menarik. Tekan B lagi untuk mengembalikan.', gerbang: 'Gerbang tertutup! Cari tuas atau tombol yang warnanya sama.', saklar: 'Blok saklar! Tarik tuas sewarna: blok padat hilang, blok garis putus-putus muncul.', macet: 'Tombol macet! Injak, lalu jawab soalnya.', macetTuas: 'Tuas macet! Tekan B di dekatnya, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
     e: 'Musuh! Injak kepalanya.', a: 'Musuh! Injak kepalanya.', r: 'Banteng! Bisa diinjak saat pusing, atau pakai B.',
     f: 'Lebah! Tidak bisa diinjak. Hindari atau pakai B.', n: 'Meriam! Lompati pelurunya, atau pakai B.', peti: 'Peti Kekuatan! Jawab soal, dapat kekuatan super.',
   };
@@ -393,7 +433,7 @@
     for (const o of L.plates) if (o.stuck) add('macet', o.x + o.w / 2, o.y - 30);
     for (const o of L.plates) if (!o.stuck) add('tombol', o.x + o.w / 2, o.y);
     for (const o of L.levers) if (!o.stuck) add('tuas', o.x + o.w / 2, o.y);
-    for (const o of L.gates) if (o.head === o) add('gerbang', o.c * T + T / 2, o.r * T - 8);
+    for (const o of L.gates) if (blockGate(L, o)) add('saklar', o.c * T + T / 2, o.r * T - 8); else if (o.head === o) add('gerbang', o.c * T + T / 2, o.r * T - 8);
     for (const o of L.saws) add('gergaji', o.cx, o.cy - 14);
     for (const k of L.cracks) add('retak', k.c * T + T / 2, k.r * T);
     for (const o of L.enemies) add(o.type || 'e', o.x + 14, o.y - 8);

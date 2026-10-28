@@ -22,6 +22,7 @@
     lift_naik: [{ go: 5.5 }, { lift: 1 }, { jump: 1 }],
     menara_lift_per: [{ go: 2.5 }, { lift: 1 }, { jump: 1 }],
     gerak_jurang: [{ go: 1.7 }, { mover: 1 }],
+    saklar_jembatan: [{ go: 0.3 }, { jump: 1 }, { go: 3.4 }, { jump: 1 }, { go: 6.4 }, { jump: 1 }, { go: 9.3 }],
   };
 
   function make() {

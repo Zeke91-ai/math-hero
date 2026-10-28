@@ -33,7 +33,7 @@
   // Musuh: kecepatan jalan dan apakah bisa diinjak (seperti MH1).
   const FOES = { e: { speed: 55, stomp: true }, a: { speed: 38, stomp: true }, r: { speed: 36, stomp: false }, f: { speed: 0, stomp: false }, n: { speed: 0, stomp: false } };
   const CHARGE = 250, BALL = 150, BALL_EVERY = 2.6;
-  const PLATE = '_,;', LEVER = 'tyu', GATE = '123', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
+  const PLATE = '_,;', LEVER = 'tyu', GATE = '123', GATE_INV = '456', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
 
   function parse(def) {
     const rows = def.map.length, cols = Math.max(...def.map.map((r) => r.length));
@@ -78,6 +78,8 @@
         else if (PLATE.includes(ch) || PLATE_Q.includes(ch)) L.plates.push({ x: x + 3, y: y + T - 6, w: T - 6, h: 6, ch: Math.max(PLATE.indexOf(ch), PLATE_Q.indexOf(ch)), down: false, stuck: PLATE_Q.includes(ch), id: L.plates.length });
         else if (LEVER.includes(ch) || LEVER_Q.includes(ch)) L.levers.push({ x: x + 4, y: y + 4, w: T - 8, h: T - 4, ch: Math.max(LEVER.indexOf(ch), LEVER_Q.indexOf(ch)), on: false, stuck: LEVER_Q.includes(ch), id: L.levers.length });
         else if (GATE.includes(ch)) { L.gates.push({ c, r, ch: GATE.indexOf(ch), open: false }); L.tiles[r * cols + c] = 1; }
+        // blok saklar terbalik: padat saat tuasnya menyala, hilang saat mati
+        else if (GATE_INV.includes(ch)) { L.gates.push({ c, r, ch: GATE_INV.indexOf(ch), inv: true, open: false }); L.tiles[r * cols + c] = 1; }
         else if (ch === 'o' || ch === 'O') L.saws.push({ cx: x + T / 2, cy: y + T / 2, x0: x + T / 2, move: ch === 'O', r: 13 });
       }
     });
@@ -101,7 +103,7 @@
         if (d < bd) { bd = d; best = sw; }
       }
       gt.link = best ? best.key : null;
-      const above = L.gates.find((o) => o.c === gt.c && o.r === gt.r - 1 && o.ch === gt.ch);
+      const above = L.gates.find((o) => o.c === gt.c && o.r === gt.r - 1 && o.ch === gt.ch && !o.inv === !gt.inv);
       gt.head = above ? above.head : gt;
     }
     if (!L.start) throw new Error('Level tanpa S');
@@ -115,7 +117,7 @@
     const L = parse(def);
     const g = {
       def, L, t: 0, phase: 'play', hearts: HEARTS, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
-      cp: { x: L.start.x, y: L.start.y }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
+      cp: { x: L.start.x, y: L.start.y, levers: L.levers.map(() => false) }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
       skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], balls: [], slam: 0, lunge: null, glide: false, throwT: 0, shield: null, nearLever: null,
       climb: false, boost: 0, dash: null, pipe: null, pipeCool: 0, ride: null, pushing: false, chans: [false, false, false],
       boxes: L.boxes.map((b) => ({ id: b.id, x0: b.x0, y0: b.y0, x: b.x0, y: b.y0, w: 30, h: 30, vx: 0, vy: 0, onGround: false })),
@@ -140,8 +142,8 @@
     g.hearts--; g.hurts++; g.invuln = INVULN; g.events.push({ type: 'hurt', why });
     if (g.hearts <= 0) {
       // Habis hati: ulang dari checkpoint terakhir dengan hati penuh. Level tidak pernah macet.
-      g.deaths++; g.hearts = HEARTS; place(g, g.cp); g.invuln = INVULN + 0.6; g.events.push({ type: 'respawn' });
-    } else if (why === 'jatuh') place(g, g.cp);
+      g.deaths++; g.hearts = HEARTS; respawn(g); g.invuln = INVULN + 0.6; g.events.push({ type: 'respawn' });
+    } else if (why === 'jatuh') respawn(g);
   }
 
   function grantPower(g, key) {
@@ -160,14 +162,15 @@
     return d;
   }
 
-  // Gerbang terbuka bila tuas/tombol yang terhubung dengannya menyala atau sedang ditekan. Gerbang tertutup = tile padat.
+  // Gerbang terbuka bila tuas/tombol yang terhubung dengannya menyala atau sedang ditekan; gerbang terbalik (inv)
+  // sebaliknya. Gerbang tertutup = tile padat.
   function updateGates(g, init) {
     const L = g.L, bodies = [g.p, ...g.boxes, ...g.enemies.filter((e) => !e.dead).map((e) => e.b)];
     const on = {};
     for (const l of L.levers) if (l.on) on[l.key] = true;
     for (const p of L.plates) if (p.down) on[p.key] = true;
     for (const gt of L.gates) {
-      const want = !!on[gt.link];
+      const want = !!on[gt.link] !== !!gt.inv;
       if (want === gt.open) continue;
       const cell = { x: gt.c * T, y: gt.r * T, w: T, h: T };
       // Gerbang tidak menutup di atas benda (anak atau kotak tidak pernah terjepit).
@@ -197,6 +200,11 @@
     const at = { ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y };
     if (lv.stuck) { g.events.push(Object.assign({ type: 'quiz', what: 'lever', id: lv.id }, at)); return; }
     lv.on = !lv.on; g.events.push(Object.assign({ type: 'lever', on: lv.on }, at));
+  }
+  // Kembali ke checkpoint: tuas kembali ke keadaan saat checkpoint diambil, jadi teka-teki saklar tidak pernah macet.
+  function respawn(g) {
+    place(g, g.cp);
+    if (g.cp.levers) { g.L.levers.forEach((l, i) => { l.on = g.cp.levers[i]; }); updateGates(g, false); }
   }
   function useSkill(g, input) {
     const p = g.p;
@@ -507,7 +515,7 @@
       const d = Math.hypot(s.x - pc.x, s.y - pc.y);
       if (d < 24 || (mag && d < mag)) { if (mag && d >= 24) { s.x += (pc.x - s.x) * Math.min(1, dt * 10); s.y += (pc.y - s.y) * Math.min(1, dt * 10); if (Math.hypot(s.x - pc.x, s.y - pc.y) > 24) continue; } s.got = true; g.stars++; g.events.push({ type: 'star', x: s.x, y: s.y }); }
     }
-    for (const c of L.checkpoints) if (!c.got && Math.abs(c.x - pc.x) < 28 && Math.abs(c.y - (p.y + p.h)) < 70) { c.got = true; g.cp = { x: c.x, y: c.y }; g.events.push({ type: 'checkpoint', x: c.x, y: c.y }); }
+    for (const c of L.checkpoints) if (!c.got && Math.abs(c.x - pc.x) < 28 && Math.abs(c.y - (p.y + p.h)) < 70) { c.got = true; g.cp = { x: c.x, y: c.y, levers: L.levers.map((l) => l.on) }; g.events.push({ type: 'checkpoint', x: c.x, y: c.y }); }
     for (const ch of L.chests) {
       const on = overlap(p, ch);
       if (!on) ch.skip = false; // peti yang ditunda terbuka lagi setelah hero menjauh

@@ -12,8 +12,8 @@
   if (typeof module === 'object' && module.exports) module.exports = factory(require('./levelgen.chunks.js'));
   else ((root.MHKit = root.MHKit || {}).levelgen = factory(root.MHKit.levelChunks));
 })(typeof self !== 'undefined' ? self : this, function (Lib) {
-  const SOLID = '#=x123';
-  const GATE = '123', LEVER = 'tyu', PLATE = '_,;', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
+  const SOLID = '#=x123456';
+  const GATE = '123', GATE_INV = '456', LEVER = 'tyu', PLATE = '_,;', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
   const VERT = [0.15, 0.3, 0.45, 0.6];      // porsi ruang naik/turun per tier
   const UP = [0.6, 0.6, 0.6, 0.8];          // dari ruang vertikal, porsi yang naik
 
@@ -222,10 +222,10 @@
     };
   }
 
-  // Ruang dengan gerbang/tuas/tombol memakai kanal 1; ganti ke kanal k (0..2).
+  // Ruang dengan gerbang/tuas/tombol memakai kanal 1 (blok saklar terbalik: 4); ganti ke kanal k (0..2).
   function remapChannel(rows, k) {
-    if (!rows.some((r) => /[1t_]/.test(r))) return rows;
-    return rows.map((r) => r.replace(/[1t_]/g, (ch) => ({ 1: GATE[k], t: LEVER[k], _: PLATE[k] })[ch]));
+    if (!rows.some((r) => /[14t_]/.test(r))) return rows;
+    return rows.map((r) => r.replace(/[14t_]/g, (ch) => ({ 1: GATE[k], 4: GATE_INV[k], t: LEVER[k], _: PLATE[k] })[ch]));
   }
 
   // Coba seed mulai dari o.seed sampai check(def) lulus. check menerima hasil generate dan mengembalikan true/false.

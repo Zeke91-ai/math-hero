@@ -159,6 +159,17 @@ const toLever = (g) => run(g, 2, (g) => ({ dir: g.nearLever ? 0 : 1 }));
   assert.strictEqual(g.phase, 'won', 'tuas dinyalakan lagi, jalan terbuka');
   console.log('ok: tuas ditarik dengan B dan bisa dibolak-balik');
 }
+// Blok saklar terbalik (4/5/6): padat saat tuasnya menyala, hilang saat mati. Kembali ke checkpoint mengembalikan tuas.
+{
+  const g = mk(pad(['', '', '', '', '', '', '', '', '', '.S.t..4...E.', '############']));
+  const blk = g.L.gates[0], lv = g.L.levers[0];
+  assert.ok(blk.inv && blk.open, 'blok terbalik terbuka selama tuas mati');
+  toLever(g); press(g); assert.ok(lv.on && !blk.open, 'tuas menyala: blok terbalik padat');
+  press(g); assert.ok(!lv.on && blk.open, 'tuas mati lagi: blok hilang');
+  press(g); g.invuln = 0; Sim.hurt(g, 'jatuh');
+  assert.ok(!lv.on && blk.open, 'kembali ke checkpoint: tuas seperti saat checkpoint diambil');
+  console.log('ok: blok saklar terbalik dan checkpoint mengingat tuas');
+}
 // Tiap gerbang terhubung ke tuas/tombol sewarna terdekat: tuas teka-teki sebelumnya tidak membuka gerbang berikutnya.
 {
   const g = mk(['', '', '', '', '', '', '', '', '', '.S.t..1.......1.t.E.', '####################']);
