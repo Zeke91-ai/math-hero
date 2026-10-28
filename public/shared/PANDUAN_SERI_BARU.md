@@ -15,7 +15,7 @@ Perintah itu membuat `public/mh4/` berisi:
 | --- | --- | --- |
 | `index.html` | `shared/template/index.html` | memuat kit (mesin, audio, bank soal, kredit, kertas coret) |
 | `js/scenes.js` | `shared/template/js/scenes.js` | judul, lima soal dari bank soal, hasil. Ini yang kamu ganti |
-| `js/gfx.js`, `assets/` | disalin dari MH3 | grafis seri (atlas sprite, pahlawan, latar). Per seri, belum jadi kit |
+| `js/gfx.js`, `assets/` | disalin dari MH3 | konfigurasi grafis seri (pahlawan dan syarat bintang, hiasan, latar) untuk mesin `shared/js/gfx.js`, plus atlas sprite seri |
 
 Folder yang sudah ada tidak pernah ditimpa. Tambahkan kartu seri di `public/index.html` setelah game-nya layak.
 
@@ -55,4 +55,4 @@ Tambahkan tes seri barumu ke skrip `test` (logika) dan `test:ui` (tampilan) di `
 
 ## 6. Yang belum jadi kit
 
-`gfx.js` dan atlas sprite (per seri), `save.js` dan skema progres (MH2 dan MH3 berbeda; progres anak di HP butuh tes migrasi sebelum disatukan), serta pemutar dialog cerita. Seri baru boleh menulis versinya sendiri untuk bagian itu.
+Atlas sprite (per seri) dan aturan progres (MH2 dan MH3 berbeda; progres seri ada di `progress.js` seri itu). Sisanya sudah kit: `shared/js/save.js` (penyimpanan berversi, cadangan, filter nama; seri memberi `key`, `version`, `newPlayer`, `normPlayer`, `migrations`), `shared/js/gfx.js` (seri memberi pahlawan, hiasan, latar), `shared/js/scenes.js` (slot, nama, pilih pahlawan, pemutar dialog cerita, kredit; seri memberi `slotInfo`, `opening`, `cast`, `credits`). Mengubah bentuk data simpanan? Naikkan `version`, tambah `migrations[versiLama]`, dan tambahkan kasusnya di `tests/save_migrasi.test.js`.

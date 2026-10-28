@@ -4,8 +4,55 @@
   const M = window.MH2;
   const S = M.save;
 
-  function heroKey() { return S.active ? S.active.hero : 'pinki'; }
-  function backBtn(g, onTap) { M.button(g, { id: 'kembali', x: 8, y: 8, w: 44, h: 38, color: 'purple', icon: 'left', onTap }); }
+  // Slot, isi nama, pilih pahlawan, cerita, dan kredit ada di shared/js/scenes.js; di sini hanya isi khas MH2.
+  const OPENING = [
+    { who: 'peri', text: 'Halo, Pahlawan! Aku Peri Angka.' },
+    { who: 'prof', text: 'Muahaha! Aku Profesor Kacau! Kristal Bilangan sudah kupecahkan!' },
+    { who: 'peri', text: 'Gawat! Tanpa Kristal Bilangan, angka di enam dunia jadi kacau.' },
+    { who: 'peri', text: 'Untuk memperbaikinya, kita harus PAHAM cara kerja angka, bukan cuma menebak.' },
+    { who: 'peri', text: 'Ayo kumpulkan lagi enam pecahan kristalnya!' },
+  ];
+  M.OPENING = OPENING;
+  const ENDING = [
+    { who: 'prof', text: 'Tidak mungkin... semua kristal kembali utuh!' },
+    { who: 'peri', text: 'Kristal Bilangan bersinar lagi! Angka-angka kembali rapi.' },
+    { who: 'prof', text: 'Hmm... ternyata angka lebih seru kalau dipahami. Boleh aku ikut belajar?' },
+    { who: 'peri', text: 'Tentu! Terima kasih, Pahlawan. Kamu benar-benar Math Hero!' },
+  ];
+  window.MHKit.scenes.install(M, {
+    ui: { backH: 38, skipH: 32, closeH: 34, del: (x, y, w) => ({ x: x + w - 40, y: y + 8, w: 32, h: 30 }), counter: { x: M.VW - 36, y: 24 } },
+    slotInfo(g, p, x, y, w, h, txt) {
+      const st = S.totalStars(p);
+      M.art(g, 'bintang', x + 104, y + 56, 2);
+      txt(g, `${st} / 90`, x + 132, y + 67, { size: 16 });
+      const crys = M.STAGES.filter((s) => (p.stars[`${s.id}-5`] || 0) > 0).length;
+      for (let k = 0; k < 6; k++) { g.globalAlpha = k < crys ? 1 : 0.25; M.art(g, 'kristal', x + 104 + k * 26, y + 84, 1.6); }
+      g.globalAlpha = 1;
+    },
+    opening: () => ({ lines: OPENING, next: ['map', { stage: 1 }], seen: 'pembuka' }),
+    mapParams: {},
+    cast(line) {
+      const bg = line.who === 'prof' || line.who === 'bos' ? 'benteng' : 'langit';
+      let draw;
+      if (line.who === 'peri') draw = (g, cx, cy) => M.art(g, 'peri', cx, cy + Math.sin(M.t * 3) * 6, 9, { anchor: 'feet' });
+      else if (line.who === 'prof') draw = (g, cx, cy) => M.drawBoss(g, 'prof', cx, cy, 8, M.t);
+      else if (line.who === 'bos') draw = (g, cx, cy) => M.drawBoss(g, line.bos.sprite, cx, cy, line.bos.sprite === 'prof' ? 8 : 5, M.t);
+      else draw = (g, cx, cy) => M.hero(g, M.ui.heroKey(), 'idle', M.t, cx, cy, { scale: 5 });
+      const who = line.who === 'peri' ? 'Peri Angka' : line.who === 'prof' ? 'Profesor Kacau' : line.who === 'bos' ? line.bos.nama : (S.active ? S.active.nama : '');
+      return { bg, who, fill: line.who === 'peri' ? '#7b4bd6' : '#ff5d73', draw };
+    },
+    credits: [
+      { head: 'MATH HERO 2', lines: ['Misi Kristal Bilangan'] },
+      { lines: ['Seri Math Hero', 'game belajar matematika', 'untuk anak SD'] },
+      { head: 'SPRITE', lines: ['CraftPix.net (lisensi gratis)', 'Tiny Hero Sprites', 'Top-Down Hunt Animals', 'Slime Mobs', 'Roguelike Shoot Em Up Kit', 'Simple Platformer Game Kit'] },
+      { head: 'IKON BUAH', lines: ['SVG Repo'] },
+      'font',
+      { head: 'PIXEL ART TAMBAHAN', lines: ['Peri, Profesor, kristal, pizza,', 'koin, timbangan: dibuat untuk game ini'] },
+      'musik',
+      'animasi',
+    ],
+  });
+  const { heroKey, backBtn } = M.ui;
   function crystalsDone() { return M.STAGES.map((st) => S.starsOf(`${st.id}-5`) > 0); }
 
   // ---------- Papan Juara ----------
@@ -55,111 +102,6 @@
       const on = M.audio.prefs.music;
       M.drawToast(g, 250);
       M.button(g, { id: 'suara', x: VW - 140, y: 10, w: 42, h: 34, color: on ? 'purple' : 'gray', icon: on ? 'sound' : 'mute', onTap: () => { M.audio.setMusicOn(!on); M.audio.setSfxOn(!on); } });
-    },
-  });
-
-  // ---------- Slot pemain ----------
-  M.register('slots', {
-    enter() { M.audio.music('title'); this.confirm = -1; },
-    update() { if (M.input.pause) M.go('title'); },
-    draw(g) {
-      const VW = M.VW;
-      M.drawBg(g, 'langit', M.t * 15, 0);
-      backBtn(g, () => M.go('title'));
-      M.text(g, 'Pilih Petualang', VW / 2, 70, { size: 28, align: 'center', color: '#ffd54a', ow: 6 });
-      S.slots().forEach((p, i) => {
-        const y = 110 + i * 150, x = 20, w = VW - 40, h = 134;
-        if (p) {
-          M.button(g, { id: 'slot' + i, x, y, w, h, color: 'white', label: '', onTap: () => {
-            S.use(i);
-            if (!S.seen('pembuka')) { M.go('story', { lines: OPENING, next: ['map', { stage: 1 }], seen: 'pembuka' }); } else M.go('map', {});
-          } });
-          M.hero(g, p.hero, 'idle', M.t, x + 52, y + 104, { scale: 2.6 });
-          M.text(g, p.nama, x + 104, y + 34, { size: 28, color: '#2b1d52', outline: false });
-          const st = S.totalStars(p);
-          M.art(g, 'bintang', x + 104, y + 56, 2);
-          M.text(g, `${st} / 90`, x + 132, y + 67, { size: 16, color: '#2b1d52', outline: false });
-          const crys = M.STAGES.filter((s) => (p.stars[`${s.id}-5`] || 0) > 0).length;
-          for (let k = 0; k < 6; k++) { g.globalAlpha = k < crys ? 1 : 0.25; M.art(g, 'kristal', x + 104 + k * 26, y + 84, 1.6); }
-          g.globalAlpha = 1;
-          if (this.confirm === i) {
-            M.box(g, x + 4, y + 4, w - 8, h - 8, '#ffe1e6', { line: '#c9414a' });
-            M.text(g, `Hapus ${p.nama}?`, x + w / 2, y + 36, { size: 20, align: 'center', color: '#c9414a', outline: false });
-            M.button(g, { id: 'ya' + i, x: x + 30, y: y + 66, w: 110, h: 44, label: 'Hapus', color: 'red', onTap: () => { S.remove(i); this.confirm = -1; } });
-            M.button(g, { id: 'tidak' + i, x: x + w - 140, y: y + 66, w: 110, h: 44, label: 'Batal', color: 'gray', onTap: () => { this.confirm = -1; } });
-          } else M.button(g, { id: 'hapus' + i, x: x + w - 40, y: y + 8, w: 32, h: 30, color: 'red', icon: 'cross', onTap: () => { this.confirm = i; } });
-        } else {
-          M.button(g, { id: 'baru' + i, x, y, w, h, color: 'purple', label: '+ Petualang Baru', size: 22, onTap: () => M.go('name', { slot: i }) });
-        }
-      });
-      M.text(g, 'Progres tersimpan di HP ini.', VW / 2, M.VH - 24, { size: 13, align: 'center', color: '#fff' });
-    },
-  });
-
-  // ---------- Isi nama ----------
-  M.register('name', {
-    enter(p) { this.slot = p.slot; this.typed = ''; this.err = ''; this.keyH = (e) => this.key(e); window.addEventListener('keydown', this.keyH); },
-    exit() { window.removeEventListener('keydown', this.keyH); },
-    key(e) {
-      if (/^[a-zA-Z]$/.test(e.key)) this.add(e.key.toUpperCase());
-      else if (e.key === 'Backspace') this.typed = this.typed.slice(0, -1);
-      else if (e.key === 'Enter') this.ok();
-    },
-    add(ch) { if (this.typed.length < 6) { this.typed += ch; this.err = ''; M.sfx('klik'); } },
-    ok() {
-      const err = S.checkName(this.typed);
-      if (err) { this.err = err; M.sfx('salah'); return; }
-      S.create(this.slot, this.typed);
-      M.go('heroes', { first: true });
-    },
-    draw(g) {
-      const VW = M.VW;
-      M.drawBg(g, 'langit', M.t * 15, 0);
-      backBtn(g, () => M.go('slots'));
-      M.text(g, 'Siapa namamu?', VW / 2, 74, { size: 28, align: 'center', color: '#ffd54a', ow: 6 });
-      for (let i = 0; i < 6; i++) {
-        const x = VW / 2 - 3 * 46 + i * 46;
-        M.box(g, x, 104, 40, 50, i === this.typed.length && Math.floor(M.t * 2) % 2 ? '#ffe1e6' : '#fff6dc', { line: '#2b1d52' });
-        M.text(g, this.typed[i] || '', x + 20, 130, { size: 30, align: 'center', color: '#2b1d52', outline: false });
-      }
-      const cols = 7, kw = (VW - 30) / cols;
-      for (let c = 0; c < 26; c++) {
-        const ch = String.fromCharCode(65 + c);
-        M.button(g, { id: 'k' + ch, x: 15 + (c % cols) * kw + 2, y: 178 + Math.floor(c / cols) * 56, w: kw - 4, h: 48, label: ch, color: 'blue', size: 22, sfx: 'pop', onTap: () => this.add(ch) });
-      }
-      const by = 178 + 4 * 56 + 10;
-      M.button(g, { id: 'hapus', x: 15, y: by, w: (VW - 40) / 2, h: 52, label: 'Hapus', color: 'orange', onTap: () => { this.typed = this.typed.slice(0, -1); } });
-      M.button(g, { id: 'lanjut', x: VW / 2 + 5, y: by, w: (VW - 40) / 2, h: 52, label: 'Lanjut', color: 'green', disabled: !this.typed, onTap: () => this.ok() });
-      if (this.err) M.text(g, this.err, VW / 2, by + 84, { size: 15, align: 'center', color: '#fff3c4', maxW: VW - 40 });
-    },
-  });
-
-  // ---------- Pilih pahlawan ----------
-  M.register('heroes', {
-    enter(p) { this.first = p.first; this.msg = ''; },
-    draw(g) {
-      const VW = M.VW;
-      M.drawBg(g, 'langit', M.t * 15, 0);
-      if (!this.first) backBtn(g, () => M.go('map', {}));
-      M.text(g, 'Pilih Pahlawanmu!', VW / 2, 74, { size: 28, align: 'center', color: '#ffd54a', ow: 6 });
-      const total = S.totalStars();
-      M.HEROES.forEach((h, i) => {
-        const cw = (VW - 40) / 2, ch = 150, x = 15 + (i % 2) * (cw + 10), y = 104 + Math.floor(i / 2) * (ch + 10);
-        const open = S.heroUnlocked(h), chosen = S.active && S.active.hero === h.key;
-        M.button(g, { id: 'h' + h.key, x, y, w: cw, h: ch, color: chosen ? 'yellow' : 'white', label: '', onTap: () => {
-          if (!open) { this.msg = `${h.nama} terbuka setelah ${h.need} bintang. Kamu punya ${total}.`; M.sfx('salah'); return; }
-          S.setHero(h.key); M.sfx('benar');
-          if (this.first) M.go('story', { lines: OPENING, next: ['map', { stage: 1 }], seen: 'pembuka' }); else M.go('map', {});
-        } });
-        if (open) M.hero(g, h.key, chosen ? 'run' : 'idle', M.t + i, x + cw / 2, y + 92, { scale: 2.6 });
-        else {
-          g.globalAlpha = 0.35; M.hero(g, h.key, 'idle', 0, x + cw / 2, y + 92, { scale: 2.6 }); g.globalAlpha = 1;
-          M.icon(g, 'lock', x + cw / 2 - 14, y + 40, 28, '#2b1d52');
-        }
-        M.text(g, h.nama, x + cw / 2, y + 112, { size: 17, align: 'center', color: '#2b1d52', outline: false });
-        M.text(g, open ? h.desc : `Butuh ${h.need} bintang`, x + cw / 2, y + 132, { size: 12, align: 'center', color: '#6b4fa8', outline: false });
-      });
-      if (this.msg) M.text(g, this.msg, VW / 2, 104 + 3 * 160 + 16, { size: 14, align: 'center', color: '#fff3c4', maxW: VW - 30 });
     },
   });
 
@@ -345,58 +287,6 @@
     },
   });
 
-  // ---------- Cerita (dialog) ----------
-  const OPENING = [
-    { who: 'peri', text: 'Halo, Pahlawan! Aku Peri Angka.' },
-    { who: 'prof', text: 'Muahaha! Aku Profesor Kacau! Kristal Bilangan sudah kupecahkan!' },
-    { who: 'peri', text: 'Gawat! Tanpa Kristal Bilangan, angka di enam dunia jadi kacau.' },
-    { who: 'peri', text: 'Untuk memperbaikinya, kita harus PAHAM cara kerja angka, bukan cuma menebak.' },
-    { who: 'peri', text: 'Ayo kumpulkan lagi enam pecahan kristalnya!' },
-  ];
-  M.OPENING = OPENING;
-  const ENDING = [
-    { who: 'prof', text: 'Tidak mungkin... semua kristal kembali utuh!' },
-    { who: 'peri', text: 'Kristal Bilangan bersinar lagi! Angka-angka kembali rapi.' },
-    { who: 'prof', text: 'Hmm... ternyata angka lebih seru kalau dipahami. Boleh aku ikut belajar?' },
-    { who: 'peri', text: 'Tentu! Terima kasih, Pahlawan. Kamu benar-benar Math Hero!' },
-  ];
-  M.register('story', {
-    enter(p) { this.lines = p.lines; this.i = 0; this.t = 0; this.next = p.next; this.seenKey = p.seen; M.audio.music(p.musik || 'peta'); },
-    advance() {
-      const line = this.lines[this.i];
-      const full = this.t * 40 >= line.text.length;
-      if (!full) { this.t = 999; return; }
-      M.sfx('kartu');
-      this.i++; this.t = 0;
-      if (this.i >= this.lines.length) {
-        if (this.seenKey) S.markSeen(this.seenKey);
-        M.go(this.next[0], this.next[1]);
-      }
-    },
-    update(dt) { this.t += dt; if (M.input.bHit || M.input.aHit) this.advance(); },
-    tap() { this.advance(); },
-    draw(g) {
-      const VW = M.VW, VH = M.VH;
-      const line = this.lines[Math.min(this.i, this.lines.length - 1)];
-      const st = line.bos ? null : null;
-      M.drawBg(g, line.who === 'prof' || line.who === 'bos' ? 'benteng' : 'langit', M.t * 10, 0);
-      // Tokoh besar di tengah.
-      const cx = VW / 2, cy = VH * 0.55;
-      if (line.who === 'peri') { M.art(g, 'peri', cx, cy + Math.sin(M.t * 3) * 6, 9, { anchor: 'feet' }); }
-      else if (line.who === 'prof') M.drawBoss(g, 'prof', cx, cy, 8, M.t);
-      else if (line.who === 'bos') M.drawBoss(g, line.bos.sprite, cx, cy, line.bos.sprite === 'prof' ? 8 : 5, M.t);
-      else M.hero(g, heroKey(), 'idle', M.t, cx, cy, { scale: 5 });
-      const who = line.who === 'peri' ? 'Peri Angka' : line.who === 'prof' ? 'Profesor Kacau' : line.who === 'bos' ? line.bos.nama : (S.active ? S.active.nama : '');
-      const h = 150, y = VH - h - 20;
-      M.panel(g, 12, y, VW - 24, h, { title: who, titleFill: line.who === 'peri' ? '#7b4bd6' : '#ff5d73' });
-      const shown = line.text.slice(0, Math.floor(this.t * 40));
-      M.text(g, shown, 30, y + 30, { size: 18, color: '#2b1d52', outline: false, maxW: VW - 60, base: 'top', lh: 24 });
-      if (this.t * 40 >= line.text.length && Math.floor(M.t * 3) % 2) M.icon(g, 'down', VW - 52, y + h - 34, 20, '#7b4bd6');
-      M.text(g, `${this.i + 1}/${this.lines.length}`, VW - 36, 24, { size: 12, align: 'right' });
-      M.button(g, { id: 'lewati', x: 10, y: 10, w: 84, h: 32, label: 'Lewati', size: 13, color: 'purple', onTap: () => { if (this.seenKey) S.markSeen(this.seenKey); M.go(this.next[0], this.next[1]); } });
-    },
-  });
-
   // ---------- Hasil level ----------
   M.register('result', {
     enter(p) {
@@ -454,38 +344,6 @@
       M.button(g, { id: 'ulang', x: x + 16, y: by, w: 92, h: 46, label: 'Ulang', color: 'orange', onTap: () => M.go('play', { level: L }) });
       M.button(g, { id: 'peta', x: x + 116, y: by, w: 80, h: 46, label: 'Peta', color: 'blue', onTap: () => M.go('map', { stage: L.stage }) });
       M.button(g, { id: 'lanjut', x: x + w - 128, y: by, w: 112, h: 46, label: 'Lanjut', color: 'green', onTap: () => this.next() });
-    },
-  });
-
-  // ---------- Kredit ----------
-  const CREDITS = MathHeroCredits.lines([
-    { head: 'MATH HERO 2', lines: ['Misi Kristal Bilangan'] },
-    { lines: ['Seri Math Hero', 'game belajar matematika', 'untuk anak SD'] },
-    { head: 'SPRITE', lines: ['CraftPix.net (lisensi gratis)', 'Tiny Hero Sprites', 'Top-Down Hunt Animals', 'Slime Mobs', 'Roguelike Shoot Em Up Kit', 'Simple Platformer Game Kit'] },
-    { head: 'IKON BUAH', lines: ['SVG Repo'] },
-    'font',
-    { head: 'PIXEL ART TAMBAHAN', lines: ['Peri, Profesor, kristal, pizza,', 'koin, timbangan: dibuat untuk game ini'] },
-    'musik',
-    'animasi',
-  ]);
-  M.register('credits', {
-    enter(p) { this.t = 0; this.ending = p.ending; M.audio.music('title'); },
-    update(dt) { this.t += dt; if (M.input.bHit) M.go(this.ending ? 'map' : 'title', {}); },
-    tap() { if (this.t > 1) M.go(this.ending ? 'map' : 'title', {}); },
-    draw(g) {
-      const VW = M.VW, VH = M.VH;
-      M.drawBg(g, 'angkasa', 0, this.t * 30, { vertical: true });
-      const y0 = VH - this.t * 40;
-      CREDITS.forEach((l, i) => {
-        const y = y0 + i * 30;
-        if (y < -20 || y > VH + 20) return;
-        const head = l === l.toUpperCase() && l.length > 0;
-        M.text(g, l, VW / 2, y, { size: head ? 22 : 16, align: 'center', color: head ? '#ffd54a' : '#fff' });
-      });
-      if (y0 + CREDITS.length * 30 < 0) this.t = 0;
-      g.fillStyle = '#1d1438'; g.fillRect(0, VH - 70, VW, 70);
-      ['pinki', 'owi', 'dudu', 'hero1', 'hero2', 'hero3'].forEach((k, i) => M.hero(g, k, 'run', M.t + i, 40 + i * 56, VH - 16, { scale: 1.6 }));
-      M.button(g, { id: 'tutup', x: VW - 92, y: 10, w: 82, h: 34, label: 'Tutup', size: 14, color: 'purple', onTap: () => M.go(this.ending ? 'map' : 'title', {}) });
     },
   });
 
