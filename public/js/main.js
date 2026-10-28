@@ -672,6 +672,13 @@
     }
   }
 
+  // Kertas coret-coret menjeda permainan selama terbuka, lalu melanjutkan bila tadinya tidak dijeda.
+  let padPaused = false;
+  window.Scratchpad.init({
+    onOpen() { if (!game.inMenu && !state.paused) { window.Input.pausePressed = true; padPaused = true; } },
+    onClose() { if (padPaused) { padPaused = false; if (state.paused) window.Input.pausePressed = true; } },
+  });
+
   function handlePause() {
     if (window.Input.pausePressed) {
       window.Input.pausePressed = false;

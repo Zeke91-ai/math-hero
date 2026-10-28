@@ -229,6 +229,11 @@ Aturan Firestore hanya mengizinkan membaca dan **menambah** skor yang bentuknya 
 
 # Umum
 
+## Kertas coret-coret dan kredit (semua seri)
+
+- `public/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3: tombol kuning "Coret" di tengah atas membuka kertas bergaris untuk menulis hitungan dengan jari atau mouse. Game dijeda selama kertas terbuka; coretan tersimpan sampai ditekan Hapus.
+- Setiap seri punya credit roll yang ditutup dengan "an edu-game by Hilmi Fuadi" dan hilmifuadi@gmail.com.
+
 ## Lisensi dan atribusi
 
 Kode game memakai lisensi MIT (lihat `LICENSE`). Aset pihak ketiga (sprite CraftPix, font, ikon SVG) memiliki lisensinya sendiri dan tidak tercakup MIT; rincian di `public/assets/svg/CREDITS.md`. Paket sumber asli CraftPix tidak disertakan di repositori ini (lisensinya tidak mengizinkan menyebarkan file aslinya); hanya sprite olahan di `public/assets/game` (Math Hero 1) dan atlas olahan `public/mh2/assets/sprites.png` (Math Hero 2) yang dipakai game.
