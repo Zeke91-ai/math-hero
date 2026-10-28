@@ -176,7 +176,7 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 ## Struktur
 
 - `public/mh3/index.html`: halaman dan urutan skrip.
-- `js/core.js`: layar logis 360 lebar, loop, input, tombol, partikel (`M.fx`), kilatan (`M.flash`), dan `M.motion` untuk kurangi gerakan.
+- `shared/js/core.js`: layar logis 360 lebar, loop, input, tombol, partikel (`M.fx`), kilatan (`M.flash`), dan `M.motion` untuk kurangi gerakan.
 - `js/audio.js`: musik dan efek suara.
 - `js/progress.js`: dunia, daftar 20 level, kelas, dan fungsi murni untuk profil pemain. `js/save.js` menyimpan profil di localStorage.
 - `js/homework.js` dan `js/homework_ui.js`: pembuat soal PR kelas 2-5 (murni logika) dan kartu PR.
@@ -260,7 +260,7 @@ Struktur singkat:
 - `tests/`: tes otomatis.
 
 Math Hero 2 (`public/mh2/`):
-- `js/core.js`: layar logis 360 x tinggi-mengikuti-HP, loop, adegan, input (sentuh, joystick, keyboard), tombol pixel yang digambar di canvas, partikel, pesan.
+- `shared/js/core.js` (bersama MH3; MH3 menambah overlay, kilatan, reduce motion): layar logis 360 x tinggi-mengikuti-HP, loop, adegan, input (sentuh, joystick, keyboard), tombol pixel yang digambar di canvas, partikel, pesan.
 - `js/gfx.js`: pemuat atlas, sprite Math Hero 1 yang dipakai ulang, pixel art buatan sendiri, latar parallax tiap dunia, gambar bos.
 - `shared/js/audio.js` (bersama MH3): musik chiptune per dunia dan bos, efek suara (Web Audio).
 - `js/save.js`: tiga slot pemain di localStorage.

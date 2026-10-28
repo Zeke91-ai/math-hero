@@ -8,6 +8,7 @@ Folder ini dipakai bersama oleh Math Hero 1, 2, dan 3. Isinya hanya hal yang mem
 - `js/credits.js`: data kredit bersama dan helper (`window.MathHeroCredits`).
 - `js/audio.js`: musik chiptune dan efek suara Web Audio (memasang diri ke `window.MH2`, yang juga dipakai core MH3), dipakai MH2 dan MH3. MH1 masih memakai `public/js/audio.js` sendiri (isinya berbeda).
 - `js/concepts.js`: semua pembuat soal dan penjelasan konsep (murni logika, diuji di Node), dipakai MH2 dan MH3.
+- `js/core.js`: inti mesin MH2/MH3 (loop, adegan, input, tombol canvas, partikel, `M.overlay`, `M.flash`, `M.motion`). Versi MH3, yang superset versi MH2 lama; di MH2 fitur tambahan tidak aktif karena tidak dipanggil.
 - `css/mh-ui.css`: gaya antarmuka bersama MH2 dan MH3 (dulu `mh2/css/mh2.css`).
 - `vendor/gsap/`: GSAP 3.15.0 (`gsap.min.js`, `Draggable.min.js`) dari paket npm resmi, disalin apa adanya, lisensi di `LICENSE.txt` (Standard "no charge"). Di-vendor lokal karena game dimainkan lewat LAN atau offline, bukan CDN.
 
