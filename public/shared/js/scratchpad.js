@@ -1,7 +1,7 @@
 // Kertas coret-coret untuk menghitung, dipakai bersama oleh Math Hero 1, 2, dan 3.
 // Tombol pulau bulat (✎) melayang dan bisa diseret; meluncur menempel ke tepi kiri/kanan saat dilepas.
-// Ketukan membuka lembar bawah (bottom sheet) setinggi ~58% layar, jadi soal di atas tetap terlihat.
-// Tombol "Lihat soal" di gagang lembar menciutkan lembar jadi strip tipis. Coretan tersimpan sampai Hapus/clear().
+// Ketukan membuka lembar bawah (bottom sheet) setinggi ~80% layar (lebar sampai 820px di layar besar) supaya luas untuk menghitung.
+// Tombol "Kecilkan" di gagang lembar menciutkan lembar jadi strip tipis agar soal terlihat; "Perbesar" atau ketukan pada strip membukanya lagi. Coretan tersimpan sampai Hapus/clear().
 //
 // Tombol hanya ada saat game memanggil Scratchpad.setAvailable(true), yaitu ketika anak sedang mengerjakan
 // soal yang menghentikan waktu. Kertas TIDAK menjeda game. Animasi memakai GSAP + Draggable (shared/vendor/gsap);
@@ -32,7 +32,7 @@
     s.textContent = [
       '#scratch-btn{position:fixed;left:0;top:0;z-index:60;display:none;align-items:center;justify-content:center;width:56px;height:56px;padding:0;border:3px solid #2b1d52;border-radius:50%;background:#ffd54a;color:#2b1d52;font:700 26px/1 system-ui,sans-serif;box-shadow:0 3px 0 #2b1d52,0 6px 12px rgba(0,0,0,.25);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}',
       '#scratch-btn:active{cursor:grabbing}',
-      '#scratch{position:fixed;left:0;right:0;bottom:0;margin:0 auto;z-index:1000;display:none;flex-direction:column;width:min(100%,560px);height:min(58vh,560px);height:min(58dvh,560px);box-sizing:border-box;background:#fffdf2;border:4px solid #2b1d52;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(20,10,45,.35);font-family:system-ui,sans-serif;color:#2b1d52}',
+      '#scratch{position:fixed;left:0;right:0;bottom:0;margin:0 auto;z-index:1000;display:none;flex-direction:column;width:min(100%,820px);height:min(80vh,900px);height:min(80dvh,900px);box-sizing:border-box;background:#fffdf2;border:4px solid #2b1d52;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 18px rgba(20,10,45,.35);font-family:system-ui,sans-serif;color:#2b1d52}',
       '#scratch.open{display:flex}',
       '#scratch .head{flex:0 0 ' + (STRIP - 4) + 'px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 10px 0 14px;box-sizing:border-box}',
       '#scratch .head span{font-weight:700;font-size:16px}',
@@ -151,7 +151,7 @@
   }
   function setCollapsed(c, instant) {
     collapsed = c;
-    toggleBtn.textContent = c ? 'Buka kertas' : 'Lihat soal';
+    toggleBtn.textContent = c ? 'Perbesar' : 'Kecilkan';
     toggleBtn.setAttribute('aria-expanded', c ? 'false' : 'true');
     sheetTo(c ? collapsedY() : 0, instant ? 0 : 0.25, 'power2.inOut');
   }
@@ -159,7 +159,7 @@
   function open() {
     if (opened || !avail) return;
     opened = true; collapsed = false;
-    toggleBtn.textContent = 'Lihat soal'; toggleBtn.setAttribute('aria-expanded', 'true');
+    toggleBtn.textContent = 'Kecilkan'; toggleBtn.setAttribute('aria-expanded', 'true');
     root.classList.add('open'); document.body.classList.add('scratch-open');
     size();
     const gsap = gs();
@@ -192,9 +192,11 @@
     const head = el('div', { class: 'head' });
     head.appendChild(el('div', { class: 'grip' }));
     head.appendChild(el('span', {}, 'Kertas coret-coret'));
-    toggleBtn = el('button', { type: 'button', 'aria-expanded': 'true' }, 'Lihat soal');
+    toggleBtn = el('button', { type: 'button', 'aria-expanded': 'true' }, 'Kecilkan');
     toggleBtn.addEventListener('click', () => setCollapsed(!collapsed));
     head.appendChild(toggleBtn);
+    // Strip yang sedang diciutkan bisa diketuk di mana saja untuk memperbesar lagi.
+    head.addEventListener('click', (e) => { if (collapsed && e.target !== toggleBtn) setCollapsed(false); });
     cv = el('canvas', { 'aria-label': 'Kertas untuk menulis dengan jari' });
     g = cv.getContext('2d');
     const bar = el('div', { class: 'bar' });
