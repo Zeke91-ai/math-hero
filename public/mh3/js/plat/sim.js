@@ -1,13 +1,16 @@
 // Math Hero 3: logika level Kejar (platformer MH1 versi layar tegak). Tanpa DOM supaya bisa diuji di Node.
 // Level ditulis sebagai peta teks (satu string per baris, atas ke bawah, tile 32 px):
 //   # padat   = tembus dari bawah   S awal   E tujuan (kristal)   c checkpoint   * bintang
-//   e musuh jalan   ^ duri   P Peti Kekuatan (PR, tidak menghalangi)   K Peti Kristal (PR, tidak menghalangi)
+//   ^ duri   P Peti Kekuatan (PR, tidak menghalangi)   K Peti Kristal (PR, tidak menghalangi)
+// Musuh (jenis sama dengan MH1): e jalan cepat, a jalan lambat (keduanya bisa diinjak), r banteng (menyeruduk saat
+//   melihat hero; bisa diinjak hanya saat pusing setelah menabrak dinding), f lebah terbang (tidak bisa diinjak),
+//   n N meriam menembak ke kiri/kanan (tidak bisa diinjak). Semua musuh kalah oleh skill jagoan.
 // Mekanik lanjutan (spesifikasi: public/shared/LEVELGEN.md):
 //   H tangga (H paling atas sebaris dengan lantai atas, jadi bisa dipijak)   s per (lontar ke atas)
 //   > < per samping (lontar mendatar)   ( ) pipa: masuk di (, keluar di ) yang berpasangan (urut kolom)
 //   - deretan mendatar = lintasan platform gerak   | deretan tegak = lintasan lift   ~ papan rapuh
 //   B kotak dorong   _ , ; tombol injak kanal 1/2/3   t y u tuas kanal 1/2/3   1 2 3 gerbang kanal 1/2/3
-//   x blok retak (padat; dihancurkan skill nanti)   o gergaji diam   O gergaji bolak-balik
+//   x blok retak (padat; dipecahkan skill jagoan: bola api, terjang, atau hantam)   o gergaji diam   O gergaji bolak-balik
 //   T Y U tuas macet kanal 1/2/3   j k l tombol macet kanal 1/2/3: menyentuhnya memunculkan soal (event 'quiz');
 //   setelah soal selesai (solveQuiz) benda itu bekerja seperti biasa. Ditunda = tetap macet, bisa dicoba lagi.
 // Kolom di luar peta = dinding, baris di bawah peta = jurang.
@@ -16,12 +19,20 @@
   else (root.MH3 = root.MH3 || {}).platSim = factory(root.Physics);
 })(typeof self !== 'undefined' ? self : this, function (Physics) {
   const { C, T, stepBody, overlap } = Physics;
-  const HEARTS = 3, INVULN = 1.4, WALK = 55, RESPAWN_FALL = 140;
+  const HEARTS = 3, INVULN = 1.4, RESPAWN_FALL = 140;
   const SPRING = -1000, DASH = 470, DASH_T = 0.6, DASH_VY = -520, CLIMB = 150, PUSH = 105, MOVER = 70, LIFT = 64;
   const CRUMBLE_SHAKE = 0.5, CRUMBLE_BACK = 3, PIPE_SPEED = 520;
-  // Skill jagoan (tombol B). Jalan utama tidak pernah membutuhkan skill; skill membuka jalan pintas dan bonus.
-  const SKILLS = { pinki: 'lempar', owi: 'melayang', dudu: 'hantam' };
-  const SHOT_SPEED = 430, SHOT_LIFE = 0.7, SHOT_CD = 0.45, GLIDE_FALL = 95, SLAM = 900;
+  // Lompat ganda selalu ada (seperti MH1). Kekuatan super dari Peti Kekuatan: meluncur (tahan Lompat setelah lompat
+  // ganda), magnet bintang, perisai (pulih sendiri SHIELD_BACK detik setelah menahan pukulan).
+  const GLIDE_FALL = 95, SHIELD_BACK = 10;
+  // Skill jagoan (tombol B), semuanya bisa memecah blok retak dan mengalahkan musuh. Jalan utama tidak pernah
+  // membutuhkan skill; skill membuka bonus. lempar: bola api memantul; terjang: melesat (di udara menukik); hantam.
+  const SKILLS = { pinki: 'lempar', owi: 'terjang', dudu: 'hantam' };
+  const SHOT_SPEED = 300, SHOT_LIFE = 1.6, SHOT_CD = 0.35, SHOT_BOUNCE = -260, SHOT_G = 1400, SLAM = 900;
+  const LUNGE = 0.28, LUNGE_VX = 520, LUNGE_DIVE = [380, 480];
+  // Musuh: kecepatan jalan dan apakah bisa diinjak (seperti MH1).
+  const FOES = { e: { speed: 55, stomp: true }, a: { speed: 38, stomp: true }, r: { speed: 36, stomp: false }, f: { speed: 0, stomp: false }, n: { speed: 0, stomp: false } };
+  const CHARGE = 250, BALL = 150, BALL_EVERY = 2.6;
   const PLATE = '_,;', LEVER = 'tyu', GATE = '123', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
 
   function parse(def) {
@@ -40,7 +51,8 @@
         else if (ch === 'E') L.goal = { x: x + 4, y: y - T, w: T - 8, h: T * 2 };
         else if (ch === 'c') L.checkpoints.push({ x: x + T / 2, y: y + T, got: false, id: L.checkpoints.length });
         else if (ch === '*') L.stars.push({ x: x + T / 2, y: y + T / 2, got: false, id: L.stars.length });
-        else if (ch === 'e') L.enemies.push({ x: x + 2, y: y + T - 30, id: L.enemies.length });
+        else if ('earf'.includes(ch)) L.enemies.push({ type: ch, x: x + 2, y: y + T - 30, id: L.enemies.length });
+        else if (ch === 'n' || ch === 'N') L.enemies.push({ type: 'n', x: x + 2, y: y + T - 30, dir: ch === 'N' ? 1 : -1, id: L.enemies.length });
         else if (ch === '^') L.spikes.push({ x: x + 3, y: y + 12, w: T - 6, h: T - 12 });
         else if (ch === 'P' || ch === 'K') L.chests.push({ kind: ch === 'P' ? 'power' : 'crystal', x: x - 4, y: y - 8, w: T + 8, h: T + 8, got: false, id: L.chests.length });
         else if (ch === 'H') {
@@ -83,39 +95,46 @@
     return L;
   }
 
-  // opts.hero: kunci jagoan (menentukan skill); opts.skill menimpa langsung ('lempar' | 'melayang' | 'hantam' | null).
+  // opts.hero: kunci jagoan (menentukan skill); opts.skill menimpa langsung ('lempar' | 'terjang' | 'hantam' | null).
   function create(def, opts) {
     opts = opts || {};
     const L = parse(def);
     const g = {
       def, L, t: 0, phase: 'play', hearts: HEARTS, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
       cp: { x: L.start.x, y: L.start.y }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
-      skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], slam: 0, glide: false, throwT: 0,
+      skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], balls: [], slam: 0, lunge: null, glide: false, throwT: 0, shield: null,
       climb: false, boost: 0, dash: null, pipe: null, pipeCool: 0, ride: null, pushing: false, chans: [false, false, false],
       boxes: L.boxes.map((b) => ({ id: b.id, x0: b.x0, y0: b.y0, x: b.x0, y: b.y0, w: 30, h: 30, vx: 0, vy: 0, onGround: false })),
       p: { x: 0, y: 0, w: C.PW, h: C.PH, vx: 0, vy: 0, onGround: false },
     };
-    g.enemies = L.enemies.map((e) => ({ id: e.id, b: { x: e.x, y: e.y, w: 28, h: 30, vx: -WALK, vy: 0, onGround: false }, dir: -1, dead: false, timer: 0, x0: e.x, y0: e.y }));
+    g.enemies = L.enemies.map((e) => ({ id: e.id, type: e.type, dir: e.dir || -1, state: 'walk', dead: false, timer: 0, t: e.id * 0.7, x0: e.x, y0: e.y,
+      b: e.type === 'f' ? { x: e.x - 2, y: e.y - 18, w: 30, h: 28 } : { x: e.x, y: e.y, w: 28, h: 30, vx: 0, vy: 0, onGround: false } }));
     updateGates(g, true);
     place(g, g.cp);
     return g;
   }
   function place(g, pt) {
     const p = g.p; p.x = pt.x - p.w / 2; p.y = pt.y - p.h; p.vx = p.vy = 0; p.onGround = false;
-    g.climb = false; g.dash = null; g.pipe = null; g.ride = null; g.boost = 0; g.slam = 0; g.glide = false;
+    g.climb = false; g.dash = null; g.pipe = null; g.ride = null; g.boost = 0; g.slam = 0; g.lunge = null; g.glide = false;
   }
 
   function hurt(g, why) {
     if (g.invuln > 0 || g.phase !== 'play') return;
+    if (g.shield && g.shield.ready && why !== 'jatuh') {
+      g.shield.ready = false; g.shield.t = SHIELD_BACK; g.invuln = INVULN; g.events.push({ type: 'shieldBreak' }); return;
+    }
     g.hearts--; g.hurts++; g.invuln = INVULN; g.events.push({ type: 'hurt', why });
-    if (g.power === 'shield') { g.power = null; g.hearts++; g.hurts--; g.events.push({ type: 'shieldBreak' }); return; }
     if (g.hearts <= 0) {
       // Habis hati: ulang dari checkpoint terakhir dengan hati penuh. Level tidak pernah macet.
       g.deaths++; g.hearts = HEARTS; place(g, g.cp); g.invuln = INVULN + 0.6; g.events.push({ type: 'respawn' });
     } else if (why === 'jatuh') place(g, g.cp);
   }
 
-  function grantPower(g, key) { g.power = key; g.djumpUsed = false; g.events.push({ type: 'power', key }); }
+  function grantPower(g, key) {
+    g.power = key; g.shield = key === 'shield' ? { ready: true, t: 0 } : null;
+    g.events.push({ type: 'power', key });
+  }
+  const defeat = (g, e) => { e.dead = true; e.timer = 0.4; g.events.push({ type: 'stomp', x: e.b.x + e.b.w / 2, y: e.b.y }); };
 
   // Benda padat/pijakan dinamis untuk fisika: platform gerak, papan rapuh, puncak tangga, kotak.
   function dynFor(g, self) {
@@ -155,8 +174,12 @@
     const p = g.p;
     if (!input.skill || g.skillCd > 0) return;
     if (g.skill === 'lempar') {
-      g.shots.push({ x: p.x + p.w / 2 + g.face * 10, y: p.y + 20, vx: g.face * SHOT_SPEED, t: SHOT_LIFE, w: 12, h: 12 });
+      if (g.shots.length >= 2) return;
+      g.shots.push({ x: p.x + p.w / 2 + g.face * 12, y: p.y + 22, vx: g.face * SHOT_SPEED, vy: SHOT_BOUNCE, t: SHOT_LIFE, r: 7 });
       g.skillCd = SHOT_CD; g.throwT = 0.25; g.events.push({ type: 'throw' });
+    } else if (g.skill === 'terjang' && !g.lunge) {
+      g.lunge = { dir: g.face, t: LUNGE, dive: !p.onGround }; g.ride = null; g.climb = false;
+      g.skillCd = 0.5; g.events.push({ type: 'lunge' });
     } else if (g.skill === 'hantam' && !g.slam) {
       // Di tanah: loncat kecil lalu menghantam. Di udara: langsung menghantam ke bawah.
       if (p.onGround) { p.vy = -480; g.slam = 1; g.ride = null; } else { g.slam = 2; p.vy = SLAM; }
@@ -166,13 +189,13 @@
   // Hantam mendarat: pecahkan blok retak tepat di bawah kaki, kalahkan musuh di dekatnya. Bila ada blok pecah, hantaman
   // berlanjut ke bawah (bisa menembus beberapa lapis).
   function landSlam(g) {
-    const p = g.p, L = g.L, r = Math.floor((p.y + p.h + 2) / T);
+    const p = g.p, r = Math.floor((p.y + p.h + 2) / T);
     let broke = false;
     for (let c = Math.floor((p.x + 2) / T); c <= Math.floor((p.x + p.w - 2) / T); c++) broke = breakCrack(g, c, r) || broke;
     for (const e of g.enemies) {
       if (e.dead) continue;
       const b = e.b;
-      if (Math.abs(b.x + b.w / 2 - (p.x + p.w / 2)) < 70 && Math.abs(b.y + b.h - (p.y + p.h)) < 24) { e.dead = true; e.timer = 0.4; g.events.push({ type: 'stomp', x: b.x + b.w / 2, y: b.y }); }
+      if (Math.abs(b.x + b.w / 2 - (p.x + p.w / 2)) < 70 && Math.abs(b.y + b.h - (p.y + p.h)) < 24) defeat(g, e);
     }
     g.events.push({ type: 'slam', x: p.x + p.w / 2, y: p.y + p.h, broke });
     if (broke) { p.onGround = false; p.vy = SLAM * 0.6; } else g.slam = 0;
@@ -184,26 +207,92 @@
     g.events.push({ type: 'crack', x: c * T + T / 2, y: r * T + T / 2 });
     return true;
   }
-  // Bola bintang Pinki: terbang lurus, mengalahkan musuh, menyalakan tuas, berhenti di dinding.
+  // Terjang Owi: sebelum bergerak, pecahkan blok retak yang akan dilewati (depan, dan bawah saat menukik).
+  function lungeBreak(g) {
+    const p = g.p, ln = g.lunge, fx = Math.floor((ln.dir > 0 ? p.x + p.w + 6 : p.x - 6) / T);
+    for (let r = Math.floor(p.y / T); r <= Math.floor((p.y + p.h - 2) / T); r++) breakCrack(g, fx, r);
+    if (ln.dive) for (let c = Math.floor((p.x + 2) / T); c <= Math.floor((p.x + p.w + 4) / T); c++) breakCrack(g, c, Math.floor((p.y + p.h + 6) / T));
+  }
+  // Bola api Pinki: memantul di lantai, mengalahkan musuh, menyalakan tuas, memecah blok retak yang ditabraknya.
   function updateShots(g, dt) {
-    const L = g.L;
+    const L = g.L, solid = (x, y) => Physics.tileAt(L, Math.floor(x / T), Math.floor(y / T));
+    const crackAt = (x, y) => breakCrack(g, Math.floor(x / T), Math.floor(y / T));
     for (const s of g.shots) {
       s.t -= dt; s.x += s.vx * dt;
-      const c = Math.floor(s.x / T), r = Math.floor(s.y / T);
-      if (Physics.tileAt(L, c, r) === 1) { s.t = 0; g.events.push({ type: 'shotHit', x: s.x, y: s.y }); continue; }
-      const box = { x: s.x - s.w / 2, y: s.y - s.h / 2, w: s.w, h: s.h };
-      for (const e of g.enemies) {
-        if (e.dead || !overlap(box, e.b)) continue;
-        e.dead = true; e.timer = 0.4; s.t = 0; g.events.push({ type: 'stomp', x: e.b.x + e.b.w / 2, y: e.b.y });
+      if (solid(s.x + Math.sign(s.vx) * s.r, s.y) === 1) { crackAt(s.x + Math.sign(s.vx) * s.r, s.y); s.t = 0; g.events.push({ type: 'shotHit', x: s.x, y: s.y }); continue; }
+      s.vy += SHOT_G * dt; s.y += s.vy * dt;
+      // blok retak di lantai yang dilewati bola api (bola memantul rendah) ikut pecah
+      if (crackAt(s.x, s.y + s.r + 18)) { s.t = 0; continue; }
+      const under = solid(s.x, s.y + s.r);
+      if (s.vy > 0 && under) {
+        if (crackAt(s.x, s.y + s.r)) { s.t = 0; continue; }
+        if (under === 1 || (s.y + s.r) % T < 12) { s.y = Math.floor((s.y + s.r) / T) * T - s.r; s.vy = SHOT_BOUNCE; }
       }
+      if (s.vy > 0) for (const m of L.movers.concat(L.crumbles.filter((c) => c.state !== 'gone'))) {
+        if (s.x > m.x && s.x < m.x + m.w && s.y + s.r >= m.y && s.y + s.r < m.y + 12) { s.y = m.y - s.r; s.vy = SHOT_BOUNCE; }
+      }
+      const box = { x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2 };
+      for (const e of g.enemies) if (!e.dead && overlap(box, e.b)) { defeat(g, e); s.t = 0; }
       for (const lv of L.levers) {
         if (lv.on || !overlap(box, lv)) continue;
         s.t = 0;
         if (lv.stuck) { if (!lv.asked) { lv.asked = true; g.events.push({ type: 'quiz', what: 'lever', id: lv.id, ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); } }
         else { lv.on = true; g.events.push({ type: 'lever', ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); }
       }
+      if (s.y > L.rows * T + 64) s.t = 0;
     }
     g.shots = g.shots.filter((s) => s.t > 0);
+  }
+
+  // Musuh (perilaku sama dengan MH1): jalan bolak-balik di lantai, banteng menyeruduk, lebah terbang, meriam menembak.
+  function updateEnemies(g, dt, input) {
+    const p = g.p, L = g.L;
+    for (const e of g.enemies) {
+      if (e.dead) { e.timer -= dt; continue; }
+      e.t += dt;
+      const b = e.b, f = FOES[e.type] || FOES.e;
+      if (e.type === 'f') {
+        const ph = e.t * 0.35 * Math.PI * 2;
+        b.x = e.x0 - 2 + Math.sin(ph) * 3 * T; b.y = e.y0 - 18 + Math.sin(e.t * 2.3) * 14; e.dir = Math.cos(ph) >= 0 ? 1 : -1;
+      } else if (e.type === 'n') {
+        b.vx = 0; b.vy += C.GRAVITY * dt; stepBody(b, dt, L, g.boxes);
+        if ((e.timer -= dt) <= 0 && Math.abs(p.x - b.x) < 12 * T) {
+          e.timer = BALL_EVERY; e.state = 'fire'; e.fire = 0.35;
+          g.balls.push({ x: b.x + b.w / 2 + e.dir * 18, y: b.y + 10, vx: e.dir * BALL, r: 9, t: 6 });
+          g.events.push({ type: 'cannon', x: b.x + b.w / 2, y: b.y });
+        }
+        if (e.fire > 0 && (e.fire -= dt) <= 0) e.state = 'walk';
+      } else {
+        if (e.type === 'r') {
+          const dx = p.x + p.w / 2 - (b.x + b.w / 2);
+          if (e.state === 'walk' && Math.sign(dx) === e.dir && Math.abs(dx) < 230 && Math.abs(p.y + p.h - (b.y + b.h)) < 70) { e.state = 'tele'; e.timer = 0.45; }
+          else if (e.state === 'tele' && (e.timer -= dt) <= 0) e.state = 'charge';
+          else if (e.state === 'stun' && (e.timer -= dt) <= 0) e.state = 'walk';
+        }
+        b.vx = e.state === 'charge' ? e.dir * CHARGE : e.state === 'walk' ? e.dir * f.speed : 0;
+        b.vy += C.GRAVITY * dt;
+        const hit = stepBody(b, dt, L, dynFor(g, b));
+        const ahead = Math.floor((b.x + (e.dir > 0 ? b.w + 2 : -2)) / T), below = Math.floor((b.y + b.h + 2) / T);
+        const edge = b.onGround && Physics.tileAt(L, ahead, below) === 0 && !dynFor(g, b).some((r) => ahead * T + T / 2 > r.x && ahead * T + T / 2 < r.x + r.w && Math.abs(b.y + b.h - r.y) < 8);
+        if (hit.hitWall) { if (e.state === 'charge') { e.state = 'stun'; e.timer = 1.6; } e.dir = -e.dir; }
+        else if (edge) { if (e.state === 'charge') { e.state = 'stun'; e.timer = 1.6; } e.dir = -e.dir; }
+        if (b.y > L.rows * T + 200) e.dead = true;
+      }
+      if (e.dead || !overlap(p, b)) continue;
+      if (g.lunge || g.slam === 2) { defeat(g, e); continue; }
+      const canStomp = f.stomp || (e.type === 'r' && e.state === 'stun');
+      if (canStomp && p.vy > 60 && p.y + p.h - b.y < 22) {
+        defeat(g, e); p.vy = input.jumpHeld ? C.JUMP * 0.85 : C.JUMP * 0.6; g.djumpUsed = false;
+      } else hurt(g, 'musuh');
+    }
+    for (const bl of g.balls) {
+      bl.x += bl.vx * dt; bl.t -= dt;
+      if (Physics.tileAt(L, Math.floor((bl.x + Math.sign(bl.vx) * bl.r) / T), Math.floor(bl.y / T)) === 1) { bl.t = 0; g.events.push({ type: 'shotHit', x: bl.x, y: bl.y }); continue; }
+      const box = { x: bl.x - bl.r, y: bl.y - bl.r, w: bl.r * 2, h: bl.r * 2 };
+      if (overlap(p, box)) { if (g.lunge) bl.t = 0; else { hurt(g, 'peluru'); bl.t = 0; } }
+      for (const s of g.shots) if (overlap(box, { x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2 })) { bl.t = 0; s.t = 0; g.events.push({ type: 'shotHit', x: bl.x, y: bl.y }); }
+    }
+    g.balls = g.balls.filter((b) => b.t > 0);
   }
 
   // Benda macet: sentuhan pertama memunculkan soal satu kali. Sesudah ditunda, soal muncul lagi setelah hero menjauh.
@@ -233,6 +322,7 @@
     g.pipeCool = Math.max(0, g.pipeCool - dt);
     g.skillCd = Math.max(0, g.skillCd - dt);
     g.throwT = Math.max(0, g.throwT - dt);
+    if (g.shield && !g.shield.ready && (g.shield.t -= dt) <= 0) { g.shield.ready = true; g.events.push({ type: 'shieldReady' }); }
     updateShots(g, dt);
 
     // --- benda bergerak (lebih dulu supaya pemain ikut terbawa) ---
@@ -268,14 +358,15 @@
     if (dir) g.face = dir;
     if (input.jump) g.buffer = C.BUFFER; else g.buffer = Math.max(0, g.buffer - dt);
 
-    // Tangga: tahan Lompat (atau atas) saat menyentuh tangga untuk memanjat. Diam = berpegangan.
+    // Tangga: tekan atas saat menyentuh tangga untuk memanjat (bawah di puncak tangga untuk turun). Diam = berpegangan.
+    // Lompat saat memanjat = melompat lepas dari tangga.
     const onLadder = touchLadder(g);
     const feetLadder = ladderAt(L, Math.floor((p.x + p.w / 2) / T), Math.floor((p.y + p.h + 2) / T));
-    if (!g.climb && ((onLadder && (input.up || (input.jumpHeld && !p.onGround && p.vy > -420))) || (feetLadder && p.onGround && input.down))) {
+    if (!g.climb && !g.lunge && ((onLadder && input.up) || (feetLadder && p.onGround && input.down))) {
       g.climb = true; g.dash = null; g.slam = 0; p.vy = 0; g.djumpUsed = false;
     }
     if (g.climb) {
-      if (input.jump && dir) { g.climb = false; p.vy = C.JUMP * 0.8; g.buffer = 0; g.events.push({ type: 'jump' }); }
+      if (input.jump) { g.climb = false; p.vy = C.JUMP * 0.8; g.buffer = 0; g.events.push({ type: 'jump' }); }
       else if (!onLadder && !(feetLadder && input.down)) g.climb = false;
     }
     if (g.climb) {
@@ -283,7 +374,7 @@
       const cx = (Math.floor((p.x + p.w / 2) / T) + 0.5) * T - p.w / 2;
       p.x += (cx - p.x) * Math.min(1, dt * 12);
       p.vx = dir * 60;
-      p.vy = input.up || input.jumpHeld ? -CLIMB : input.down ? CLIMB : 0;
+      p.vy = input.up ? -CLIMB : input.down ? CLIMB : 0;
       const r = stepBody(p, dt, L, dynFor(g, p));
       // Sampai di puncak: kaki di atas tangga paling atas -> berdiri.
       const c = Math.floor((p.x + p.w / 2) / T), below = Math.floor((p.y + p.h - 1) / T);
@@ -293,7 +384,12 @@
       g.buffer = 0;
     } else {
       g.pushing = false;
-      if (g.dash) {
+      if (g.lunge) {
+        const ln = g.lunge;
+        p.vx = ln.dir * (ln.dive ? LUNGE_DIVE[0] : LUNGE_VX); p.vy = ln.dive ? LUNGE_DIVE[1] : 0; g.face = ln.dir;
+        lungeBreak(g);
+        if ((ln.t -= dt) <= 0) g.lunge = null;
+      } else if (g.dash) {
         p.vx = g.dash.dir * DASH; g.face = g.dash.dir;
         if ((g.dash.t -= dt) <= 0 || (dir && dir !== g.dash.dir)) g.dash = null;
       } else p.vx = dir * C.MOVE;
@@ -311,24 +407,27 @@
       g.coyote = p.onGround ? C.COYOTE : Math.max(0, g.coyote - dt);
       if (g.buffer > 0) {
         if (g.coyote > 0) { p.vy = C.JUMP; g.coyote = 0; g.buffer = 0; g.djumpUsed = false; g.ride = null; g.events.push({ type: 'jump' }); }
-        else if (g.power === 'djump' && !g.djumpUsed && !p.onGround) { p.vy = C.DJUMP; g.djumpUsed = true; g.buffer = 0; g.events.push({ type: 'djump' }); }
+        else if (!g.djumpUsed && !p.onGround) { p.vy = C.DJUMP; g.djumpUsed = true; g.buffer = 0; g.slam = 0; g.events.push({ type: 'djump' }); }
       }
       useSkill(g, input);
       // lompat pendek jika tombol dilepas lebih awal (tidak berlaku saat dilontar per)
       if (!input.jumpHeld && p.vy < -200 && g.boost <= 0) p.vy += C.GRAVITY * dt * 1.5;
-      p.vy += C.GRAVITY * dt;
+      if (!g.lunge) p.vy += C.GRAVITY * dt;
       if (g.slam === 2) p.vy = SLAM, p.vx *= 0.3;
       if (g.slam === 1 && p.vy >= 0) { g.slam = 2; p.vy = SLAM; }
-      g.glide = g.skill === 'melayang' && !!input.skillHeld && !p.onGround && p.vy > GLIDE_FALL;
+      // Meluncur: setelah lompat ganda, tahan Lompat saat turun.
+      g.glide = g.power === 'glide' && g.djumpUsed && !!input.jumpHeld && !p.onGround && !g.slam && !g.lunge && p.vy > GLIDE_FALL;
       if (g.glide) p.vy = GLIDE_FALL;
       const wasGround = p.onGround;
       const r = stepBody(p, dt, L, dynFor(g, p));
+      if (g.lunge && r.hitWall) g.lunge = null;
+      if (g.lunge && g.lunge.dive && r.landed) g.lunge = null;
       g.ride = r.platform && L.movers.includes(r.platform) ? r.platform : null;
       if (r.landed && !wasGround) g.events.push({ type: 'land' });
       if (r.landed && g.slam === 2) landSlam(g);
       if (r.platform && r.platform.state === 'idle' && L.crumbles.includes(r.platform)) { r.platform.state = 'shake'; r.platform.t = CRUMBLE_SHAKE; }
       if (r.hitWall && g.dash) g.dash = null;
-      g.anim = g.throwT > 0 ? 'throw' : g.pushing ? 'push' : !p.onGround ? (p.vy < 0 ? 'jump' : 'fall') : dir ? 'run' : 'idle';
+      g.anim = g.lunge ? 'jump' : g.throwT > 0 ? 'throw' : g.pushing ? 'push' : !p.onGround ? (p.vy < 0 ? 'jump' : 'fall') : dir ? 'run' : 'idle';
     }
     if (p.y > L.rows * T + RESPAWN_FALL) hurt(g, 'jatuh');
 
@@ -378,22 +477,7 @@
     }
     updateGates(g, false);
 
-    // --- musuh jalan ---
-    for (const e of g.enemies) {
-      if (e.dead) { e.timer -= dt; continue; }
-      const b = e.b;
-      b.vx = e.dir * WALK; b.vy += C.GRAVITY * dt;
-      const hit = stepBody(b, dt, L, g.boxes);
-      const ahead = Math.floor((b.x + (e.dir > 0 ? b.w + 2 : -2)) / T), below = Math.floor((b.y + b.h + 2) / T);
-      const edge = b.onGround && Physics.tileAt(L, ahead, below) === 0;
-      if (hit.hitWall || edge) { e.dir = -e.dir; }
-      if (b.y > L.rows * T + 200) e.dead = true;
-      if (!e.dead && overlap(p, b)) {
-        const stomp = p.vy > 60 && p.y + p.h - b.y < 22;
-        if (stomp) { e.dead = true; e.timer = 0.4; p.vy = input.jumpHeld ? C.JUMP * 0.85 : C.JUMP * 0.6; g.djumpUsed = false; g.events.push({ type: 'stomp', x: b.x + b.w / 2, y: b.y }); }
-        else hurt(g, 'musuh');
-      }
-    }
+    updateEnemies(g, dt, input);
     for (const s of L.spikes) if (overlap(p, s)) hurt(g, 'duri');
     for (const s of L.saws) if (overlap(p, { x: s.cx - s.r, y: s.cy - s.r, w: s.r * 2, h: s.r * 2 })) hurt(g, 'gergaji');
 
@@ -420,6 +504,6 @@
   }
 
   // K: nilai lontaran untuk pemeriksa level (levelcheck.fromKejar).
-  const K = { springVy: SPRING, dashVx: DASH, dashVy: DASH_VY, dashT: DASH_T };
+  const K = { springVy: SPRING, dashVx: DASH, dashVy: DASH_VY, dashT: DASH_T, djump: true };
   return { HEARTS, SKILLS, K, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
 });

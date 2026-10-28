@@ -64,18 +64,29 @@ Puzzle yang disukai anak SD (dipakai generator sebagai pola ruang):
 
 ## 3. Skill jagoan
 
-Tiap jagoan punya satu skill, tombol B di samping Lompat. Animasinya sudah ada di atlas (`throw`, `push`, `climb`).
+Tiap jagoan punya satu skill, tombol B di samping Lompat. Semua skill bisa memecah blok retak dan mengalahkan musuh.
 
 | Jagoan | Skill | Kegunaan |
 |---|---|---|
-| Pinki | Lempar bola bintang | Menjatuhkan musuh dari jauh, menekan tuas yang tidak terjangkau. |
-| Owi | Melayang | Tahan Lompat di udara untuk turun pelan, menyeberang jurang lebar. |
-| Dudu | Hantam tanah | Dari udara menghantam ke bawah: menghancurkan blok retak dan memantulkan musuh. |
-| hero1 sampai hero3 (MH1) | Lempar (sama seperti Pinki) | Atlas MH1 tidak punya animasi panjat atau dorong, jadi pakai pose terdekat. |
+| Pinki | Bola api | Bola api memantul rendah: menjatuhkan musuh dari jauh, menyalakan tuas, memecah blok retak yang dilewati. |
+| Owi | Terjang | Melesat ke depan; di udara menukik miring ke bawah. Memecah blok retak di depan/bawah, menembus musuh. |
+| Dudu | Hantam tanah | Dari udara menghantam ke bawah: memecah blok retak (beberapa lapis) dan mengalahkan musuh di dekatnya. |
+| hero1 sampai hero3 (MH1) | Bola api (sama seperti Pinki) | Atlas MH1 tidak punya animasi panjat atau dorong, jadi pakai pose terdekat. |
 
 Aturan: **jalan utama selalu bisa dilalui tanpa skill.** Skill hanya membuka jalan pintas, bintang ekstra, atau ruang rahasia.
-Jadi pilihan jagoan tidak pernah membuat anak macet, tetapi tiap jagoan punya alasan untuk dimainkan ulang.
-Kekuatan dari Peti Kekuatan (lompat ganda, magnet, perisai) tetap seperti sekarang.
+
+### Lompat ganda dan kekuatan super (masukan uji 2026-10-28)
+
+- Lompat ganda selalu ada, seperti MH1. Karena itu ruang dengan mekanik dibuat cukup tinggi/lebar (naik lebih dari
+  7 tile, jurang 10 tile atau lebih) supaya lompat ganda tidak melewati teka-tekinya. Pemeriksa level memakai lompat
+  ganda untuk Kejar (`djump` di `Sim.K`).
+- Kekuatan super dari Peti Kekuatan: **Meluncur** (setelah lompat 2x, tahan Lompat untuk turun pelan; sayap di
+  punggung), **Magnet bintang** (aura emas), **Perisai** (menahan pukulan, pulih tiap 10 detik; gelembung kecil
+  ungu saat mengisi, membesar dan biru muda saat siap).
+- Kontrol: pad 4 arah (kiri, kanan, atas, bawah). Tangga dipanjat dengan atas, dituruni dengan bawah.
+- Musuh MH1 dipakai sejak level awal: jalan cepat `e`, jalan lambat `a`, banteng `r`, lebah `f`, meriam `n N`.
+  Potongan datar memakai `foes` dari rencana level. Platform gerak dan papan rapuh juga muncul sejak level 1.
+- Balon penjelasan singkat muncul saat benda atau musuh baru pertama kali terlihat.
 
 ## 4. Tingkat kesulitan dan arah gerak
 

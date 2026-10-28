@@ -1,10 +1,11 @@
 // Kit Math Hero: level generator platformer (spesifikasi: public/shared/LEVELGEN.md).
 // Merangkai ruang tulisan tangan (levelgen.chunks.js) dan potongan datar acak menjadi satu peta teks Kejar MH3.
 // Deterministik: seed yang sama selalu menghasilkan level yang sama.
-//   MHKit.levelgen.generate({ seed, tier, tema, mech: ['tangga', ...], intro: ['per'], quiz: 1, sec: 110 })
+//   MHKit.levelgen.generate({ seed, tier, tema, mech: ['tangga', ...], intro: ['per'], foes: ['e', 'f'], quiz: 1, sec: 110 })
 //   -> { map: [...string], inside: [[c0, r0, c1, r1]], tema, tier, seed, rooms: [{ id, c, w, dy }], est }
 // mech  = mekanik yang boleh muncul (tag ruang). intro = mekanik baru level ini: muncul dulu di ruang aman, lalu
-// diulang. quiz = jumlah tuas/tombol macet (pemicu soal) di jalan utama. sec = perkiraan lama main (detik).
+// diulang. foes = jenis musuh di potongan datar (e a r f n, lihat sim.js). quiz = jumlah tuas/tombol macet
+// (pemicu soal) di jalan utama. sec = perkiraan lama main (detik).
 // Pemeriksaan bisa diselesaikan dilakukan di luar (shared/js/levelcheck.js); pickSeed() mencoba seed berurutan.
 // Node: require('.../levelgen.js'); browser: window.MHKit.levelgen (muat levelgen.chunks.js lebih dulu).
 (function (root, factory) {
@@ -43,8 +44,10 @@
     return { in: din, out: dout, w, h: rows.length, dy: dout - din };
   }
 
-  // Potongan datar acak: 5 baris udara + 1 baris lantai. Rintangan sesuai tier, selalu bisa dilompati.
+  // Potongan datar acak: 5 baris udara + 1 baris lantai. Rintangan sesuai tier, selalu bisa dilompati. Seperti MH1, ada
+  // jurang lebar dengan platform gerak atau papan rapuh bila mekaniknya sudah dikenalkan (lebar 10: tidak terlompati).
   function run(R, w, tier, mech, opt) {
+    const foes = opt.foes && opt.foes.length ? opt.foes : ['e'];
     const H = 6, F = H - 1;
     const g = Array.from({ length: H }, () => Array(w).fill('.'));
     for (let c = 0; c < w; c++) g[F][c] = '#';
@@ -53,6 +56,9 @@
       const kinds = ['gap', 'spike', 'enemy', 'hill', 'stars'];
       if (tier >= 1) kinds.push('bridge', 'gap');
       if (tier >= 2 && mech.includes('gergaji')) kinds.push('saw');
+      if (foes.length > 1) kinds.push('enemy');
+      if (mech.includes('gerak') && c + 13 < w) kinds.push('mover');
+      if (mech.includes('rapuh') && c + 13 < w) kinds.push('crumble');
       const k = R.pick(kinds);
       if (k === 'gap') {
         const n = tier === 0 ? 2 : R.int(2, 3);
@@ -65,8 +71,19 @@
         g[F - 3][c] = '*';
         c += n + R.int(2, 4);
       } else if (k === 'enemy') {
-        g[F - 1][c + 1] = 'e';
-        c += R.int(4, 5);
+        const f = R.pick(foes);
+        if (f === 'f') { g[tier ? F - 2 : F - 3][c + 2] = 'f'; c += 6; }
+        else if (f === 'n') { g[F - 1][c + 3] = 'n'; c += R.int(5, 6); }
+        else { g[F - 1][c + 1] = f; c += f === 'r' ? 6 : R.int(4, 5); }
+      } else if (k === 'mover') {
+        for (let i = 0; i < 10; i++) g[F][c + i] = '.';
+        for (let i = 1; i < 9; i++) g[F - 1][c + i] = '-';
+        g[F - 3][c + 3] = '*'; g[F - 3][c + 6] = '*';
+        c += 10 + R.int(2, 3);
+      } else if (k === 'crumble') {
+        for (let i = 0; i < 10; i++) g[F][c + i] = '~';
+        g[F - 2][c + 3] = '*'; g[F - 2][c + 6] = '*';
+        c += 10 + R.int(2, 3);
       } else if (k === 'hill') {
         const n = R.int(2, 3), up = R.int(1, 2);
         for (let i = 0; i < n; i++) for (let r = F - up; r < F; r++) g[r][c + i] = '#';
@@ -123,7 +140,7 @@
     const st = { used: {}, last: null, y: 0, n: 0, vert: 0, introQ: [...o.intro], repeatQ: [...o.intro] };
     const blocks = [];
     let est = 0;
-    const addRun = (w, opt) => { const b = run(R, w, o.tier, o.mech, opt || {}); blocks.push(b); est += w * 0.24; return b; };
+    const addRun = (w, opt) => { const b = run(R, w, o.tier, o.mech, Object.assign({ foes: o.foes }, opt)); blocks.push(b); est += w * 0.24; return b; };
     blocks.push({ id: 'awal', rows: ['......', '......', '......', '......', '......', '######'], gen: true });
     addRun(R.int(10, 14), { flat: 4 });
     let n = 0;
@@ -143,7 +160,7 @@
       blocks.push(ch); st.used[ch.id] = (st.used[ch.id] || 0) + 1; st.last = ch.id; st.y += d.dy; n++; st.n = n; if (ch.dir) st.vert++;
       if (quizHost(ch)) hosts++;
       est += d.w * 0.3 + Math.abs(d.dy) * 0.35 + (ch.tags.length ? 3 : 0);
-      addRun(R.int(6, 11));
+      addRun(R.int(8, 15));
     }
     blocks.push({ id: 'akhir', rows: ['..........', '..........', '..........', '..........', '..........', '##########'], gen: true });
 

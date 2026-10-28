@@ -48,6 +48,21 @@ html, body {
 .pad.arrow i { width: 30px; height: 34px; background: #fff; clip-path: polygon(0 50%, 100% 0, 100% 100%); filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
 #btn-kanan i { clip-path: polygon(0 0, 100% 50%, 0 100%); }
 #controls.noa #btn-b { right: 14px; bottom: 30px; }
+/* Pad 4 arah (level Kejar): tombol lebih kecil tersusun silang supaya atas/bawah terjangkau jempol kiri; B mengecil
+   supaya tidak menabrak pad di layar 360 px. */
+.pad.vert { display: none; background: #8b5cf6; }
+#controls.dpad .pad.vert { display: flex; }
+#controls.dpad .pad.arrow, #controls.dpad .pad.vert { width: 58px; height: 58px; }
+#controls.dpad #btn-kiri { left: 6px; bottom: 50px; }
+#controls.dpad #btn-kanan { left: 122px; bottom: 50px; }
+#controls.dpad #btn-atas { left: 64px; bottom: 100px; }
+#controls.dpad #btn-bawah { left: 64px; bottom: 2px; }
+#controls.dpad #btn-a { right: 10px; }
+#controls.dpad #btn-b { right: 100px; bottom: 64px; width: 72px; height: 72px; }
+#controls.dpad #btn-b span { font-size: 28px; }
+.pad.vert i { width: 28px; height: 22px; background: #fff; clip-path: polygon(50% 0, 100% 100%, 0 100%); filter: drop-shadow(0 3px 0 rgba(0,0,0,0.35)); }
+#btn-bawah i { clip-path: polygon(0 0, 100% 0, 50% 100%); }
+#controls.dpad .pad.arrow i { width: 22px; height: 26px; }
 
 #loading {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;

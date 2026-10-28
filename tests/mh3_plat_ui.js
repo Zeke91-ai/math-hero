@@ -22,8 +22,8 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.touchscreen.tap(70 * s, 151 * s); // tombol debug "Kejar 1"
   await pg.waitForTimeout(700);
   ok(await pg.evaluate(() => MH2.sceneName) === 'plat', 'tombol debug membuka level Kejar');
-  const ctl = await pg.evaluate(() => { const c = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, vis: r.width > 0 }; }; return { kanan: c('btn-kanan'), kiri: c('btn-kiri'), a: c('btn-a') }; });
-  ok(ctl.kanan.vis && ctl.kiri.vis && ctl.a.vis, 'panah kiri, kanan, dan Lompat tampil');
+  const ctl = await pg.evaluate(() => { const c = (id) => { const r = document.getElementById(id).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2, vis: r.width > 0 }; }; return { kanan: c('btn-kanan'), kiri: c('btn-kiri'), atas: c('btn-atas'), bawah: c('btn-bawah'), a: c('btn-a'), b: c('btn-b') }; });
+  ok(ctl.kanan.vis && ctl.kiri.vis && ctl.atas.vis && ctl.bawah.vis && ctl.a.vis && ctl.b.vis, 'pad 4 arah, Lompat, dan B tampil');
   const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
   const pt = (c, id) => ({ x: c.x, y: c.y, id });
   const pos = () => pg.evaluate(() => { const g = MH3.plat.state().g; return { x: Math.round(g.p.x), y: Math.round(g.p.y), ground: g.p.onGround }; });

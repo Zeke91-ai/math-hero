@@ -112,11 +112,16 @@
       for (const p of plans) add(simulate(L, s, p, allowDouble));
       for (const sp of L.springs || []) {
         if (!touches(s, sp)) continue;
-        for (const dir of dirs) for (const sw of [undefined, 0.5]) for (const d2 of dirs) add(simulate(L, s, { vy0: L.springVy, dir, sw, dir2: d2 }, false));
+        for (const dir of dirs) for (const sw of [undefined, 0.5]) for (const d2 of dirs) {
+          add(simulate(L, s, { vy0: L.springVy, dir, sw, dir2: d2 }, false));
+          if (allowDouble && L.djump) add(simulate(L, s, { vy0: L.springVy, dir, sw, dir2: d2, dj: 0.6 }, true));
+        }
       }
       for (const d of L.dashes || []) {
         if (!touches(s, d)) continue;
-        for (const jump of [false, true]) add(simulate(L, s, { vy0: jump ? C.JUMP : L.dashVy, dash: { dir: d.dir, t: L.dashT, vx: L.dashVx }, dir: d.dir }, false));
+        for (const jump of [false, true]) for (const dj of allowDouble && L.djump ? [undefined, 0.35, 0.6] : [undefined]) {
+          add(simulate(L, s, { vy0: jump ? C.JUMP : L.dashVy, dash: { dir: d.dir, t: L.dashT, vx: L.dashVx }, dir: d.dir, dj }, dj !== undefined));
+        }
       }
       for (const ld of L.ladders || []) {
         if (Math.abs(s.x - ld.x) < T / 2 + 6 && s.feet >= ld.top && s.feet <= ld.bottom + T + 2) add({ x: ld.x, feet: ld.top });
@@ -128,8 +133,9 @@
 
   function check(L) {
     const out = { id: L.id, nama: L.nama, ok: true, msg: [] };
-    const single = reach(L, false);
+    // L.djump: game dengan lompat ganda bawaan (Kejar MH3); jalan utama boleh memakai lompat ganda.
     const double = reach(L, true);
+    const single = L.djump ? double : reach(L, false);
     const near = (list, x, y, dx, dyUp) => list.some((s) => Math.abs(s.x - x) <= dx && s.feet >= y - 1 && s.feet - y <= dyUp);
     const stand = (list, o) => list.some((s) => Math.abs(s.x - o.x) <= 56 && Math.abs(s.feet - o.y) <= 40);
     const goal = L.goal;
@@ -179,7 +185,7 @@
       chests: L.chests,
       ladTops: L.ladTops || [], ladders, springs: L.springs || [], dashes: L.dashes || [], pipes: L.pipes || [],
       tracks: L.movers || [], gates: L.gates || [], switches: [...(L.levers || []), ...(L.plates || []).map((p) => ({ x: p.x, y: p.y - 8, w: p.w, h: p.h + 8, ch: p.ch }))],
-      springVy: opts.springVy, dashVx: opts.dashVx, dashVy: opts.dashVy, dashT: opts.dashT,
+      springVy: opts.springVy, dashVx: opts.dashVx, dashVy: opts.dashVy, dashT: opts.dashT, djump: !!opts.djump,
     };
   }
 

@@ -13,7 +13,7 @@ function run(g, sec, inp) {
 const feet = (g) => g.p.y + g.p.h, cx = (g) => g.p.x + g.p.w / 2;
 const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
 
-// Tangga: jalan ke tangga, tahan Lompat, berdiri di lantai atas, lalu jalan ke tujuan.
+// Tangga: jalan ke tangga, tekan atas, berdiri di lantai atas, lalu jalan ke tujuan.
 {
   const g = mk(pad([
     '', '', '', '',
@@ -30,11 +30,11 @@ const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
     if (phase === 0 && Math.abs(cx(g) - 5.5 * T) < 6) phase = 1;
     if (phase === 1 && feet(g) <= 5 * T + 0.5 && !g.climb) phase = 2;
     if (phase === 0) return { dir: 1 };
-    if (phase === 1) return { dir: 0, jump: !g.climb && g.p.onGround, jumpHeld: true };
+    if (phase === 1) return { dir: 0, up: true };
     return { dir: 1 };
   });
   assert.strictEqual(g.phase, 'won', `tangga: harus sampai tujuan (x=${Math.round(cx(g))}, kaki=${Math.round(feet(g))})`);
-  console.log('ok: tangga dipanjat dengan menahan Lompat, berdiri di puncak');
+  console.log('ok: tangga dipanjat dengan tombol atas, berdiri di puncak');
 }
 // Turun tangga dengan tombol bawah dari puncak.
 {
@@ -162,42 +162,77 @@ const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
 // Skill jagoan sesuai hero; MH1 dan tanpa nama memakai lempar.
 {
   assert.strictEqual(mk(pad(['', '', '.S..'])).skill, 'lempar');
-  assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'owi' }).skill, 'melayang');
+  assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'owi' }).skill, 'terjang');
   assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'dudu' }).skill, 'hantam');
   assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'hero2' }).skill, 'lempar');
   console.log('ok: skill dipilih dari jagoan');
 }
-// Pinki: bola bintang mengalahkan musuh dari jauh dan menyalakan tuas di seberang jurang.
+// Pinki: bola api memantul, mengalahkan musuh dari jauh dan menyalakan tuas di seberang jurang.
 {
   const g = mk(pad(['', '', '', '', '', '', '', '', '', '.S.....e....', '############']), { hero: 'pinki' });
   run(g, 0.2, { dir: 0 });
   run(g, 0.05, { dir: 0, skill: true });
   run(g, 1, { dir: 0 });
-  assert.ok(g.enemies[0].dead && g.hurts === 0, 'musuh kalah oleh lemparan');
+  assert.ok(g.enemies[0].dead && g.hurts === 0, 'musuh kalah oleh bola api');
   const h = mk(pad(['', '', '', '', '', '', '', '', '', '.S....t.1.E.', '######.#####']), { hero: 'pinki' });
   run(h, 0.2, { dir: 0 }); run(h, 0.05, { dir: 0, skill: true }); run(h, 1, { dir: 0 });
-  assert.ok(h.L.levers[0].on && h.L.gates[0].open, 'lemparan menyalakan tuas dari jauh');
-  console.log('ok: Pinki melempar bola bintang');
+  assert.ok(h.L.levers[0].on && h.L.gates[0].open, 'bola api menyalakan tuas dari jauh');
+  console.log('ok: Pinki melempar bola api');
 }
-// Owi: menahan B di udara turun pelan, jadi bisa menyeberang jurang yang terlalu lebar untuk lompat biasa.
+// Lompat ganda selalu ada; Meluncur (kekuatan super) membuat hero menyeberang jurang yang terlalu lebar.
 {
-  const map = ['', '', '', '', '', '', '', '', '', '', '', '', '.S..........E...', '#####.......####'];
-  const plain = mk(map, { hero: 'pinki' }), owi = mk(map, { hero: 'owi' });
-  const plan = (sk) => (g) => ({ dir: 1, jump: g.p.onGround && cx(g) > 4.3 * T, jumpHeld: true, skillHeld: sk });
-  run(plain, 5, plan(false)); run(owi, 5, plan(true));
-  assert.ok(plain.phase !== 'won' && owi.phase === 'won', `hanya Owi yang menyeberang (biasa: ${plain.phase}, Owi: ${owi.phase})`);
-  console.log('ok: Owi melayang menyeberang jurang lebar');
+  const map = ['', '', '', '', '', '', '', '', '', '', '', '', '.S..................', '#####...........####'];
+  const plain = mk(map), glide = mk(map);
+  Sim.grantPower(glide, 'glide');
+  const plan = (g) => ({ dir: cx(g) < 17 * T ? 1 : 0, jump: (g.p.onGround && cx(g) > 4.3 * T && cx(g) < 6 * T) || (!g.p.onGround && !g.djumpUsed && g.p.vy > 0), jumpHeld: true });
+  let dj = false;
+  run(plain, 3, (g) => { if (g.djumpUsed) dj = true; return plan(g); }); run(glide, 5, plan);
+  assert.ok(dj, 'lompat ganda tanpa kekuatan super');
+  assert.ok(plain.hurts >= 1 && glide.hurts === 0 && glide.p.onGround && cx(glide) > 16 * T, `hanya yang meluncur menyeberang (biasa jatuh ${plain.hurts}x, meluncur x=${(cx(glide) / T).toFixed(1)})`);
+  console.log('ok: lompat ganda bawaan, meluncur menyeberang jurang lebar');
 }
-// Dudu: hantam tanah memecahkan blok retak (bisa beberapa lapis) dan membuka ruang rahasia.
+// Perisai menahan pukulan lalu pulih sendiri setelah 10 detik.
 {
-  const g = mk(pad(['', '', '', '', '', '', '.S..........', '##x#########', '..x.........', '#..*........', '############']), { hero: 'dudu' });
+  const g = mk(pad(['', '', '.S..']));
+  Sim.grantPower(g, 'shield');
+  Sim.hurt(g, 'musuh');
+  assert.ok(g.hearts === Sim.HEARTS && !g.shield.ready, 'perisai menahan pukulan pertama');
+  g.invuln = 0; Sim.hurt(g, 'musuh');
+  assert.strictEqual(g.hearts, Sim.HEARTS - 1, 'perisai belum pulih: pukulan kedua kena');
+  run(g, 10.2, { dir: 0 });
+  assert.ok(g.shield.ready && g.power === 'shield', 'perisai pulih setelah 10 detik');
+  console.log('ok: perisai pulih tiap 10 detik');
+}
+// Semua jagoan bisa memecah blok retak: Dudu menghantam (beberapa lapis), Pinki bola api, Owi menukik.
+{
+  const map = pad(['', '', '', '', '', '', '.S..........', '##x#########', '..x.........', '#..*........', '############']);
+  const g = mk(map, { hero: 'dudu' });
   Sim.place(g, { x: 2.5 * T, y: 7 * T }); run(g, 0.2, { dir: 0 });
   run(g, 0.05, { dir: 0, skill: true }); run(g, 1.5, { dir: 0 });
   assert.ok(g.L.cracks.every((k) => k.broken) && feet(g) === 10 * T, `dua lapis blok retak pecah (kaki=${feet(g)})`);
-  const n = mk(pad(['', '', '', '', '', '', '.S..........', '##x#########', '..x.........', '#..*........', '############']), { hero: 'pinki' });
-  Sim.place(n, { x: 2.5 * T, y: 7 * T }); run(n, 0.2, { dir: 0 }); run(n, 0.05, { dir: 0, skill: true }); run(n, 1, { dir: 0 });
-  assert.ok(n.L.cracks.every((k) => !k.broken), 'jagoan lain tidak memecahkan blok retak');
-  console.log('ok: Dudu menghantam tanah memecahkan blok retak');
+  const n = mk(pad(['', '', '', '', '', '', '.S..........', '#####x######', '............', '############']), { hero: 'pinki' });
+  run(n, 0.2, { dir: 0 }); run(n, 0.05, { dir: 0, skill: true }); run(n, 1.2, { dir: 0 });
+  assert.ok(n.L.cracks[0].broken, 'bola api Pinki memecah blok retak di lantai');
+  const o = mk(pad(['', '', '', '', '', '', '.S..........', '#####x######', '............', '############']), { hero: 'owi' });
+  Sim.place(o, { x: 3.5 * T, y: 7 * T }); run(o, 0.2, { dir: 0 });
+  run(o, 0.15, { dir: 1, jump: o.t < 0.22, jumpHeld: true }); run(o, 0.05, { dir: 1, skill: true }); run(o, 1, { dir: 0 });
+  assert.ok(o.L.cracks[0].broken, 'terjang Owi menukik memecah blok retak');
+  console.log('ok: semua jagoan memecah blok retak');
+}
+// Musuh MH1: banteng menyeruduk dan pusing saat menabrak dinding; lebah dan meriam tidak bisa diinjak; meriam menembak.
+{
+  const g = mk(pad(['', '', '', '', '', '', '', '', '', '#S......r..#', '############']));
+  run(g, 0.1, { dir: 0 });
+  const e = g.enemies[0]; e.dir = -1;
+  let charged = false; run(g, 2, () => { if (e.state === 'charge') charged = true; return { dir: 0 }; });
+  assert.ok(charged, 'banteng menyeruduk saat melihat hero');
+  const f = mk(pad(['', '', '', '', '', '', '', '', '.S..f.......', '############']));
+  run(f, 3, { dir: 1 });
+  assert.ok(f.hurts >= 1 && !f.enemies[0].dead, 'lebah tidak bisa dilewati begitu saja');
+  const c = mk(pad(['', '', '', '', '', '', '', '', '', '.S........n.', '############']));
+  let shot = false; run(c, 4, (g) => { if (g.balls.length) shot = true; return { dir: 0 }; });
+  assert.ok(shot && c.hurts >= 1, 'meriam menembak dan peluru melukai');
+  console.log('ok: banteng, lebah, dan meriam seperti MH1');
 }
 // Gergaji melukai.
 {

@@ -17,7 +17,7 @@
   }
 
   // Sprite MH1 yang dipakai ulang (pahlawan lama, permata, peti, musuh, ikon, tileset).
-  const MH1_USE = /^(hero\d|gem\d|box\d_idle|icon\d+|enemy[1-7]_(run|idle|hit|fly|walk|charge)|end_|checkpoint_flag_idle1|tileset|cannonball1|appearing|trap[1-6])/;
+  const MH1_USE = /^(hero\d|gem\d|box\d_idle|icon\d+|enemy[1-7]_(run|idle|hit|fly|walk|charge|stun|attack)|end_|checkpoint_flag_idle1|tileset|cannonball1|appearing|trap[1-6])/;
   const SVG = ['apple', 'banana', 'cherry', 'grape', 'strawberry', 'pineapple', 'watermelon', 'candy', 'lollipop', 'chick', 'bee'];
 
   M.load = function (progress) {
@@ -391,6 +391,126 @@
       'oro.oro',
       'oo...oo',
     ],
+    // ---- hiasan level Kejar (berdiri di atas lantai; anchor 'feet') ----
+    rumput: [
+      '.g...g.',
+      '.gg.gg.',
+      'gGg.gGg',
+      'GgGgGgG',
+    ],
+    bunga: [
+      '.rrr.',
+      'rryrr',
+      '.rrr.',
+      '..G..',
+      '.gG..',
+      '..Gg.',
+      '..G..',
+    ],
+    semak: [
+      '....ooooo.....',
+      '..oogggggoo...',
+      '.oggwgggggGoo.',
+      'oggggggrgggGGo',
+      'oggrgggggggGGo',
+      'oGgggggggrGGGo',
+      '.oGGGGGGGGGGo.',
+    ],
+    pohon: [
+      '.....oooooo.....',
+      '...ooggggggoo...',
+      '..oggwggggggGo..',
+      '.ogggggggggggGo.',
+      '.oggggggggggGGo.',
+      'ogggggggggggGGGo',
+      'oggggggggggGGGGo',
+      'oGggggggggGGGGGo',
+      '.oGGgggggGGGGGo.',
+      '..ooGGGGGGGGoo..',
+      '....oooKKooo....',
+      '.......kK.......',
+      '.......kK.......',
+      '.......kK.......',
+      '......kkKK......',
+      '.....kk..KK.....',
+    ],
+    batu: [
+      '...ooo...',
+      '.oonnno..',
+      'onhnnnNo.',
+      'onnnnNNNo',
+      'oNNNNNNNo',
+    ],
+    jamur: [
+      '.ooooo.',
+      'orrwrro',
+      'orwrrwr',
+      'ooooooo',
+      '..ohh..',
+      '..ohh..',
+      '..ooo..',
+    ],
+    labu: [
+      '....G....',
+      '...Gg....',
+      '.ooaoaoo.',
+      'oaaAaAaao',
+      'oaaAaAaao',
+      'oAaAaAaAo',
+      '.ooooooo.',
+    ],
+    kristalKecil: [
+      '..o..',
+      '.olo.',
+      '.olco',
+      'olcco',
+      'olcCo',
+      'occCo',
+      'occCo',
+      '.oCo.',
+    ],
+    stalagmit: [
+      '...o..',
+      '..oVo.',
+      '..oVo.',
+      '.ovVVo',
+      '.ovVVo',
+      'ovvVVo',
+      'ovvVVVo',
+    ],
+    stalaktit: [
+      'ovvVVVo',
+      '.ovVVo.',
+      '.ovVo..',
+      '..oVo..',
+      '..oo...',
+    ],
+    antena: [
+      '..yy..',
+      '.oyyo.',
+      '..oo..',
+      '..nN..',
+      '..nN..',
+      '..nN..',
+      '..nN..',
+      '..nN..',
+      '..nN..',
+      '.onNNo',
+      'onnNNNo',
+    ],
+    bendera: [
+      'oo.......',
+      'onrrrrro.',
+      'onrrwrrro',
+      'onrrrrrro',
+      'onrrrrro.',
+      'on.......',
+      'on.......',
+      'on.......',
+      'on.......',
+      'on.......',
+      'oNo......',
+    ],
   };
   const artCache = {};
   // Gambar pixel art ART[name] dengan skala s. Warna bisa ditukar: swap = { r: '#...' }.
@@ -501,9 +621,9 @@
   // Tiap tema: warna langit (atas, bawah) dan lapisan bentuk. Lapisan dirender sekali ke canvas setengah
   // resolusi selebar 2 layar (bisa diulang mendatar), lalu digambar dua kali lipat agar tampak berpiksel.
   const THEMES = {
-    padang: { sky: ['#7cc8ff', '#d4f1ff'], sun: '#fff3b0', layers: [['hill', '#9fdc8c', 0.55, 60, 0.15], ['hill', '#6cc46a', 0.68, 40, 0.35], ['trees', '#3f9a50', 0.78, 0, 0.6]] },
+    padang: { sky: ['#7cc8ff', '#d4f1ff'], sun: '#fff3b0', layers: [['clouds', '#ffffff', 0.35, 2, 0.06], ['hill', '#a9c4e8', 0.5, 90, 0.08], ['hill', '#9fdc8c', 0.6, 60, 0.15], ['hill', '#6cc46a', 0.7, 40, 0.35], ['trees', '#3f9a50', 0.8, 0, 0.6]] },
     pantai: { sky: ['#5fb8ff', '#ffe0b8'], sun: '#fff3b0', layers: [['sea', '#2f8fe0', 0.62, 0, 0.1], ['hill', '#ffe1a0', 0.8, 20, 0.4], ['palms', '#2f9a43', 0.78, 0, 0.6]] },
-    kebun: { sky: ['#ffb38a', '#ffe8b8'], sun: '#fff1c4', layers: [['hill', '#d6b46a', 0.55, 50, 0.15], ['hill', '#9cc65a', 0.66, 30, 0.35], ['fence', '#a8683a', 0.8, 0, 0.6]] },
+    kebun: { sky: ['#ffb38a', '#ffe8b8'], sun: '#fff1c4', layers: [['clouds', '#fff4e0', 0.35, 3, 0.06], ['hill', '#c99a8a', 0.5, 80, 0.08], ['hill', '#d6b46a', 0.58, 50, 0.15], ['hill', '#9cc65a', 0.68, 30, 0.35], ['fence', '#a8683a', 0.82, 0, 0.6]] },
     gua: { sky: ['#1c1236', '#3b2466'], layers: [['stal', '#2a1a4d', 0, 0, 0.2], ['crystals', '#64e3ff', 0.75, 0, 0.35], ['hill', '#3a2a5e', 0.82, 24, 0.6]] },
     kota: { sky: ['#ff9a8b', '#ffd6a5'], sun: '#ffe9c4', layers: [['city', '#c17aa8', 0.52, 0, 0.15], ['city', '#8f5a9e', 0.64, 1, 0.35], ['hill', '#5e3f7a', 0.84, 6, 0.6]] },
     benteng: { sky: ['#140c2e', '#4b2e83'], moon: true, layers: [['stars', '#ffffff', 0, 0, 0.05], ['castle', '#2a1a4d', 0.5, 0, 0.2], ['hill', '#1f1440', 0.8, 30, 0.5]] },

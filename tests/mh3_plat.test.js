@@ -51,11 +51,11 @@ for (const lv of Lv.LEVELS) {
   assert.strictEqual(g.hearts, Sim.HEARTS); assert.strictEqual(g.deaths, 1);
   assert.ok(Math.abs(g.p.x + g.p.w / 2 - 30 * T) < 2, 'kembali ke checkpoint');
 }
-// Perisai menahan satu pukulan.
+// Perisai menahan pukulan lalu mengisi ulang (tetap jadi kekuatan aktif).
 {
   const g = Sim.create(Lv.LEVELS[0]);
   Sim.grantPower(g, 'shield'); Sim.hurt(g, 'musuh');
-  assert.strictEqual(g.hearts, Sim.HEARTS); assert.strictEqual(g.power, null);
+  assert.strictEqual(g.hearts, Sim.HEARTS); assert.strictEqual(g.power, 'shield'); assert.strictEqual(g.shield.ready, false);
 }
 // Generator: banyak seed acak di tiap tier lulus pemeriksa level, dan tier tinggi lebih banyak naik/turun.
 {

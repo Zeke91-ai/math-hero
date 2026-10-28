@@ -1,4 +1,4 @@
-// Math Hero 3: adegan Kejar (platformer layar tegak). Menggambar sim.js dan membaca panah kiri/kanan + tombol Lompat.
+// Math Hero 3: adegan Kejar (platformer layar tegak). Menggambar sim.js dan membaca pad 4 arah + tombol Lompat dan B.
 // Mulai: MH3.plat.start(levelDef, onWin, onLose)  atau  M.go('plat', { level: 1, onEnd })
 // Peti (PR) tidak menghalangi: menyentuhnya membuka kartu PR (MH3.homework). Peti Kekuatan -> pilih 1 dari 3 kekuatan,
 // Peti Kristal -> 1 sampai 3 Kunci Kristal. opts.onChest(kind, id, g) bila ada menggantikan perilaku ini.
@@ -6,17 +6,18 @@
   const M = window.MH2;
   const MH3 = window.MH3 = window.MH3 || {};
   const Sim = MH3.platSim, Lv = MH3.platLevels, Ph = window.Physics;
-  const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 112;
+  const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 150;
   let S = null;
   const grade = () => (M.save && M.save.active && M.save.active.grade) || 2;
   const POWERS = [
-    { key: 'djump', nama: 'Lompat ganda', info: 'Lompat sekali lagi di udara', color: 'red' },
+    { key: 'glide', nama: 'Meluncur', info: 'Setelah lompat 2x, tahan Lompat untuk meluncur', color: 'red' },
     { key: 'magnet', nama: 'Magnet bintang', info: 'Bintang di sekitar tertarik ke kamu', color: 'yellow' },
-    { key: 'shield', nama: 'Perisai', info: 'Menahan satu pukulan', color: 'teal' },
+    { key: 'shield', nama: 'Perisai', info: 'Menahan pukulan, pulih lagi tiap 10 detik', color: 'teal' },
   ];
+  const POWER_NAME = { glide: 'Meluncur', magnet: 'Magnet', shield: 'Perisai' };
 
-  const SKILL_LABEL = { lempar: 'Lempar', melayang: 'Melayang', hantam: 'Hantam' };
-  const controls = () => ({ arrows: true, a: 'Lompat', b: SKILL_LABEL[S && S.g && S.g.skill] || null });
+  const SKILL_LABEL = { lempar: 'Bola api', terjang: 'Terjang', hantam: 'Hantam' };
+  const controls = () => ({ dpad: true, a: 'Lompat', b: SKILL_LABEL[S && S.g && S.g.skill] || null });
   const heroKey = () => (M.save && M.save.active && M.save.active.hero) || 'pinki';
   const say = (t, ms, c) => M.toast(t, ms, c);
   const viewH = () => M.VH - HUD - PAD_H;
@@ -30,7 +31,11 @@
     else if (e.type === 'hurt') { a.sfx('hit'); S.shake = 0.3; M.flash('#ff6b6b', 0.3); }
     else if (e.type === 'respawn') say('Ulang dari bendera terakhir, ya!', 1800);
     else if (e.type === 'checkpoint') { a.sfx('kartu'); say('Bendera! Kamu mulai dari sini kalau jatuh.', 1800, '#e3ffe6'); }
-    else if (e.type === 'power') say({ djump: 'Lompat ganda!', magnet: 'Magnet bintang!', shield: 'Perisai!' }[e.key] || 'Kekuatan!', 1800);
+    else if (e.type === 'power') say({ glide: 'Meluncur! Lompat 2x lalu tahan Lompat.', magnet: 'Magnet bintang!', shield: 'Perisai! Pulih lagi tiap 10 detik.' }[e.key] || 'Kekuatan!', 2200);
+    else if (e.type === 'shieldBreak') { a.sfx('hit'); fx.burst(sx(S.g.p.x + 14), sy(S.g.p.y + 26), { n: 14, speed: 140, color: ['#64e3ff', '#b8f4ff'], life: 0.4 }); }
+    else if (e.type === 'shieldReady') { a.sfx('naik'); fx.float('Perisai siap!', sx(S.g.p.x + 14), sy(S.g.p.y - 10), '#64e3ff', 14); }
+    else if (e.type === 'lunge') a.sfx('boost');
+    else if (e.type === 'cannon') a.sfx('tembak');
     else if (e.type === 'spring' || e.type === 'dash') { a.sfx('boost'); fx.burst(sx(e.x), sy(e.y), { n: 8, speed: 90, color: ['#ffd54a', '#fff6dc'], life: 0.3 }); }
     else if (e.type === 'pipeIn' || e.type === 'pipeOut') a.sfx('hop');
     else if (e.type === 'lever' || e.type === 'plate') a.sfx('klik');
@@ -40,7 +45,7 @@
     else if (e.type === 'boxReset') say('Kotak kembali ke tempat awal.', 1600);
     else if (e.type === 'quiz') quiz(e);
     else if (e.type === 'throw') a.sfx('tembak');
-    else if (e.type === 'shotHit') fx.burst(sx(e.x), sy(e.y), { n: 6, speed: 60, color: ['#ffd54a'], life: 0.25 });
+    else if (e.type === 'shotHit') fx.burst(sx(e.x), sy(e.y), { n: 8, speed: 70, color: ['#ffd54a', '#ff7a2f', '#ff3d2e'], life: 0.3 });
     else if (e.type === 'slam') { a.sfx('ledak'); S.shake = 0.25; fx.burst(sx(e.x), sy(e.y), { n: 14, speed: 140, color: ['#fff6dc', '#c48a4a'], life: 0.4 }); }
     else if (e.type === 'crack') { fx.burst(sx(e.x), sy(e.y), { n: 12, speed: 120, color: ['#c48a4a', '#7a4a2a', '#4a2a14'], life: 0.5 }); if (!S.crackHint) { S.crackHint = true; say('Blok retak pecah!', 1500, '#e3ffe6'); } }
     else if (e.type === 'chest') chest(e);
@@ -206,6 +211,7 @@
       g.moveTo(x + 6, y + 4); g.lineTo(x + 14, y + 14); g.lineTo(x + 10, y + 22); g.lineTo(x + 18, y + 29);
       g.moveTo(x + 14, y + 14); g.lineTo(x + 25, y + 11); g.stroke();
     }
+    for (const d of S.decor) if (d.x > cam.x - 64 && d.x < cam.x + vw + 64 && d.y > cam.y - 8 && d.y < cam.y + vh + 80) M.art(g, d.art, d.x, d.y, 2, { anchor: d.hang ? undefined : 'feet', flip: d.flip, swap: d.swap });
     for (const gt of L.gates) drawGate(g, gt, L);
     for (const m of L.movers) {
       drawBoard(g, m.x, m.y, m.w);
@@ -238,23 +244,164 @@
     for (const s of L.stars) if (!s.got) M.art(g, 'bintang', s.x - 11 * 1.3, s.y - 11 * 1.3 + Math.sin(M.t * 5 + s.id) * 2, 2.6);
     // tujuan: kristal
     { const gl = L.goal, bob = Math.sin(M.t * 3) * 3; g.fillStyle = 'rgba(100,227,255,0.25)'; g.beginPath(); g.arc(gl.x + gl.w / 2, gl.y + gl.h / 2, 36, 0, 7); g.fill(); M.art(g, 'kristal', gl.x + gl.w / 2 - 12 * 2.4, gl.y + 4 + bob, 4.5); }
-    for (const e of gm.enemies) {
-      const b = e.b, f = M.t * 9 + e.id;
-      if (e.dead) { if (e.timer > 0) M.spr1(g, 'enemy1_hit', 2, b.x + b.w / 2, b.y + b.h + 2, { scale: 1.2, alpha: Math.max(0, e.timer * 2.5) }); continue; }
-      M.spr1(g, 'enemy1_run', f, b.x + b.w / 2, b.y + b.h + 2, { scale: 1.2, flip: e.dir > 0 });
+    for (const e of gm.enemies) drawEnemy(g, e);
+    for (const bl of gm.balls) M.spr1(g, 'cannonball1', 0, bl.x, bl.y, { scale: 2, anchor: 'center' });
+    for (const sh of gm.shots) drawFireball(g, sh);
+    const p = gm.p, hx = p.x + p.w / 2, hy = p.y + p.h / 2;
+    if (gm.power === 'magnet' && !gm.pipe) {
+      // aura emas berdenyut
+      const r = 34 + Math.sin(M.t * 5) * 4, gr = g.createRadialGradient(hx, hy, 6, hx, hy, r);
+      gr.addColorStop(0, 'rgba(255,213,74,0.35)'); gr.addColorStop(0.7, 'rgba(255,213,74,0.18)'); gr.addColorStop(1, 'rgba(255,213,74,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(hx, hy, r, 0, 7); g.fill();
     }
-    for (const sh of gm.shots) M.art(g, 'bintang', sh.x - 11 * 0.7, sh.y - 11 * 0.7 + Math.sin(M.t * 30) * 1, 1.4);
-    const p = gm.p;
-    if (gm.glide) {
-      // sayap daun kecil saat Owi melayang
-      g.fillStyle = 'rgba(255,255,255,0.85)';
-      for (const d of [-1, 1]) { g.beginPath(); g.ellipse(p.x + p.w / 2 + d * 20, p.y + 16 + Math.sin(M.t * 18) * 2, 16, 6, d * 0.35, 0, 7); g.fill(); }
+    if (gm.power === 'glide' && !gm.pipe) drawWings(g, gm, hx, p.y + 28);
+    if (gm.lunge) {
+      g.fillStyle = 'rgba(255,255,255,0.7)';
+      for (let k = 0; k < 4; k++) g.fillRect(hx - gm.lunge.dir * (22 + k * 9), p.y + 10 + k * 9, 14, 3);
     }
     const blink = gm.invuln > 0 && Math.floor(M.t * 14) % 2;
-    if (!gm.pipe && !blink) M.hero(g, heroKey(), gm.anim, M.t, p.x + p.w / 2, p.y + p.h + 2, { scale: 1.5, flip: gm.face < 0, frame: gm.climb && !p.vy ? 0 : undefined });
-    if (gm.power === 'shield' && !gm.pipe) { g.strokeStyle = 'rgba(100,227,255,0.8)'; g.lineWidth = 3; g.beginPath(); g.arc(p.x + p.w / 2, p.y + p.h / 2, 38, 0, 7); g.stroke(); }
+    if (!gm.pipe && !blink) M.hero(g, heroKey(), gm.anim, M.t, hx, p.y + p.h + 2, { scale: 1.5, flip: gm.face < 0, frame: gm.climb && !p.vy ? 0 : undefined });
+    if (gm.shield && !gm.pipe) {
+      // gelembung perisai: kecil dan ungu saat mengisi, membesar sampai ukuran penuh dan biru muda saat siap
+      const sd = gm.shield, k = sd.ready ? 1 : 1 - sd.t / 10, r = 12 + 26 * k;
+      g.fillStyle = sd.ready ? 'rgba(100,227,255,0.16)' : 'rgba(179,140,255,0.14)'; g.beginPath(); g.arc(hx, hy, r, 0, 7); g.fill();
+      g.strokeStyle = sd.ready ? 'rgba(100,227,255,0.85)' : 'rgba(179,140,255,0.7)'; g.lineWidth = sd.ready ? 3 : 2;
+      g.beginPath(); g.arc(hx, hy, r, 0, 7); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,0.7)'; g.fillRect(hx - r * 0.5, hy - r * 0.6, Math.max(2, r * 0.18), Math.max(2, r * 0.18));
+    }
     g.restore();
   }
+
+  // Musuh MH1 dengan sprite masing-masing. faces = arah hadap sprite asli (1 kanan, -1 kiri).
+  const FOE_ART = {
+    e: { run: 'enemy1_run', hit: 'enemy1_hit', faces: 1 }, a: { run: 'enemy2_run', hit: 'enemy2_hit', faces: 1 },
+    r: { run: 'enemy3_walk', tele: 'enemy3_idle', charge: 'enemy3_charge', stun: 'enemy3_stun', hit: 'enemy3_hit', faces: 1 },
+    f: { run: 'enemy5_fly', hit: 'enemy5_hit', faces: 1 }, n: { run: 'enemy4_idle', fire: 'enemy4_attack', hit: 'enemy4_hit', faces: -1 },
+  };
+  function drawEnemy(g, e) {
+    const b = e.b, d = FOE_ART[e.type] || FOE_ART.e, f = M.t * 12 + e.id, fly = e.type === 'f';
+    const x = b.x + b.w / 2, y = fly ? b.y + b.h / 2 : b.y + b.h + 2, o = { scale: 1.25, flip: e.dir !== d.faces, anchor: fly ? 'center' : undefined };
+    if (e.dead) { if (e.timer > 0) M.spr1(g, d.hit, 2, x, y, Object.assign(o, { alpha: Math.max(0, e.timer * 2.5) })); return; }
+    M.spr1(g, d[e.state] || d.run, f, x, y, o);
+    if (e.state === 'tele') M.text(g, '!', x, b.y - 20, { size: 20, align: 'center', color: '#ff5d73' });
+    if (e.state === 'stun') for (let k = 0; k < 3; k++) M.art(g, 'bintang', x - 6 + Math.cos(M.t * 6 + k * 2.1) * 14, b.y - 18 + Math.sin(M.t * 6 + k * 2.1) * 4, 1);
+  }
+  // Bola api: inti kuning, api jingga-merah, ekor yang memudar ke belakang.
+  function drawFireball(g, s) {
+    const d = Math.sign(s.vx) || 1;
+    for (let k = 3; k >= 1; k--) { g.fillStyle = `rgba(255,${90 + k * 20},40,${0.5 - k * 0.12})`; g.beginPath(); g.arc(s.x - d * k * 7, s.y - k * 1.5, s.r - k, 0, 7); g.fill(); }
+    g.fillStyle = '#ff3d2e'; g.beginPath(); g.arc(s.x, s.y, s.r + 1, 0, 7); g.fill();
+    g.fillStyle = '#ff9f43'; g.beginPath(); g.arc(s.x + d, s.y, s.r - 2, 0, 7); g.fill();
+    g.fillStyle = '#ffe98a'; g.beginPath(); g.arc(s.x + d * 2, s.y - 1, s.r - 4.5, 0, 7); g.fill();
+  }
+  // Sayap Meluncur: terlipat kecil di punggung, terbentang dan mengepak saat meluncur.
+  function drawWings(g, gm, x, y) {
+    const open = gm.glide, flap = open ? Math.sin(M.t * 16) * 0.25 : 0;
+    for (const d of [-1, 1]) {
+      g.save(); g.translate(x - gm.face * 8, y); g.scale(d, 1); g.rotate((open ? -0.25 : -0.6) + flap);
+      const L = open ? 40 : 22;
+      g.fillStyle = '#ffffff'; g.strokeStyle = '#1d1438'; g.lineWidth = 2;
+      g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(L * 0.6, -12, L, -4); g.lineTo(L * 0.8, 2); g.lineTo(L * 0.55, 0); g.lineTo(L * 0.35, 5); g.closePath();
+      g.fill(); g.stroke();
+      g.fillStyle = '#b8f4ff'; g.fillRect(L * 0.3, -5, L * 0.4, 2);
+      g.restore();
+    }
+  }
+
+  // ---------- Hiasan per tema ----------
+  // Tanaman, batu, kristal, dan tiang di atas lantai kosong (bukan di dekat benda permainan), dipilih dari hash kolom
+  // supaya sama setiap kali level dimainkan. Gua juga punya stalaktit di bawah atap.
+  const DECOR = {
+    padang: [['rumput', 30], ['bunga', 14], ['semak', 10], ['pohon', 6, 3], ['batu', 6], ['bunga', 6, 0, { r: '#ffffff', y: '#ffd54a' }], ['bunga', 5, 0, { r: '#4b9cff' }]],
+    kebun: [['rumput', 24], ['bunga', 14, 0, { r: '#ff8fab' }], ['labu', 8], ['semak', 9], ['jamur', 6], ['pohon', 5, 3], ['bunga', 8, 0, { r: '#ffd54a', y: '#ff9f43' }]],
+    gua: [['kristalKecil', 14], ['batu', 14], ['stalagmit', 10], ['jamur', 8, 0, { r: '#64e3ff', w: '#b8f4ff' }], ['kristalKecil', 8, 0, { l: '#e3d4ff', c: '#b38cff', C: '#8b5cf6' }]],
+    langit: [['antena', 7, 1], ['bendera', 5, 1], ['batu', 6, 0, { n: '#c8d3e6', N: '#8a96b0', h: '#ffffff' }], ['bendera', 3, 1, { r: '#4b9cff' }]],
+  };
+  const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+  function buildDecor(L, def) {
+    const out = [], busy = new Set(), mark = (x, y) => busy.add(Math.floor(y / T) * L.cols + Math.floor(x / T));
+    for (const o of [...L.springs, ...L.levers, ...L.plates, ...L.chests, ...L.checkpoints, ...L.spikes, ...L.dashes, ...L.enemies]) mark(o.x + 8, o.y + 8);
+    for (const o of L.pipes) { mark(o.a.x, o.a.y); mark(o.b.x, o.b.y); }
+    for (const o of L.boxes) mark(o.x0, o.y0);
+    for (const o of L.saws) mark(o.cx, o.cy);
+    mark(L.start.x, L.start.y - 8); mark(L.goal.x, L.goal.y + T);
+    const inside = (c, r) => (def.inside || []).some((q) => c >= q[0] && c <= q[2] && r >= q[1] && r <= q[3]);
+    const set = DECOR[def.tema] || DECOR.padang, total = set.reduce((t, d) => t + d[1], 0);
+    const free = (c, r) => c >= 0 && c < L.cols && r >= 0 && !L.tiles[r * L.cols + c] && !L.lad[r * L.cols + c] && !busy.has(r * L.cols + c);
+    for (let r = 1; r < L.rows; r++) for (let c = 0; c < L.cols; c++) {
+      const i = r * L.cols + c;
+      if (L.tiles[i] !== 1 || L.cracks.some((k) => k.c === c && k.r === r) || L.gates.some((gt) => gt.c === c && gt.r === r)) continue;
+      // stalaktit menggantung di bawah atap gua
+      if (def.tema === 'gua' && r + 1 < L.rows && free(c, r + 1) && free(c, r + 2) && hash(c, r * 7) < 0.18) out.push({ art: 'stalaktit', x: c * T + 9, y: (r + 1) * T, hang: true });
+      if (!free(c, r - 1) || hash(c, r) > 0.42) continue;
+      let k = hash(r, c) * total, d = set[0];
+      for (const x of set) { if ((k -= x[1]) < 0) { d = x; break; } }
+      if (d[2] && (!free(c, r - 2) || !free(c, r - 3) || inside(c, r - 1) || (d[2] > 1 && (!free(c - 1, r - 1) || !free(c + 1, r - 1))))) continue;
+      out.push({ art: d[0], x: c * T + T / 2 + (hash(c * 3, r) - 0.5) * 10, y: r * T, flip: hash(c, r * 3) < 0.5, swap: d[3] });
+    }
+    return out;
+  }
+
+  // ---------- Balon penjelasan ----------
+  // Saat benda atau musuh baru pertama kali terlihat, balon teks singkat muncul di dekatnya selama beberapa detik.
+  // Tiap jenis tampil sekali per permainan level, dan berhenti muncul setelah dilihat 3 kali di perangkat ini.
+  const CRACK_TIP = { lempar: 'Blok retak! Tekan B: bola api memecahkannya.', terjang: 'Blok retak! Lompat, lalu tekan B untuk menukik.', hantam: 'Blok retak! Tekan B untuk menghantam tanah.' };
+  const TIP = {
+    tangga: 'Tangga! Tekan ▲ untuk naik, ▼ untuk turun.', per: 'Per! Injak untuk melambung tinggi.', samping: 'Per samping! Lewati untuk melesat jauh.',
+    pipa: 'Pipa! Masuk dari mulut hijau.', gerak: 'Papan bergerak! Tunggu, lalu lompat naik.', lift: 'Lift! Berdiri di atasnya untuk naik.',
+    rapuh: 'Papan rapuh! Cepat lewat, nanti runtuh.', kotak: 'Kotak! Dorong ke tombol.', tombol: 'Tombol! Injak, atau taruh kotak di atasnya.',
+    tuas: 'Tuas! Sentuh untuk membuka gerbang yang warnanya sama.', macet: 'Macet! Sentuh, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
+    e: 'Musuh! Injak kepalanya.', a: 'Musuh! Injak kepalanya.', r: 'Banteng! Bisa diinjak saat pusing, atau pakai B.',
+    f: 'Lebah! Tidak bisa diinjak. Hindari atau pakai B.', n: 'Meriam! Lompati pelurunya, atau pakai B.', peti: 'Peti Kekuatan! Jawab soal, dapat kekuatan super.',
+  };
+  const TIP_KEY = 'mh3_tips_v1';
+  function tipStore() { try { return JSON.parse(localStorage.getItem(TIP_KEY)) || {}; } catch (e) { return {}; } }
+  function buildTips(L, skill) {
+    const t = [], add = (key, x, y) => { if (!t.some((q) => q.key === key)) t.push({ key, x, y, text: key === 'retak' ? CRACK_TIP[skill] || CRACK_TIP.lempar : TIP[key] }); };
+    L.lad.forEach((v, i) => { if (v && !t.some((q) => q.key === 'tangga')) add('tangga', (i % L.cols) * T + T / 2, Math.floor(i / L.cols) * T); });
+    for (const o of L.springs) add('per', o.x + o.w / 2, o.y);
+    for (const o of L.dashes) add('samping', o.x + o.w / 2, o.y + o.h - 24);
+    for (const o of L.pipes) add('pipa', o.a.x + T / 2, o.a.y);
+    for (const o of L.movers) add(o.axis === 'x' ? 'gerak' : 'lift', o.x + o.w / 2, o.axis === 'x' ? o.y : o.y1);
+    for (const o of L.crumbles) add('rapuh', o.x + T / 2, o.y);
+    for (const o of L.boxes) add('kotak', o.x0 + 15, o.y0);
+    for (const o of [...L.levers, ...L.plates]) if (o.stuck) add('macet', o.x + o.w / 2, o.y - 30);
+    for (const o of L.plates) if (!o.stuck) add('tombol', o.x + o.w / 2, o.y);
+    for (const o of L.levers) if (!o.stuck) add('tuas', o.x + o.w / 2, o.y);
+    for (const o of L.saws) add('gergaji', o.cx, o.cy - 14);
+    for (const k of L.cracks) add('retak', k.c * T + T / 2, k.r * T);
+    for (const o of L.enemies) add(o.type || 'e', o.x + 14, o.y - 8);
+    for (const o of L.chests) if (o.kind === 'power') add('peti', o.x + o.w / 2, o.y);
+    return t;
+  }
+  function updateTips(dt) {
+    const tp = S.tip;
+    if (tp) { tp.t -= dt; if (tp.t <= 0) S.tip = null; return; }
+    const cam = S.cam, vw = M.VW / SC, vh = viewH() / SC, p = S.g.p;
+    const seen = S.tipSeen;
+    const q = S.tips.find((k) => !k.shown && (seen[k.key] || 0) < 3 && k.x > cam.x + 20 && k.x < cam.x + vw - 10 && k.y > cam.y + 20 && k.y < cam.y + vh && Math.abs(k.x - p.x) < vw * 0.75);
+    if (!q) return;
+    q.shown = true; S.tip = { k: q, t: 4.5 };
+    seen[q.key] = (seen[q.key] || 0) + 1;
+    try { localStorage.setItem(TIP_KEY, JSON.stringify(seen)); } catch (e) { /* tanpa penyimpanan: balon tetap tampil */ }
+  }
+  function drawTip(g) {
+    const tp = S.tip;
+    if (!tp) return;
+    const k = tp.k, a = Math.min(1, tp.t * 3, (4.5 - tp.t) * 4), maxW = 200;
+    g.font = `13px ${M.FONT}`;
+    const lines = M.wrap(g, k.text, maxW), w = Math.max(...lines.map((l) => g.measureText(l).width)) + 20, h = lines.length * 17 + 14;
+    const ax = (k.x - S.cam.x) * SC, ay = HUD + (k.y - S.cam.y) * SC - 10;
+    const bx = Math.max(6, Math.min(M.VW - w - 6, ax - w / 2)), by = Math.max(HUD + 4, ay - h - 12);
+    g.globalAlpha = a;
+    g.fillStyle = '#fff6dc'; g.strokeStyle = '#2b1d52'; g.lineWidth = 3;
+    g.beginPath(); g.roundRect ? g.roundRect(bx, by, w, h, 8) : g.rect(bx, by, w, h); g.fill(); g.stroke();
+    const tx = Math.max(bx + 12, Math.min(bx + w - 12, ax));
+    if (by + h < ay) { g.beginPath(); g.moveTo(tx - 7, by + h - 1); g.lineTo(tx, Math.min(ay, by + h + 12)); g.lineTo(tx + 7, by + h - 1); g.closePath(); g.fill(); g.stroke(); g.fillRect(tx - 6, by + h - 3, 12, 3); }
+    lines.forEach((l, i) => M.text(g, l, bx + w / 2, by + 15 + i * 17, { size: 13, align: 'center', color: '#2b1d52', outline: false }));
+    g.globalAlpha = 1;
+  }
+
   function drawHud(g) {
     const gm = S.g;
     M.box(g, 0, 0, M.VW, HUD - 6, '#2b1d52', { line: '#1d1438', shade: false });
@@ -262,7 +409,7 @@
     M.art(g, 'bintang', 10, 33, 2);
     M.text(g, `${gm.stars}/${gm.L.stars.length}`, 38, 43, { size: 18, color: '#ffd54a' });
     M.text(g, S.def.nama, M.VW / 2 + 22, 30, { size: 14, align: 'center', color: '#b8f4ff' });
-    if (gm.power) M.text(g, { djump: 'Lompat ganda', magnet: 'Magnet', shield: 'Perisai' }[gm.power], M.VW / 2 + 22, 47, { size: 12, align: 'center', color: '#ffd54a' });
+    if (gm.power) M.text(g, POWER_NAME[gm.power] + (gm.shield && !gm.shield.ready ? ` (${Math.ceil(gm.shield.t)})` : ''), M.VW / 2 + 22, 47, { size: 12, align: 'center', color: '#ffd54a' });
     M.button(g, { id: 'jeda', x: M.VW - 46, y: 4, w: 38, h: 38, color: 'purple', icon: 'pause', onTap: () => { if (S.state === 'play') S.state = 'pause'; } });
     M.text(g, `Bonus ${S.bonus.value()}`, M.VW - 8, 46, { size: 11, align: 'right', color: '#cbbcff' });
   }
@@ -296,6 +443,8 @@
       const def = p.def || Lv.level(p.level || 1);
       S = { def, params: p, opts: p, g: Sim.create(def, { hero: heroKey() }), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame('mh3') };
       S.gateCell = new Set(S.g.L.gates.map((gt) => gt.r * S.g.L.cols + gt.c));
+      S.decor = buildDecor(S.g.L, def);
+      S.tips = buildTips(S.g.L, S.g.skill); S.tipSeen = tipStore(); S.tip = null;
       updateCam(0, true);
       M.setControls(controls());
       M.audio.music('padang');
@@ -316,6 +465,7 @@
       for (const e of S.g.events) handle(e);
       S.g.events.length = 0;
       updateCam(dt, false);
+      updateTips(dt);
       if (S.g.phase === 'won') { S.state = 'end'; S.endT = 0; M.setControls(null); }
     },
     draw(g) {
@@ -326,6 +476,7 @@
       drawWorld(g);
       M.fx.draw(g);
       g.restore();
+      if (S.state === 'play') drawTip(g);
       drawHud(g);
       if (S.state === 'pause') {
         g.fillStyle = 'rgba(29,20,56,0.7)'; g.fillRect(0, 0, M.VW, M.VH);
