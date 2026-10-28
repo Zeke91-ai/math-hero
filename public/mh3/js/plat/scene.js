@@ -104,22 +104,26 @@
     M.text(g, S.def.nama, M.VW / 2 + 22, 30, { size: 14, align: 'center', color: '#b8f4ff' });
     if (gm.power) M.text(g, { djump: 'Lompat ganda', magnet: 'Magnet', shield: 'Perisai' }[gm.power], M.VW / 2 + 22, 47, { size: 12, align: 'center', color: '#ffd54a' });
     M.button(g, { id: 'jeda', x: M.VW - 46, y: 4, w: 38, h: 38, color: 'purple', icon: 'pause', onTap: () => { if (S.state === 'play') S.state = 'pause'; } });
+    M.text(g, `Bonus ${S.bonus.value()}`, M.VW - 8, 46, { size: 11, align: 'right', color: '#cbbcff' });
   }
   function drawEnd(g) {
     const gm = S.g, k = M.ease(S.endT * 2);
     g.fillStyle = `rgba(29,20,56,${0.7 * k})`; g.fillRect(0, 0, M.VW, M.VH);
     const x = 30, y = M.VH * 0.2, w = M.VW - 60;
-    M.panel(g, x, y, w, 330, { title: 'Kristal direbut!' });
+    // Sampai 4 baris info (bintang, bonus, jatuh, kunci) di atas; posisi tombol tetap.
+    const info = [[`Bintang: ${gm.stars} dari ${gm.L.stars.length}`, 16, '#2b1d52'],
+      [`Bonus waktu: +${S.bonus.value()} (${window.TimeBonus.clock(S.bonus.seconds())})`, 14, '#2b1d52']];
+    if (gm.deaths) info.push([`Kamu jatuh ${gm.deaths}x, tapi tidak menyerah!`, 13, '#6b6478']);
+    if (S.keys) info.push([`Kunci Kristal: ${S.keys}`, 14, '#8a5a00']);
+    M.panel(g, x, y, w, 354, { title: 'Kristal direbut!' });
     M.stars(g, M.VW / 2, y + 40, Sim.rating(gm), 4);
-    M.text(g, `Bintang: ${gm.stars} dari ${gm.L.stars.length}`, M.VW / 2, y + 114, { size: 16, align: 'center', color: '#2b1d52', outline: false });
-    if (S.keys) M.text(g, `Kunci Kristal: ${S.keys}`, M.VW / 2, y + 140 + (gm.deaths ? 18 : 0), { size: 14, align: 'center', color: '#8a5a00', outline: false });
-    if (gm.deaths) M.text(g, `Kamu jatuh ${gm.deaths}x, tapi tidak menyerah!`, M.VW / 2, y + 140, { size: 13, align: 'center', color: '#6b6478', outline: false });
-    M.button(g, { id: 'ulang', x: x + 30, y: y + 168, w: w - 60, h: 52, label: 'Main lagi', color: 'green', onTap: () => M.go('plat', S.params) });
-    M.button(g, { id: 'lanjutend', x: x + 30, y: y + 236, w: w - 60, h: 52, label: S.params.onEnd || S.params.onWin ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
+    info.forEach((r, i) => M.text(g, r[0], M.VW / 2, y + 112 + i * 22, { size: r[1], align: 'center', color: r[2], outline: false }));
+    M.button(g, { id: 'ulang', x: x + 30, y: y + 212, w: w - 60, h: 52, label: 'Main lagi', color: 'green', onTap: () => M.go('plat', S.params) });
+    M.button(g, { id: 'lanjutend', x: x + 30, y: y + 280, w: w - 60, h: 52, label: S.params.onEnd || S.params.onWin ? 'Lanjut' : 'Ke judul', color: 'blue', onTap: finish });
   }
   function finish() {
     const gm = S.g, P = S.params;
-    const res = { win: true, stars: Sim.rating(gm), collected: gm.stars, keys: S.keys, hearts: gm.hearts, deaths: gm.deaths, level: S.def.id };
+    const res = { win: true, stars: Sim.rating(gm), collected: gm.stars, keys: S.keys, bonus: S.bonus.value(), seconds: S.bonus.seconds(), hearts: gm.hearts, deaths: gm.deaths, level: S.def.id };
     if (P.onEnd) P.onEnd(res); else if (P.onWin) P.onWin(res); else M.go('title');
   }
   function quit() {
@@ -130,7 +134,7 @@
   M.register('plat', {
     enter(p) {
       const def = p.def || Lv.level(p.level || 1);
-      S = { def, params: p, opts: p, g: Sim.create(def), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0 };
+      S = { def, params: p, opts: p, g: Sim.create(def), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame('mh3') };
       updateCam(0, true);
       M.setControls({ arrows: true, a: 'Lompat', b: null });
       M.audio.music('padang');
@@ -146,6 +150,7 @@
       const I = M.input;
       if (I.pause) { S.state = 'pause'; return; }
       // Tombol Lompat: A (juga B); layar tidak dipakai supaya jempol tidak meleset ke tombol lain.
+      S.bonus.tick(dt); // hanya saat state 'play': kartu PR (overlay), jeda, pilih kekuatan, dan layar hasil tidak menghitung
       Sim.update(S.g, dt, { dir: (I.rHold ? 1 : 0) - (I.lHold ? 1 : 0) || Math.sign(I.x), jump: I.aHit || I.bHit, jumpHeld: I.a || I.b });
       for (const e of S.g.events) handle(e);
       S.g.events.length = 0;

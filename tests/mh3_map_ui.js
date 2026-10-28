@@ -63,7 +63,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.evaluate(() => { const g = MH3.defense.state().g; g.phase = 'won'; g.hearts = 5; });
   await pg.waitForFunction(() => MH3.defense.state().state === 'end', null, { timeout: 5000 });
   await pg.waitForTimeout(900);
-  await tap(VW / 2, VH * 0.2 + 278 + 24); // Lanjut
+  await tap(VW / 2, VH * 0.2 + 302 + 24); // Lanjut
   await skipStories();
   ok(await scene() === 'map', 'selesai Bertahan: kembali ke peta');
   ok(await pg.evaluate(() => MH2.save.starsOf('1-1')) === 3, 'bintang 1-1 tersimpan (3)');
@@ -76,7 +76,7 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   await pg.evaluate(() => { MH3.plat.state().g.phase = 'won'; });
   await pg.waitForFunction(() => MH3.plat.state().state === 'end', null, { timeout: 5000 });
   await pg.waitForTimeout(900);
-  await tap(VW / 2, VH * 0.2 + 236 + 26); // Lanjut
+  await tap(VW / 2, VH * 0.2 + 280 + 26); // Lanjut
   for (let i = 0; i < 30 && (await scene()) !== 'rescue'; i++) { if ((await scene()) === 'story') await tap(200, 400); await pg.waitForTimeout(150); }
   ok(await scene() === 'rescue', 'penduduk diselamatkan: layar bergabung tampil');
   await pg.waitForTimeout(1000);
