@@ -10,6 +10,7 @@ Folder ini dipakai bersama oleh Math Hero 1, 2, dan 3. Isinya hanya hal yang mem
 - `js/concepts.js`: semua pembuat soal dan penjelasan konsep (murni logika, diuji di Node), dipakai MH2 dan MH3.
 - `js/core.js`: inti mesin MH2/MH3 (loop, adegan, input, tombol canvas, partikel, `M.overlay`, `M.flash`, `M.motion`). Versi MH3, yang superset versi MH2 lama; di MH2 fitur tambahan tidak aktif karena tidak dipanggil.
 - `js/physics.js`: fisika platformer murni logika (`window.Physics`, juga dimuat Node oleh bot level dan tes), dipakai MH1 dan Kejar di MH3.
+- `js/levelcheck.js`: pemeriksa level (bot jangkauan, `window.MHKit.levelcheck`, juga dimuat Node). Memakai `physics.js`; mengerti format MH1 dan Kejar MH3 (`fromKejar`). Format baru cukup membuat adaptor. Dijalankan lewat `npm run test:levels` (`scripts/cek_level.js`: semua 8 level MH1 dan 8 level Kejar; `tests/bot_sanity.js`: jurang lebar harus dianggap mustahil di kedua format).
 - `css/mh-ui.css`: gaya antarmuka bersama MH2 dan MH3 (dulu `mh2/css/mh2.css`).
 - `vendor/gsap/`: GSAP 3.15.0 (`gsap.min.js`, `Draggable.min.js`) dari paket npm resmi, disalin apa adanya, lisensi di `LICENSE.txt` (Standard "no charge"). Di-vendor lokal karena game dimainkan lewat LAN atau offline, bukan CDN.
 

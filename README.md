@@ -255,7 +255,7 @@ Struktur singkat:
 - `public/mh1/index.html`, `public/css/style.css`: tampilan Math Hero 1. Halamannya memakai `<base href="../">` sehingga skrip dan aset Math Hero 1 tetap di `public/js` dan `public/assets`.
 - `public/js/`: `shared/js/physics.js` (fisika, dipakai juga bot level dan MH3 Kejar), `levels.js` (pembangun level dan 8 level), `assets.js` (pemuat sprite), `render.js` (tile bertema dan latar parallax), `entities.js` (musuh, jebakan, platform gerak, jembatan, bos), `main.js` (pemain, aturan, kamera, HUD), `math.js` (soal 8 level), `quiz.js` (panel soal), `audio.js`, `input.js`, `menu.js`.
 - `public/assets/game/`: sprite hasil `python scripts/prepare_assets.py` dari paket CraftPix (jalankan ulang jika aset sumber berubah).
-- `scripts/cek_level.js`: bot yang memastikan trofi dan semua peti bisa dicapai di setiap level.
+- `scripts/cek_level.js`: menjalankan bot kit (`shared/js/levelcheck.js`) pada 8 level MH1 dan 8 level Kejar MH3; memastikan trofi, peti, dan bintang bisa dicapai (`npm run test:levels`).
 - `kb/` dan `scripts/kb.py`: catatan kerja agen (knowledge base, Markdown). Mulai dari `kb/RINGKASAN.md`. `kb.sqlite` hanya berisi brief yang menunjuk ke `kb/`.
 - `tests/`: tes otomatis.
 
