@@ -5,7 +5,7 @@
 (function () {
   const M = window.MH2;
   const MH3 = window.MH3 = window.MH3 || {};
-  const Sim = MH3.platSim, Lv = MH3.platLevels, Ph = window.Physics;
+  const Sim = MH3.platSim, Lv = MH3.platLevels, En = MH3.endless, Ph = window.Physics;
   const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 180;
   let S = null;
   const grade = () => (M.save && M.save.active && M.save.active.grade) || 2;
@@ -58,15 +58,34 @@
     else if (e.type === 'slam') { a.sfx('ledak'); S.shake = 0.25; fx.burst(sx(e.x), sy(e.y), { n: 14, speed: 140, color: ['#fff6dc', '#c48a4a'], life: 0.4 }); }
     else if (e.type === 'crack') { fx.burst(sx(e.x), sy(e.y), { n: 12, speed: 120, color: ['#c48a4a', '#7a4a2a', '#4a2a14'], life: 0.5 }); if (!S.crackHint) { S.crackHint = true; say('Blok retak pecah!', 1500, '#e3ffe6'); } }
     else if (e.type === 'chest') chest(e);
+    else if (e.type === 'dead') { a.sfx('salah'); S.shake = 0.4; }
     else if (e.type === 'win') { a.sfx('benar'); fx.confetti(); }
+  }
+  // Kartu PR: di Kejar biasa mengikuti tingkat level; di tanpa batas tingkat pelajaran naik tiap putaran.
+  function cardOpts(title) {
+    if (!S.endless) return { grade: grade(), tier: S.def.tier || 0, title };
+    const ls = En.lesson(S.endless.round, S.endless.grade0);
+    return { grade: ls.grade, tier: ls.tier, title };
+  }
+  // Tanpa batas: tiap jawaban salah di kartu memotong 1 hati (paling banyak En.WRONG_MAX per kartu).
+  // Mengembalikan true bila hati habis (adegan pindah ke layar akhir).
+  function wrongCost(r) {
+    if (!S.endless || !r || !(r.wrong > 0)) return false;
+    const n = Math.min(En.WRONG_MAX, r.wrong);
+    const dead = Sim.loseHearts(S.g, n);
+    M.audio.sfx('hit'); S.shake = 0.3; M.flash('#ff6b6b', 0.3);
+    say(`Jawaban salah: hati -${n}`, 1800, '#ffd0d0');
+    if (dead) { overNow(); return true; }
+    return false;
   }
   function chest(e) {
     const f = S.opts.onChest;
     if (f) { f(e.kind, e.id, S.g); return; }
     const ch = S.g.L.chests[e.id], power = e.kind === 'power';
     S.state = 'card';
-    MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: power ? 'Peti Kekuatan' : 'Peti Kristal' }, (r) => {
+    MH3.homework.open(cardOpts(power ? 'Peti Kekuatan' : 'Peti Kristal'), (r) => {
       M.setControls(controls());
+      if (wrongCost(r)) return;
       if (r.status !== 'done') { ch.got = false; ch.skip = true; S.state = 'play'; say('Peti disimpan. Sentuh lagi kalau sudah siap.', 2200); return; }
       M.audio.sfx('benar');
       if (power) S.state = 'power';
@@ -82,8 +101,9 @@
   function quiz(e) {
     if (S.opts.onQuiz) { S.opts.onQuiz(e, S.g); return; }
     S.state = 'card'; a0().sfx('awas');
-    MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: e.what === 'lever' ? 'Tuas macet!' : 'Tombol macet!' }, (r) => {
+    MH3.homework.open(cardOpts(e.what === 'lever' ? 'Tuas macet!' : 'Tombol macet!'), (r) => {
       M.setControls(controls());
+      if (wrongCost(r)) return;
       S.state = 'play';
       if (r.status !== 'done') { say(e.what === 'lever' ? 'Masih macet. Tekan B lagi kalau sudah siap.' : 'Masih macet. Injak lagi kalau sudah siap.', 2200); return; }
       Sim.solveQuiz(S.g, e.what, e.id);
@@ -469,15 +489,76 @@
   function drawHud(g) {
     const gm = S.g;
     M.box(g, 0, 0, M.VW, HUD - 6, '#2b1d52', { line: '#1d1438', shade: false });
-    M.hearts(g, 8, 8, gm.hearts, Sim.HEARTS, 2.4);
+    M.hearts(g, 8, 8, gm.hearts, S.endless ? En.HEARTS : Sim.HEARTS, S.endless ? 1.9 : 2.4);
     M.art(g, 'bintang', 10, 33, 2);
     M.text(g, `${gm.stars}/${gm.L.stars.length}`, 38, 43, { size: 18, color: '#ffd54a' });
-    M.text(g, S.def.nama, M.VW / 2 + 22, 30, { size: 14, align: 'center', color: '#b8f4ff' });
+    M.text(g, S.endless ? `Putaran ${S.endless.round} · Skor ${S.endless.total}` : S.def.nama, M.VW / 2 + 22, 30, { size: 14, align: 'center', color: '#b8f4ff' });
     if (gm.power) M.text(g, POWER_NAME[gm.power] + (gm.shield && !gm.shield.ready ? ` (${Math.ceil(gm.shield.t)})` : ''), M.VW / 2 + 22, 47, { size: 12, align: 'center', color: '#ffd54a' });
     M.button(g, { id: 'jeda', x: M.VW - 46, y: 4, w: 38, h: 38, color: 'purple', icon: 'pause', onTap: () => { if (S.state === 'play') S.state = 'pause'; } });
     M.text(g, `Bonus ${S.bonus.value()}`, M.VW - 8, 46, { size: 11, align: 'right', color: '#cbbcff' });
   }
+  // ---------- Kejar tanpa batas: akhir putaran, hati habis, papan skor ----------
+  const BEST_KEY = 'mh3_kejar_best';
+  function bestStore() { try { return JSON.parse(localStorage.getItem(BEST_KEY)) || {}; } catch (e) { return {}; } }
+  function saveBest(name, row) {
+    const b = bestStore();
+    if (!b[name] || b[name].score < row.score) b[name] = row;
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(b)); } catch (e) { /* tanpa penyimpanan: skor tetap dikirim ke papan bersama */ }
+  }
+  // Papan lokal (cadangan bila papan bersama tidak ada): skor terbaik tiap petualang di HP ini.
+  function localBoard() {
+    const b = bestStore();
+    return Object.keys(b).map((n) => ({ name: n, score: b[n].score, hero: b[n].hero, note: 'Putaran ' + b[n].level })).sort((x, y) => y.score - x.score).slice(0, 10);
+  }
+  // Kirim skor permainan ini (sekali). Meta cukup untuk mengulang level yang sama: seed permainan + putaran.
+  function submitRun(round, total) {
+    const E = S.endless;
+    if (E.sent || !(total > 0)) return;
+    E.sent = true;
+    const p = M.save && M.save.active;
+    if (!p) return;
+    const meta = { seed: E.runSeed, tingkat: En.tier(round), level: round, hero: p.hero };
+    saveBest(p.nama, { score: total, level: round, hero: p.hero });
+    if (window.Scores) window.Scores.submit('math-hero', En.BOARD, p.nama, total, meta);
+  }
+  function overNow() {
+    const E = S.endless, gm = S.g;
+    E.pts = 10 * gm.stars;          // bintang di putaran yang gagal tetap dihitung
+    E.total += E.pts;
+    S.state = 'over'; S.endT = 0; M.setControls(null);
+    submitRun(E.round, E.total);
+  }
+  function nextRound() {
+    const E = S.endless;
+    M.go('plat', { endless: { round: E.round + 1, runSeed: E.runSeed, total: E.total, hearts: S.g.hearts, power: S.g.power, grade0: E.grade0 } });
+  }
+  function drawRoundEnd(g) {
+    const E = S.endless, gm = S.g, k = M.ease(S.endT * 2);
+    g.fillStyle = `rgba(29,20,56,${0.7 * k})`; g.fillRect(0, 0, M.VW, M.VH);
+    const x = 30, y = M.VH * 0.2, w = M.VW - 60;
+    M.panel(g, x, y, w, 330, { title: `Putaran ${E.round} selesai!` });
+    const rows = [[`Bintang: ${gm.stars}`, 16], [`Bonus waktu: +${S.bonus.value()} (${window.TimeBonus.clock(S.bonus.seconds())})`, 14],
+      [`Skor putaran: +${E.pts}`, 16], [`Skor total: ${E.total}`, 18]];
+    rows.forEach((r, i) => M.text(g, r[0], M.VW / 2, y + 60 + i * 28, { size: r[1], align: 'center', color: i === 3 ? '#d65f82' : '#2b1d52', outline: false }));
+    M.text(g, `Hati tersisa: ${gm.hearts}. Hati tidak bisa bertambah.`, M.VW / 2, y + 180, { size: 13, align: 'center', color: '#6b4fa8', outline: false, maxW: w - 20 });
+    M.button(g, { id: 'lanjutend', x: x + 30, y: y + 204, w: w - 60, h: 52, label: `Putaran ${E.round + 1}`, color: 'green', onTap: nextRound });
+    M.button(g, { id: 'berhenti', x: x + 30, y: y + 266, w: w - 60, h: 46, label: 'Berhenti, simpan skor', color: 'blue', size: 15, onTap: () => { submitRun(E.round, E.total); quit(true); } });
+  }
+  function drawOver(g) {
+    const E = S.endless, k = M.ease(S.endT * 2);
+    g.fillStyle = `rgba(29,20,56,${0.75 * k})`; g.fillRect(0, 0, M.VW, M.VH);
+    const x = 30, y = M.VH * 0.18, w = M.VW - 60;
+    M.panel(g, x, y, w, 380, { title: 'Hati habis!' });
+    M.text(g, `Sampai putaran ${E.round}`, M.VW / 2, y + 66, { size: 18, align: 'center', color: '#2b1d52', outline: false });
+    M.text(g, `Skor: ${E.total}`, M.VW / 2, y + 100, { size: 26, align: 'center', color: '#d65f82', outline: false });
+    M.text(g, 'Skor tersimpan di Papan Juara Kejar.', M.VW / 2, y + 132, { size: 13, align: 'center', color: '#6b4fa8', outline: false, maxW: w - 20 });
+    M.button(g, { id: 'ulang', x: x + 30, y: y + 160, w: w - 60, h: 52, label: 'Main lagi', color: 'green', onTap: () => M.go('plat', { endless: { round: 1, runSeed: En.newRunSeed(), total: 0, hearts: En.HEARTS, grade0: E.grade0 } }) });
+    M.button(g, { id: 'juarak', x: x + 30, y: y + 224, w: w - 60, h: 46, label: 'Papan Juara Kejar', color: 'yellow', textColor: '#2b1d52', size: 16, onTap: () => M.go('juarakejar') });
+    M.button(g, { id: 'peta', x: x + 30, y: y + 284, w: w - 60, h: 46, label: 'Ke peta', color: 'blue', size: 16, onTap: () => quit(true) });
+  }
+
   function drawEnd(g) {
+    if (S.endless) { drawRoundEnd(g); return; }
     const gm = S.g, k = M.ease(S.endT * 2);
     g.fillStyle = `rgba(29,20,56,${0.7 * k})`; g.fillRect(0, 0, M.VW, M.VH);
     const x = 30, y = M.VH * 0.2, w = M.VW - 60;
@@ -497,15 +578,22 @@
     const res = { win: true, stars: Sim.rating(gm), collected: gm.stars, keys: S.keys, bonus: S.bonus.value(), seconds: S.bonus.seconds(), hearts: gm.hearts, deaths: gm.deaths, level: S.def.id };
     if (P.onEnd) P.onEnd(res); else if (P.onWin) P.onWin(res); else M.go('title');
   }
-  function quit() {
+  function quit(done) {
     const P = S.params, gm = S.g;
+    if (S.endless) {
+      const E = S.endless;
+      if (!done) submitRun(E.round, E.total);
+      M.go('map', {}); return;
+    }
     if (P.onLose) P.onLose({ win: false, level: S.def.id, collected: gm.stars }); else if (P.onEnd) P.onEnd({ win: false, stars: 0, level: S.def.id }); else M.go('title');
   }
 
   M.register('plat', {
     enter(p) {
-      const def = p.def || Lv.level(p.level || 1);
-      S = { def, params: p, opts: p, g: Sim.create(def, { hero: heroKey() }), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame('mh3') };
+      const E = p.endless ? Object.assign({ pts: 0, sent: false }, p.endless) : null;
+      const def = p.def || (E ? En.level(E.round, E.runSeed) : Lv.level(p.level || 1));
+      S = { def, params: p, opts: p, endless: E, g: Sim.create(def, E ? { hero: heroKey(), hearts: E.hearts, endless: true } : { hero: heroKey() }), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame(E ? 'mh3-kejar' : 'mh3') };
+      if (E && E.power) Sim.grantPower(S.g, E.power);
       S.gateCell = new Set(S.g.L.gates.map((gt) => gt.r * S.g.L.cols + gt.c));
       S.decor = buildDecor(S.g.L, def);
       S.tips = buildTips(S.g.L, S.g.skill); S.tipSeen = tipStore(); S.tip = null;
@@ -519,7 +607,7 @@
     update(dt) {
       if (!S) return;
       S.shake = Math.max(0, S.shake - dt);
-      if (S.state === 'end') { S.endT += dt; return; }
+      if (S.state === 'end' || S.state === 'over') { S.endT += dt; return; }
       if (S.state !== 'play') return;
       if (S.pan) { S.pan.t -= dt; updateCam(dt, false); if (S.pan.t <= 0) S.pan = null; return; }
       const I = M.input;
@@ -532,7 +620,10 @@
       M.padLabels('Lompat', S.g.nearLever ? 'Tarik' : SKILL_LABEL[S.g.skill] || null);
       updateCam(dt, false);
       updateTips(dt);
-      if (S.g.phase === 'won') { S.state = 'end'; S.endT = 0; M.setControls(null); }
+      if (S.g.phase === 'won') {
+        S.state = 'end'; S.endT = 0; M.setControls(null);
+        if (S.endless) { const E = S.endless; E.pts = En.roundScore(E.round, S.g.stars, S.bonus.value()); E.total += E.pts; }
+      } else if (S.g.phase === 'dead') overNow();
     },
     draw(g) {
       if (!S) return;
@@ -562,10 +653,12 @@
         });
       }
       if (S.state === 'end') drawEnd(g);
+      if (S.state === 'over') drawOver(g);
       M.drawToast(g, HUD + 6);
     },
   });
 
+  MH3.endlessLocalBoard = localBoard;
   MH3.plat = {
     state: () => S,
     start(def, onWin, onLose, extra) { M.go('plat', Object.assign({ def, onWin, onLose }, extra || {})); },

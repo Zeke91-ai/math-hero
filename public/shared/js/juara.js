@@ -6,8 +6,13 @@
   const TOP_N = 10;
 
   // Satu baris papan: { name, score, hero, stars }.
+  let cfgNote = false;   // papan yang menyimpan `level` di meta (Kejar tanpa batas) menampilkan "Putaran N"
   function fromShared(rows) {
-    return rows.map((r) => ({ name: r.name, score: r.score, hero: r.meta && r.meta.hero, stars: r.meta && r.meta.stars }));
+    return rows.map((r) => {
+      const row = { name: r.name, score: r.score, hero: r.meta && r.meta.hero, stars: r.meta && r.meta.stars };
+      if (cfgNote && r.meta && typeof r.meta.level === 'number') row.note = 'Putaran ' + r.meta.level;
+      return row;
+    });
   }
   function fromLocal(M) {
     const slots = (M.save && M.save.slots()) || [];
@@ -26,19 +31,20 @@
   }
 
   function install(M, cfg) {
-    const board = cfg.board, back = cfg.back || 'title';
+    const board = cfg.board, back = cfg.back || 'title', scene = cfg.scene || 'juara', heading = cfg.title || 'Papan Juara';
+    const local = cfg.local || fromLocal, note = !!cfg.note;
     const RANK = ['#ffd54a', '#d5dbe6', '#e8a56b'];
-    M.register('juara', {
+    M.register(scene, {
       enter() {
         M.audio.music('title');
-        this.rows = fromLocal(M);
+        this.rows = local(M);
         this.state = 'loading';          // loading | online | offline | local
         const tok = this.tok = {};
         const sc = root.Scores;
         if (!sc || !sc.enabled()) { this.state = 'local'; return; }
         sc.top(APP_ID, board, TOP_N).then((rows) => {
           if (this.tok !== tok) return;   // sudah pindah layar
-          if (rows) { this.rows = fromShared(rows); this.state = 'online'; } else this.state = 'offline';
+          if (rows) { cfgNote = note; this.rows = fromShared(rows); this.state = 'online'; } else this.state = 'offline';
         });
       },
       exit() { this.tok = null; },
@@ -47,7 +53,7 @@
         const VW = M.VW, VH = M.VH;
         M.drawBg(g, 'langit', M.t * 15, 0);
         M.button(g, { id: 'kembali', x: 8, y: 8, w: 44, h: 38, color: 'purple', icon: 'left', onTap: () => M.go(back) });
-        M.text(g, 'Papan Juara', VW / 2, 70, { size: 28, align: 'center', color: '#ffd54a', ow: 6 });
+        M.text(g, heading, VW / 2, 70, { size: 28, align: 'center', color: '#ffd54a', ow: 6 });
         const sub = this.state === 'online' ? 'Skor terbaik tiap pemain' : this.state === 'loading' ? 'Memuat papan...'
           : this.state === 'offline' ? 'Tidak terhubung. Menampilkan skor di HP ini.' : 'Skor para petualang di HP ini';
         M.text(g, sub, VW / 2, 96, { size: 13, align: 'center', color: '#fff', maxW: VW - 30 });
@@ -65,7 +71,8 @@
           M.hero(g, heroFor(M, r), i === 0 ? 'run' : 'idle', M.t + i * 0.37, x + 54, y + rh - 2, { scale: 1.1 });
           M.text(g, String(r.name).toUpperCase(), x + 78, y + 20, { size: 18, color: '#2b1d52', outline: false, maxW: w - 78 - 120 });
           M.text(g, M.fmt(r.score), x + w - 10, y + 15, { size: 18, align: 'right', color: '#d65f82', outline: false, font: M.NUMFONT });
-          if (typeof r.stars === 'number') M.text(g, `${r.stars} bintang`, x + w - 10, y + 32, { size: 11, align: 'right', color: '#6b4fa8', outline: false });
+          if (r.note) M.text(g, r.note, x + w - 10, y + 32, { size: 11, align: 'right', color: '#6b4fa8', outline: false });
+          else if (typeof r.stars === 'number') M.text(g, `${r.stars} bintang`, x + w - 10, y + 32, { size: 11, align: 'right', color: '#6b4fa8', outline: false });
         });
         M.text(g, 'Bonus waktu: makin cepat, makin tinggi!', VW / 2, VH - 18, { size: 12, align: 'center', color: '#fff', maxW: VW - 24 });
       },
