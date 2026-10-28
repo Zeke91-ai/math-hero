@@ -195,7 +195,8 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 
 ## Tes
 
-- `npm run test:mh2` dan `npm run test:mh3`: tes logika (Node), termasuk generator PR, data level, dan adaptif.
+- `npm test`: semua tes logika Node (skor, bonus waktu, bank soal, pemeriksa level, templat seri, MH2, MH3), sekitar 20 detik dan jalan di cloud tanpa browser. Per bagian: `npm run test:mh2`, `test:mh3`, `test:levels`, `test:bank`, `test:scores`, `test:bonus`, `test:template`.
+- `npm run test:ui`: semua tes sentuh Chromium (butuh paket `playwright` untuk Node). `npm run test:legacy`: tes Python MH1/MH2 lama (butuh Python + playwright Python).
 - Tes sentuh di Chromium (layar 393x851, butuh paket `playwright` untuk Node): `node tests/mh3_plat_ui.js`, `node tests/mh3_defense_ui.js`, `node tests/mh3_map_ui.js`, `node tests/mh3_boss_ui.js`, `node tests/mh3_chests_ui.js`. Tes ini juga memeriksa tidak ada galat di konsol.
 
 Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
@@ -238,7 +239,7 @@ Aturan Firestore hanya mengizinkan membaca dan **menambah** skor yang bentuknya 
 
 ## Bank aset bersama
 
-`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`.
+`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`. Membuat seri baru (MH4): `node scripts/buat_seri.js mh4 "Judul"`, lalu ikuti `public/shared/PANDUAN_SERI_BARU.md`.
 
 ## Lisensi dan atribusi
 
@@ -283,11 +284,9 @@ python -m playwright install chromium
 Lalu dari folder project:
 
 ```
-node tests/mh2.test.js
+npm test                       # semua tes logika Node
+npm run test:legacy            # python tests/playthrough.py dst. (lihat package.json)
 python tests/mh2_playthrough.py
-node tests/math.test.js
-node tests/bot_sanity.js
-node scripts/cek_level.js
 python tests/playthrough.py
 python tests/menu.py
 python tests/font_kleintenna.py

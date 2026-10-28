@@ -18,6 +18,8 @@ Folder ini dipakai bersama oleh Math Hero 1, 2, dan 3. Isinya hanya hal yang mem
 - `css/mh-ui.css`: gaya antarmuka bersama MH2 dan MH3 (dulu `mh2/css/mh2.css`).
 - `vendor/gsap/`: GSAP 3.15.0 (`gsap.min.js`, `Draggable.min.js`) dari paket npm resmi, disalin apa adanya, lisensi di `LICENSE.txt` (Standard "no charge"). Di-vendor lokal karena game dimainkan lewat LAN atau offline, bukan CDN.
 
+- `template/`: templat seri baru (`index.html` + `js/scenes.js`), dipakai `scripts/buat_seri.js`. Panduan lengkap: `PANDUAN_SERI_BARU.md`.
+
 ## Aturan
 
 - Masuk bank hanya kode atau aset yang dipakai lebih dari satu seri dan tidak bergantung pada isi satu seri.
