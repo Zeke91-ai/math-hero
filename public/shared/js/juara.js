@@ -75,4 +75,5 @@
   const api = { install, fromLocal, fromShared, heroFor };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.MHJuara = api;
+  (root.MHKit = root.MHKit || {}).juara = api;
 })(typeof window !== 'undefined' ? window : globalThis);

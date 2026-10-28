@@ -42,4 +42,5 @@
   const api = { GAMES, value, create, forGame, clock };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.TimeBonus = api;
+  (root.MHKit = root.MHKit || {}).timebonus = api;
 })(typeof window !== 'undefined' ? window : globalThis);

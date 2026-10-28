@@ -1,4 +1,5 @@
 // Papan skor bersama (Firebase Firestore) yang bisa dipakai banyak aplikasi: salin file ini + firebase-config.js ke aplikasi lain.
+// Di kit: window.Scores (nama lama) dan window.MHKit.scores. Konfigurasi (SCORES_CONFIG) tetap milik aplikasi: public/js/firebase-config.js.
 //   Scores.submit(appId, board, name, score, meta) -> Promise<boolean>   (tidak pernah melempar galat)
 //   Scores.top(appId, board, n)                    -> Promise<array|null> (null = offline/belum dikonfigurasi: pakai skor lokal)
 // appId = alias aplikasi (huruf kecil, angka, strip; contoh "math-hero"). board = papan di dalam aplikasi (contoh "mh1").
@@ -107,4 +108,5 @@
   const api = { submit, top, _build: build, enabled: () => !!backend || configured(), _setBackend(b) { backend = b; backendPromise = null; } };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   root.Scores = api;
+  (root.MHKit = root.MHKit || {}).scores = api;
 })(typeof window !== 'undefined' ? window : globalThis);

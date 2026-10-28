@@ -1,4 +1,4 @@
-// Konfigurasi Firebase untuk papan skor bersama (js/scores.js).
+// Konfigurasi Firebase untuk papan skor bersama (shared/js/scores.js).
 // Nilai di bawah ini BUKAN rahasia (memang dirancang publik untuk aplikasi web), tetapi tetap isi dari konsol Firebase milikmu sendiri:
 // Project settings > General > Your apps > Web app > SDK setup and configuration > Config.
 // Selama masih berisi "ISI_...", papan skor online mati dan game memakai skor lokal di HP/browser. Lihat README bagian "Papan skor bersama".
