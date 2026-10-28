@@ -96,7 +96,8 @@ ok(P.weekCount(p, t0 + 2000) === 2 && P.weekCount(p, t0 + 8 * 86400000) === 0, '
 function boot(store, search) {
   const win = { MH2: {}, MH3: { progress: P } };
   const ctx = { window: win, localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } }, location: { search: search || '' }, Date, JSON, Math, Object, Array, Set, Number, String };
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public/mh3/js/save.js'), 'utf8'), ctx);
+  win.MHKit = {};
+  for (const f of ['shared/js/save.js', 'mh3/js/save.js']) vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../public', f), 'utf8'), ctx);
   return win.MH2.save;
 }
 const store = {};
