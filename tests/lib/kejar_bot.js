@@ -26,7 +26,7 @@
 
   function make() {
     const ctx = { room: -1, step: 0, mem: {} };
-    function step(g) {
+    function move(g) {
       const p = g.p, L = g.L, rooms = g.def.rooms || [];
       const cx = p.x + p.w / 2, col = Math.floor(cx / T), foot = Math.floor((p.y + p.h - 1) / T);
       const tile = (c, r) => (c < 0 || c >= L.cols ? 1 : r < 0 || r >= L.rows ? 0 : L.tiles[r * L.cols + c]);
@@ -131,6 +131,11 @@
         return { dir: 0 };
       }
       return auto(1);
+    }
+    // Tuas di dekat hero: tekan B sekali bila belum menyala (B di dekat tuas menarik tuas, bukan skill).
+    function step(g) {
+      const inp = move(g), lv = g.nearLever;
+      return lv ? Object.assign({}, inp, { skill: !lv.on }) : inp;
     }
     return { step, ctx };
   }

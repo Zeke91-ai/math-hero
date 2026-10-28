@@ -131,32 +131,50 @@ const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
   assert.ok(!gate.open, 'gerbang menutup setelah tombol dilepas');
   console.log('ok: tombol injak hanya aktif selama ditekan');
 }
-// Tuas: sekali disentuh, gerbang tetap terbuka.
+// Tuas ditarik dengan B di dekatnya (bot: tarik bila belum menyala), satu tekan = satu kali tarik.
+const pull = (g) => ({ dir: 1, skill: !!g.nearLever && !g.nearLever.on });
+const press = (g) => { const ev = []; Sim.update(g, 1 / 60, { dir: 0, skill: true }); ev.push(...g.events); g.events.length = 0; return ev; };
+const toLever = (g) => run(g, 2, (g) => ({ dir: g.nearLever ? 0 : 1 }));
 {
   const g = mk(pad(['', '', '', '', '', '', '', '', '', '.S.t..1...E.', '############']));
   const g2 = mk(pad(['', '', '', '', '', '', '', '', '', '.S.y..1...E.', '############']));
-  run(g2, 4, { dir: 1 });
+  run(g2, 4, pull);
   assert.notStrictEqual(g2.phase, 'won', 'tuas kanal lain tidak membuka gerbang 1');
-  run(g, 4, { dir: 1 });
+  run(g, 4, pull);
   assert.strictEqual(g.phase, 'won', 'tuas membuka gerbang kanal yang sama');
   console.log('ok: tuas membuka gerbang sesuai warna kanal');
+}
+// Lewat tuas tanpa B tidak menariknya; B membolak-balik tuas dan gerbangnya.
+{
+  const map = pad(['', '', '', '', '', '', '', '', '', '.S.t..1...E.', '############']);
+  const walk = mk(map); run(walk, 3, { dir: 1 });
+  assert.ok(!walk.L.gates[0].open && walk.phase === 'play', 'menyentuh tuas saja tidak menariknya');
+  const g = mk(map); toLever(g);
+  const lv = g.nearLever, gt = g.L.gates[0];
+  assert.ok(lv && !lv.on && !gt.open, 'berdiri di dekat tuas');
+  press(g); assert.ok(lv.on && gt.open, 'B menyalakan tuas, gerbang terbuka');
+  run(g, 0.1, { dir: 0 });
+  press(g); assert.ok(!lv.on && !gt.open, 'B lagi mematikan tuas, gerbang menutup');
+  press(g); run(g, 3, { dir: 1 });
+  assert.strictEqual(g.phase, 'won', 'tuas dinyalakan lagi, jalan terbuka');
+  console.log('ok: tuas ditarik dengan B dan bisa dibolak-balik');
 }
 // Tiap gerbang terhubung ke tuas/tombol sewarna terdekat: tuas teka-teki sebelumnya tidak membuka gerbang berikutnya.
 {
   const g = mk(['', '', '', '', '', '', '', '', '', '.S.t..1.......1.t.E.', '####################']);
   const [g1, g2] = g.L.gates;
   assert.ok(!g1.open && !g2.open, 'semua gerbang tertutup di awal');
-  run(g, 5, { dir: 1 });
+  run(g, 5, pull);
   assert.ok(g1.open && !g2.open, 'tuas pertama hanya membuka gerbang pertama');
   assert.ok(cx(g) < 14 * T && g.phase === 'play', 'gerbang kedua menghadang');
   console.log('ok: gerbang terhubung ke tuas terdekat yang sewarna');
 }
-// Tuas dan tombol macet: memunculkan soal sekali per sentuhan; gerbang baru terbuka setelah soal selesai.
+// Tuas dan tombol macet: soal muncul saat B ditekan (tuas) atau diinjak (tombol); gerbang baru terbuka setelah soal selesai.
 {
-  const evs = []; const g0 = mk(pad(['', '', '', '', '', '', '', '', '', '.S.T..1...E.', '############']));
-  for (let i = 0; i < 180; i++) { Sim.update(g0, 1 / 60, { dir: 1 }); evs.push(...g0.events); g0.events.length = 0; }
-  const qs = evs.filter((e) => e.type === 'quiz');
-  assert.strictEqual(qs.length, 1, 'soal muncul satu kali selama hero menempel');
+  const g0 = mk(pad(['', '', '', '', '', '', '', '', '', '.S.T..1...E.', '############']));
+  toLever(g0);
+  const qs = press(g0).filter((e) => e.type === 'quiz');
+  assert.strictEqual(qs.length, 1, 'satu tekan B = satu soal');
   assert.ok(qs[0].what === 'lever' && !g0.L.gates[0].open && g0.phase === 'play', 'tuas macet tidak membuka gerbang');
   Sim.solveQuiz(g0, 'lever', qs[0].id);
   assert.ok(g0.L.gates[0].open, 'soal selesai: tuas menyala, gerbang terbuka');

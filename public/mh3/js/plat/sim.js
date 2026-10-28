@@ -116,7 +116,7 @@
     const g = {
       def, L, t: 0, phase: 'play', hearts: HEARTS, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
       cp: { x: L.start.x, y: L.start.y }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
-      skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], balls: [], slam: 0, lunge: null, glide: false, throwT: 0, shield: null,
+      skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], balls: [], slam: 0, lunge: null, glide: false, throwT: 0, shield: null, nearLever: null,
       climb: false, boost: 0, dash: null, pipe: null, pipeCool: 0, ride: null, pushing: false, chans: [false, false, false],
       boxes: L.boxes.map((b) => ({ id: b.id, x0: b.x0, y0: b.y0, x: b.x0, y: b.y0, w: 30, h: 30, vx: 0, vy: 0, onGround: false })),
       p: { x: 0, y: 0, w: C.PW, h: C.PH, vx: 0, vy: 0, onGround: false },
@@ -187,6 +187,17 @@
     return false;
   }
 
+  // Tuas: ditarik dengan tombol B (atau kena bola api), bisa dibolak-balik nyala/mati.
+  // Tuas macet meminta soal dulu; setelah soal selesai tuas menyala dan bekerja biasa.
+  function leverNear(g) {
+    const p = g.p, near = { x: p.x - 8, y: p.y, w: p.w + 16, h: p.h };
+    return g.L.levers.find((lv) => overlap(near, lv)) || null;
+  }
+  function pullLever(g, lv) {
+    const at = { ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y };
+    if (lv.stuck) { g.events.push(Object.assign({ type: 'quiz', what: 'lever', id: lv.id }, at)); return; }
+    lv.on = !lv.on; g.events.push(Object.assign({ type: 'lever', on: lv.on }, at));
+  }
   function useSkill(g, input) {
     const p = g.p;
     if (!input.skill || g.skillCd > 0) return;
@@ -250,12 +261,7 @@
       }
       const box = { x: s.x - s.r, y: s.y - s.r, w: s.r * 2, h: s.r * 2 };
       for (const e of g.enemies) if (!e.dead && overlap(box, e.b)) { defeat(g, e); s.t = 0; }
-      for (const lv of L.levers) {
-        if (lv.on || !overlap(box, lv)) continue;
-        s.t = 0;
-        if (lv.stuck) { if (!lv.asked) { lv.asked = true; g.events.push({ type: 'quiz', what: 'lever', id: lv.id, ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); } }
-        else { lv.on = true; g.events.push({ type: 'lever', ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); }
-      }
+      for (const lv of L.levers) if (overlap(box, lv)) { s.t = 0; pullLever(g, lv); break; }
       if (s.y > L.rows * T + 64) s.t = 0;
     }
     g.shots = g.shots.filter((s) => s.t > 0);
@@ -426,7 +432,9 @@
         if (g.coyote > 0) { p.vy = C.JUMP; g.coyote = 0; g.buffer = 0; g.djumpUsed = false; g.ride = null; g.events.push({ type: 'jump' }); }
         else if (!g.djumpUsed && !p.onGround) { p.vy = C.DJUMP; g.djumpUsed = true; g.buffer = 0; g.slam = 0; g.events.push({ type: 'djump' }); }
       }
-      useSkill(g, input);
+      // Tombol B di dekat tuas menarik tuas; di tempat lain memakai skill jagoan.
+      g.nearLever = leverNear(g);
+      if (g.nearLever) { if (input.skill) pullLever(g, g.nearLever); } else useSkill(g, input);
       // lompat pendek jika tombol dilepas lebih awal (tidak berlaku saat dilontar per)
       if (!input.jumpHeld && p.vy < -200 && g.boost <= 0) p.vy += C.GRAVITY * dt * 1.5;
       if (!g.lunge) p.vy += C.GRAVITY * dt;
@@ -485,12 +493,6 @@
       const down = on(p) || g.boxes.some(on);
       if (down && !pl.down) g.events.push({ type: 'plate', ch: pl.ch, x: pl.x + pl.w / 2, y: pl.y });
       pl.down = down;
-    }
-    for (const lv of L.levers) {
-      if (lv.on) continue;
-      const touch = overlap(p, lv);
-      if (lv.stuck) { if (quizTouch(g, lv, touch, 'lever')) return; continue; }
-      if (touch) { lv.on = true; g.events.push({ type: 'lever', ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); }
     }
     updateGates(g, false);
 

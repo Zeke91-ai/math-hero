@@ -81,7 +81,7 @@
     MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: e.what === 'lever' ? 'Tuas macet!' : 'Tombol macet!' }, (r) => {
       M.setControls(controls());
       S.state = 'play';
-      if (r.status !== 'done') { say('Masih macet. Sentuh lagi kalau sudah siap.', 2200); return; }
+      if (r.status !== 'done') { say(e.what === 'lever' ? 'Masih macet. Tekan B lagi kalau sudah siap.' : 'Masih macet. Injak lagi kalau sudah siap.', 2200); return; }
       Sim.solveQuiz(S.g, e.what, e.id);
       say(e.what === 'lever' ? 'Tuas bisa ditarik!' : 'Tombol bisa ditekan!', 1800, '#e3ffe6');
     });
@@ -185,6 +185,13 @@
       g.fillStyle = CH_COL[lv.ch]; g.beginPath(); g.arc(bx + (lv.on ? 11 : -11), by - 25, 5, 0, 7); g.fill();
       M.box(g, bx - 10, by - 8, 20, 8, '#6b6478', { line: '#1d1438', shade: false });
       if (lv.stuck) stuckMark(g, bx, by - 40);
+      // di dekat tuas: tanda tombol B berdenyut di atasnya
+      if (S.g.nearLever === lv) {
+        const k = 1 + Math.sin(M.t * 8) * 0.08, ty = by - (lv.stuck ? 62 : 44);
+        g.save(); g.fillStyle = '#ffb347'; g.strokeStyle = '#2b1d52'; g.lineWidth = 3;
+        g.beginPath(); g.arc(bx, ty, 11 * k, 0, 7); g.fill(); g.stroke();
+        g.fillStyle = '#fff'; g.font = 'bold 14px Kleintenna, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('B', bx, ty + 1); g.restore();
+      }
     }
     for (const pl of L.plates) if (pl.stuck) stuckMark(g, pl.x + pl.w / 2, pl.y - 26);
   }
@@ -367,7 +374,7 @@
     tangga: 'Tangga! Tekan ▲ untuk naik, ▼ untuk turun.', per: 'Per! Injak untuk melambung tinggi.', samping: 'Per samping! Lewati untuk melesat jauh.',
     pipa: 'Pipa! Masuk dari mulut hijau.', gerak: 'Papan bergerak! Tunggu, lalu lompat naik.', lift: 'Lift! Berdiri di atasnya untuk naik.',
     rapuh: 'Papan rapuh! Cepat lewat, nanti runtuh.', kotak: 'Kotak! Dorong ke tombol.', tombol: 'Tombol! Injak, atau taruh kotak di atasnya.',
-    tuas: 'Tuas! Sentuh untuk membuka gerbang yang warnanya sama.', gerbang: 'Gerbang tertutup! Cari tuas atau tombol yang warnanya sama.', macet: 'Macet! Sentuh, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
+    tuas: 'Tuas! Berdiri di dekatnya, tekan B untuk menarik. Tekan B lagi untuk mengembalikan.', gerbang: 'Gerbang tertutup! Cari tuas atau tombol yang warnanya sama.', macet: 'Tombol macet! Injak, lalu jawab soalnya.', macetTuas: 'Tuas macet! Tekan B di dekatnya, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
     e: 'Musuh! Injak kepalanya.', a: 'Musuh! Injak kepalanya.', r: 'Banteng! Bisa diinjak saat pusing, atau pakai B.',
     f: 'Lebah! Tidak bisa diinjak. Hindari atau pakai B.', n: 'Meriam! Lompati pelurunya, atau pakai B.', peti: 'Peti Kekuatan! Jawab soal, dapat kekuatan super.',
   };
@@ -382,7 +389,8 @@
     for (const o of L.movers) add(o.axis === 'x' ? 'gerak' : 'lift', o.x + o.w / 2, o.axis === 'x' ? o.y : o.y1);
     for (const o of L.crumbles) add('rapuh', o.x + T / 2, o.y);
     for (const o of L.boxes) add('kotak', o.x0 + 15, o.y0);
-    for (const o of [...L.levers, ...L.plates]) if (o.stuck) add('macet', o.x + o.w / 2, o.y - 30);
+    for (const o of L.levers) if (o.stuck) add('macetTuas', o.x + o.w / 2, o.y - 30);
+    for (const o of L.plates) if (o.stuck) add('macet', o.x + o.w / 2, o.y - 30);
     for (const o of L.plates) if (!o.stuck) add('tombol', o.x + o.w / 2, o.y);
     for (const o of L.levers) if (!o.stuck) add('tuas', o.x + o.w / 2, o.y);
     for (const o of L.gates) if (o.head === o) add('gerbang', o.c * T + T / 2, o.r * T - 8);
@@ -478,11 +486,12 @@
       if (S.pan) { S.pan.t -= dt; updateCam(dt, false); if (S.pan.t <= 0) S.pan = null; return; }
       const I = M.input;
       if (I.pause) { S.state = 'pause'; return; }
-      // Tombol Lompat: A; tombol B: skill jagoan; layar tidak dipakai supaya jempol tidak meleset ke tombol lain.
+      // Tombol Lompat: A; tombol B: skill jagoan, atau tarik tuas bila di dekatnya; layar tidak dipakai supaya jempol tidak meleset ke tombol lain.
       S.bonus.tick(dt); // hanya saat state 'play': kartu PR (overlay), jeda, pilih kekuatan, dan layar hasil tidak menghitung
       Sim.update(S.g, dt, { dir: (I.rHold ? 1 : 0) - (I.lHold ? 1 : 0) || Math.sign(I.x), jump: I.aHit, jumpHeld: I.a, skill: I.bHit, skillHeld: I.b, up: I.y < 0, down: I.y > 0 });
       for (const e of S.g.events) handle(e);
       S.g.events.length = 0;
+      M.padLabels('Lompat', S.g.nearLever ? 'Tarik' : SKILL_LABEL[S.g.skill] || null);
       updateCam(dt, false);
       updateTips(dt);
       if (S.g.phase === 'won') { S.state = 'end'; S.endT = 0; M.setControls(null); }

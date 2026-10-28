@@ -36,14 +36,14 @@ punya platform gerak, papan rapuh, gergaji, meriam, dan gerbang; fisikanya (`sha
 | `~` | Papan rapuh | Runtuh 0,6 detik setelah diinjak, muncul lagi 3 detik kemudian. | `trap5` (animasi runtuh). |
 | `B` | Kotak dorong | Didorong dengan berjalan ke arahnya, jatuh oleh gravitasi, bisa dipijak dan menekan tombol. | `box1_idle`, animasi `*_push` hero. |
 | `_` `,` `;` | Tombol injak kanal 1/2/3 | Aktif selama ditekan hero atau kotak. Membuka gerbang dengan warna sama. | Digambar prosedural (alas + tombol warna kanal). |
-| `t` `y` `u` | Tuas kanal 1/2/3 | Disentuh sekali, menyala tetap. Membuka gerbang dengan warna sama. | Digambar prosedural (batang + kenop warna kanal). |
+| `t` `y` `u` | Tuas kanal 1/2/3 | Ditarik dengan tombol B saat berdiri di dekatnya (label B berganti "Tarik"); tekan B lagi untuk mematikan. Membuka gerbang sewarna yang terdekat selama menyala. Bola api Pinki juga membalik tuas dari jauh. | Digambar prosedural (batang + kenop warna kanal). |
 | `1` `2` `3` | Gerbang kanal 1/2/3 | Padat sampai kanalnya aktif. Maksimal 3 kanal warna per level (merah, biru, kuning). Tidak menutup di atas hero atau kotak. | Balok bergaris dari `tileset` + warna kanal. |
 | `x` | Blok retak | Bisa dihancurkan dengan skill Dudu atau kotak yang jatuh. Hanya menutup jalan pintas atau harta, tidak pernah jalan utama. | `box2_break`. |
 | `o` `O` | Gergaji (diam, bolak-balik) | Melukai seperti duri. Hanya tier 2 ke atas. | `trap2`. |
 
 ### Pemicu soal (benda macet)
 
-Supaya tetap game edukasi, sebagian tuas dan tombol **macet**. Menyentuhnya membuka kartu PR MH3 (soal sesuai kelas dan
+Supaya tetap game edukasi, sebagian tuas dan tombol **macet**. Menekan B di dekat tuas macet, atau menginjak tombol macet, membuka kartu PR MH3 (soal sesuai kelas dan
 tingkat adaptif, ada petunjuk dan kertas coret). Jawaban selesai: benda bekerja seperti biasa. Ditunda: tetap macet dan
 soal muncul lagi saat disentuh ulang, jadi anak tidak pernah terkunci, hanya diminta mencoba lagi.
 
@@ -68,7 +68,7 @@ Tiap jagoan punya satu skill, tombol B di samping Lompat. Semua skill bisa memec
 
 | Jagoan | Skill | Kegunaan |
 |---|---|---|
-| Pinki | Bola api | Bola api memantul rendah: menjatuhkan musuh dari jauh, menyalakan tuas, memecah blok retak yang dilewati. |
+| Pinki | Bola api | Bola api memantul rendah: menjatuhkan musuh dari jauh, membalik tuas, memecah blok retak yang dilewati. |
 | Owi | Terjang | Melesat ke depan; di udara menukik miring ke bawah. Memecah blok retak di depan/bawah, menembus musuh. |
 | Dudu | Hantam tanah | Dari udara menghantam ke bawah: memecah blok retak (beberapa lapis) dan mengalahkan musuh di dekatnya. |
 | hero1 sampai hero3 (MH1) | Bola api (sama seperti Pinki) | Atlas MH1 tidak punya animasi panjat atau dorong, jadi pakai pose terdekat. |
