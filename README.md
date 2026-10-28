@@ -181,7 +181,7 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 - `js/progress.js`: dunia, daftar 20 level, kelas, dan fungsi murni untuk profil pemain. `js/save.js` menyimpan profil di localStorage.
 - `js/homework.js` dan `js/homework_ui.js`: pembuat soal PR kelas 2-5 (murni logika) dan kartu PR.
 - `js/defense/` (`data.js`, `sim.js`, `board.js`): Bertahan. Data dan simulasi terpisah dari papan supaya bisa diuji di Node.
-- `js/plat/` (`levels.js`, `physics.js`, `sim.js`, `scene.js`): Kejar. Peta level ditulis sebagai teks di `levels.js`.
+- `js/plat/` (`levels.js`, `sim.js`, `scene.js`; fisika di `shared/js/physics.js`): Kejar. Peta level ditulis sebagai teks di `levels.js`.
 - `js/story.js`: naskah cerita sebelum dan sesudah tiap level.
 - `js/scenes.js`: judul, pilih kelas, peta, Barak, Buku PR, hasil, dan kredit.
 
@@ -253,7 +253,7 @@ Struktur singkat:
 - `lib/store.js`: database SQLite dan endpoint API (`MATHHERO_DATA_DIR` mengganti folder data, dipakai tes).
 - `public/index.html`: halaman pemilih seri (Math Hero 1 / Math Hero 2), satu file tanpa pustaka.
 - `public/mh1/index.html`, `public/css/style.css`: tampilan Math Hero 1. Halamannya memakai `<base href="../">` sehingga skrip dan aset Math Hero 1 tetap di `public/js` dan `public/assets`.
-- `public/js/`: `physics.js` (fisika, dipakai juga bot level), `levels.js` (pembangun level dan 8 level), `assets.js` (pemuat sprite), `render.js` (tile bertema dan latar parallax), `entities.js` (musuh, jebakan, platform gerak, jembatan, bos), `main.js` (pemain, aturan, kamera, HUD), `math.js` (soal 8 level), `quiz.js` (panel soal), `audio.js`, `input.js`, `menu.js`.
+- `public/js/`: `shared/js/physics.js` (fisika, dipakai juga bot level dan MH3 Kejar), `levels.js` (pembangun level dan 8 level), `assets.js` (pemuat sprite), `render.js` (tile bertema dan latar parallax), `entities.js` (musuh, jebakan, platform gerak, jembatan, bos), `main.js` (pemain, aturan, kamera, HUD), `math.js` (soal 8 level), `quiz.js` (panel soal), `audio.js`, `input.js`, `menu.js`.
 - `public/assets/game/`: sprite hasil `python scripts/prepare_assets.py` dari paket CraftPix (jalankan ulang jika aset sumber berubah).
 - `scripts/cek_level.js`: bot yang memastikan trofi dan semua peti bisa dicapai di setiap level.
 - `kb/` dan `scripts/kb.py`: catatan kerja agen (knowledge base, Markdown). Mulai dari `kb/RINGKASAN.md`. `kb.sqlite` hanya berisi brief yang menunjuk ke `kb/`.

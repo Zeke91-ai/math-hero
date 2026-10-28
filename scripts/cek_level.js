@@ -3,7 +3,7 @@
 // Gerbang tumpukan peti dianggap terbuka, jembatan dianggap terpasang, platform gerak dan papan rapuh dianggap
 // padat di posisi ujungnya. Musuh dan jebakan diabaikan.
 // Pakai: node scripts/cek_level.js [nomor level ...]
-const Ph = require('../public/js/physics.js');
+const Ph = require('../public/shared/js/physics.js');
 const { LEVELS } = require('../public/js/levels.js');
 const { C, T, stepBody } = Ph;
 

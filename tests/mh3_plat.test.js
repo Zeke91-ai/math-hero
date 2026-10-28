@@ -3,7 +3,7 @@
 const assert = require('assert');
 const Sim = require('../public/mh3/js/plat/sim.js');
 const Lv = require('../public/mh3/js/plat/levels.js');
-const { T } = require('../public/mh3/js/plat/physics.js');
+const { T } = require('../public/shared/js/physics.js');
 const tileAt = (L, c, r) => (c < 0 || c >= L.cols ? 1 : r < 0 || r >= L.rows ? 0 : L.tiles[r * L.cols + c]);
 
 function bot(g, usePower) {

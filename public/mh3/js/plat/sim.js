@@ -4,7 +4,7 @@
 //   e musuh jalan   ^ duri   P Peti Kekuatan (PR, tidak menghalangi)   K Peti Kristal (PR, tidak menghalangi)
 // Kolom di luar peta = dinding, baris di bawah peta = jurang.
 (function (root, factory) {
-  if (typeof module === 'object' && module.exports) module.exports = factory(require('./physics.js'));
+  if (typeof module === 'object' && module.exports) module.exports = factory(require('../../../shared/js/physics.js'));
   else (root.MH3 = root.MH3 || {}).platSim = factory(root.Physics);
 })(typeof self !== 'undefined' ? self : this, function (Physics) {
   const { C, T, stepBody, overlap } = Physics;
