@@ -10,6 +10,13 @@
   const hs = $('menu-hs');
   const heroBox = $('menu-hero');
   const creditBox = $('menu-credit');
+  MathHeroCredits.renderRoll($('credit-roll-inner'), [
+    { head: 'MATH HERO', lines: ['Petualangan berhitung di Kerajaan Awan'] },
+    { head: 'SPRITE', lines: ['CraftPix.net', 'Free Simple Platformer Game Kit'] },
+    { head: 'FONT', lines: ['Kleintenna (freeware)'] },
+    { head: 'IKON DAN VEKTOR', lines: ['SVG Repo, Vecteezy', 'Rincian di assets/svg/CREDITS.md'] },
+    'animasi',
+  ]);
   const msg = $('menu-msg');
   const NAME_MAX = 6;
   let player = null;   // { id, nama } pemain yang sedang bermain

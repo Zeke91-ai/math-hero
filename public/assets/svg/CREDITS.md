@@ -44,3 +44,8 @@ Lisensi Vecteezy mengharuskan atribusi. Teks atribusi tampil di layar awal game.
 - Ikon buah dan lebah dari SVG Repo (tabel di atas) dipakai ulang di Pasar Koin dan Kebun Kotak.
 - Pixel art lain (Peri Angka, Profesor Kacau, kristal, hati, bintang, awan, gerobak, peti, bibit, bunga, meteor, mahkota, topi koki, pizza, koin, uang kertas, timbangan) dibuat khusus untuk game ini di kode `public/mh2/js`.
 - Musik dan efek suara disintesis dengan Web Audio, tanpa file rekaman.
+
+## GSAP (https://gsap.com)
+
+GSAP 3.15.0 (gsap.min.js dan plugin Draggable) oleh GreenSock, dipakai untuk animasi kertas coret dan tombolnya.
+Lisensi: GSAP Standard "no charge" (https://gsap.com/standard-license). Berkas ada di `public/shared/vendor/gsap/`.

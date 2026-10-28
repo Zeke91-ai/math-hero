@@ -204,8 +204,12 @@ Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan per
 
 ## Kertas coret-coret dan kredit (semua seri)
 
-- `public/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3: tombol kuning "Coret" di tengah atas membuka kertas bergaris untuk menulis hitungan dengan jari atau mouse. Game dijeda selama kertas terbuka; coretan tersimpan sampai ditekan Hapus.
+- `public/shared/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3: tombol kuning "Coret" di tengah atas membuka kertas bergaris untuk menulis hitungan dengan jari atau mouse. Game dijeda selama kertas terbuka; coretan tersimpan sampai ditekan Hapus.
 - Setiap seri punya credit roll yang ditutup dengan "an edu-game by Hilmi Fuadi" dan hilmifuadi@gmail.com.
+
+## Bank aset bersama
+
+`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`.
 
 ## Lisensi dan atribusi
 

@@ -542,17 +542,16 @@
   });
 
   // ---------- Kredit ----------
-  const CREDITS = [
-    'MATH HERO 3', 'Benteng Bintang', '',
-    'Seri Math Hero', 'game belajar matematika', 'untuk anak SD', '',
-    'SPRITE', 'CraftPix.net (lisensi gratis)', 'Tiny Hero Sprites', 'Top-Down Hunt Animals', 'Slime Mobs', 'Roguelike Shoot Em Up Kit', 'Simple Platformer Game Kit', '',
-    'IKON BUAH', 'SVG Repo', '',
-    'FONT', 'Kleintenna (freeware)', 'Pixelzone (domain publik)', '',
-    'PIXEL ART TAMBAHAN', 'Peri, kristal, bintang, hati:', 'dibuat untuk game ini', '',
-    'MUSIK DAN SUARA', 'Disintesis langsung di browser', '',
-    'Terima kasih sudah belajar!', '',
-    'an edu-game by Hilmi Fuadi', 'hilmifuadi@gmail.com',
-  ];
+  const CREDITS = MathHeroCredits.lines([
+    { head: 'MATH HERO 3', lines: ['Benteng Bintang'] },
+    { lines: ['Seri Math Hero', 'game belajar matematika', 'untuk anak SD'] },
+    { head: 'SPRITE', lines: ['CraftPix.net (lisensi gratis)', 'Tiny Hero Sprites', 'Top-Down Hunt Animals', 'Slime Mobs', 'Roguelike Shoot Em Up Kit', 'Simple Platformer Game Kit'] },
+    { head: 'IKON BUAH', lines: ['SVG Repo'] },
+    'font',
+    { head: 'PIXEL ART TAMBAHAN', lines: ['Peri, kristal, bintang, hati:', 'dibuat untuk game ini'] },
+    'musik',
+    'animasi',
+  ]);
   M.register('credits', {
     enter(p) { this.t = 0; this.ending = p.ending; M.audio.music('title'); },
     update(dt) { this.t += dt; if (M.input.bHit) M.go(this.ending ? 'map' : 'title', {}); },
