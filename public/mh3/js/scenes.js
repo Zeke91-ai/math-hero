@@ -24,6 +24,7 @@
 
   // ---------- Papan Juara ----------
   window.MHJuara.install(M, { board: 'mh3', back: 'title' });
+  window.MHJuara.install(M, { board: 'mh3-kejar', scene: 'juarakejar', title: 'Juara Kejar', note: true, back: 'map', local: () => MH3.endlessLocalBoard() });
 
   // ---------- Judul ----------
   const LOGO_COLORS = ['#ffffff', '#ffd54a'];
@@ -353,6 +354,8 @@
       M.text(g, S.active ? S.active.nama : '', 112, 30, { size: 16 });
       M.button(g, { id: 'pasukan', x: VW - 182, y: 8, w: 84, h: 44, label: 'Pasukan', size: 14, color: 'blue', onTap: () => M.go('barak', { back: ['map', { stage: this.world }] }) });
       M.button(g, { id: 'buku', x: VW - 92, y: 8, w: 84, h: 44, label: 'Buku PR', size: 14, color: 'orange', onTap: () => M.go('buku', { back: ['map', { stage: this.world }] }) });
+      M.button(g, { id: 'tanpabatas', x: 8, y: 84, w: 150, h: 36, label: 'Kejar Tanpa Batas', size: 13, color: 'teal', onTap: () => M.go('plat', { endless: { round: 1, runSeed: MH3.endless.newRunSeed(), total: 0, hearts: MH3.endless.HEARTS, grade0: S.active ? S.active.grade : 2 } }) });
+      M.button(g, { id: 'juarakejar', x: VW - 128, y: 84, w: 120, h: 36, label: 'Juara Kejar', size: 13, color: 'yellow', textColor: '#2b1d52', icon: 'trophy', onTap: () => M.go('juarakejar') });
       M.art(g, 'bintang', 12, 58, 1.6);
       M.text(g, `${S.totalStars()}/${PR.LEVELS.length * 3}`, 34, 66, { size: 13, color: '#ffd54a' });
       M.art(g, 'kristal', 110, 56, 1.3);
