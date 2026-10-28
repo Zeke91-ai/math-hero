@@ -195,20 +195,21 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 
 ## Tes
 
-- `npm run test:mh2` dan `npm run test:mh3`: tes logika (Node), termasuk generator PR, data level, dan adaptif.
+- `npm test`: semua tes logika Node (skor, bonus waktu, bank soal, pemeriksa level, templat seri, MH2, MH3), sekitar 20 detik dan jalan di cloud tanpa browser. Per bagian: `npm run test:mh2`, `test:mh3`, `test:levels`, `test:bank`, `test:scores`, `test:bonus`, `test:template`.
+- `npm run test:ui`: semua tes sentuh Chromium (butuh paket `playwright` untuk Node). `npm run test:legacy`: tes Python MH1/MH2 lama (butuh Python + playwright Python).
 - Tes sentuh di Chromium (layar 393x851, butuh paket `playwright` untuk Node): `node tests/mh3_plat_ui.js`, `node tests/mh3_defense_ui.js`, `node tests/mh3_map_ui.js`, `node tests/mh3_boss_ui.js`, `node tests/mh3_chests_ui.js`. Tes ini juga memeriksa tidak ada galat di konsol.
 
 Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
 
 # Bonus waktu (semua game)
 
-Bonus level menyusut menurut waktu main supaya papan juara menghargai kecepatan: bonus mulai dari 200 poin dan berkurang 1 poin tiap 5 detik waktu main aktif, paling rendah 0. Bonus hanya tambahan, jadi skor dasar tidak pernah berkurang karena bermain pelan. Waktu tidak dihitung saat jeda, saat tab/aplikasi tersembunyi, saat penjelasan atau cerita, dan di Math Hero 3 saat kartu PR terbuka (kartu PR sengaja tanpa batas waktu karena butuh kertas coretan). Angkanya ada di satu tabel, `GAMES` di `public/js/timebonus.js` (`base` dan `secPerPoint` untuk `mh1`, `mh2`, `mh3`); ubah di sana untuk menyetel. Bonus yang tersisa tampil kecil di layar main dan rinciannya di layar hasil. Tes: `npm run test:bonus` (hitungan) dan `node tests/bonus_ui.js` (jam di browser, Papan Juara).
+Bonus level menyusut menurut waktu main supaya papan juara menghargai kecepatan: bonus mulai dari 200 poin dan berkurang 1 poin tiap 5 detik waktu main aktif, paling rendah 0. Bonus hanya tambahan, jadi skor dasar tidak pernah berkurang karena bermain pelan. Waktu tidak dihitung saat jeda, saat tab/aplikasi tersembunyi, saat penjelasan atau cerita, dan di Math Hero 3 saat kartu PR terbuka (kartu PR sengaja tanpa batas waktu karena butuh kertas coretan). Angkanya ada di satu tabel, `GAMES` di `public/shared/js/timebonus.js` (`base` dan `secPerPoint` untuk `mh1`, `mh2`, `mh3`); ubah di sana untuk menyetel. Bonus yang tersisa tampil kecil di layar main dan rinciannya di layar hasil. Tes: `npm run test:bonus` (hitungan) dan `node tests/bonus_ui.js` (jam di browser, Papan Juara).
 
 # Papan skor bersama (Firebase, opsional)
 
 Papan Juara Math Hero 1 bisa dibagi antar pemain lewat Firebase Firestore (paket gratis Spark cukup). Total skor terbaik Math Hero 2 dan 3 ikut tercatat di papan `mh2` dan `mh3`; keduanya punya layar **Papan Juara** (tombol di layar judul) yang menampilkan papan bersama, atau skor para petualang di HP itu bila offline atau belum dikonfigurasi. Tanpa pengaturan ini game tetap jalan seperti biasa dan skor tersimpan di HP/browser masing-masing.
 
-Satu proyek Firebase bisa dipakai banyak aplikasi hobi sekaligus. Semua skor ada di satu koleksi `scores`; tiap dokumen punya `appId` (alias aplikasi, contoh `math-hero`), `board` (papan di dalam aplikasi, contoh `mh1`), `name`, `score`, `createdAt`, dan `meta` (opsional). Aplikasi lain cukup menyalin `public/js/scores.js` dan `public/js/firebase-config.js`, lalu memanggil `Scores.submit('alias-aplikasi', 'papan', nama, skor, meta)` dan `Scores.top('alias-aplikasi', 'papan', 10)`.
+Satu proyek Firebase bisa dipakai banyak aplikasi hobi sekaligus. Semua skor ada di satu koleksi `scores`; tiap dokumen punya `appId` (alias aplikasi, contoh `math-hero`), `board` (papan di dalam aplikasi, contoh `mh1`), `name`, `score`, `createdAt`, dan `meta` (opsional). Aplikasi lain cukup menyalin `public/shared/js/scores.js` dan `public/js/firebase-config.js`, lalu memanggil `Scores.submit('alias-aplikasi', 'papan', nama, skor, meta)` dan `Scores.top('alias-aplikasi', 'papan', 10)`.
 
 ## Langkah pengaturan (sekitar 10 menit)
 
@@ -231,14 +232,14 @@ Aturan Firestore hanya mengizinkan membaca dan **menambah** skor yang bentuknya 
 
 ## Kertas coret-coret dan kredit (semua seri)
 
-- `public/shared/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3. Tombol berupa pulau kuning bulat (✎) yang bisa diseret dan menempel ke tepi kiri/kanan (posisi tersimpan di `localStorage` kunci `mathHero.scratch.pos`). Ketukan membuka lembar bawah setinggi ~58% layar sehingga soal di atas tetap terlihat; tombol "Lihat soal" menciutkan lembar jadi strip. Coretan tersimpan sampai Hapus atau soal baru. Animasi memakai GSAP + Draggable; tanpa GSAP tetap jalan tanpa animasi.
+- `public/shared/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3. Tombol berupa pulau kuning bulat (✎) yang bisa diseret dan menempel ke tepi kiri/kanan (posisi tersimpan di `localStorage` kunci `mathHero.scratch.pos`). Ketukan membuka lembar bawah yang besar (~80% tinggi layar, lebar sampai 820px); tombol "Kecilkan" menciutkan lembar jadi strip agar soal terlihat, "Perbesar" atau ketukan pada strip membukanya lagi. Coretan tersimpan sampai Hapus atau soal baru. Animasi memakai GSAP + Draggable; tanpa GSAP tetap jalan tanpa animasi.
 - Pulau hanya muncul saat anak mengerjakan soal yang menghentikan waktu, lewat `Scratchpad.setAvailable(bool)` (dipanggil tiap frame, idempoten). Kertas tidak menjeda game. MH1: selama `Quiz.isOpen()`. MH2: mode dengan properti `scratch: true` (balance, garden, market, numline, share, dan pizza kecuali `cfg.timer` > 0); tidak muncul di runner, shooter, racer. MH3: selama kartu PR dikerjakan (`MH3.homework`, mode soal).
 - API: `setAvailable`, `open`, `close`, `clear`, `isOpen`, `isAvailable`, `init(opts)` (opsional `onOpen`/`onClose`). Uji: `npm run test:scratch`.
 - Setiap seri punya credit roll yang ditutup dengan "an edu-game by Hilmi Fuadi" dan hilmifuadi@gmail.com.
 
 ## Bank aset bersama
 
-`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`.
+`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`. Membuat seri baru (MH4): `node scripts/buat_seri.js mh4 "Judul"`, lalu ikuti `public/shared/PANDUAN_SERI_BARU.md`.
 
 ## Lisensi dan atribusi
 
@@ -283,11 +284,9 @@ python -m playwright install chromium
 Lalu dari folder project:
 
 ```
-node tests/mh2.test.js
+npm test                       # semua tes logika Node
+npm run test:legacy            # python tests/playthrough.py dst. (lihat package.json)
 python tests/mh2_playthrough.py
-node tests/math.test.js
-node tests/bot_sanity.js
-node scripts/cek_level.js
 python tests/playthrough.py
 python tests/menu.py
 python tests/font_kleintenna.py

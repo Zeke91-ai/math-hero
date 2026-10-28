@@ -92,9 +92,8 @@ async function startServer(port) {
       ok(await pg.evaluate(() => Scratchpad.isOpen()), 'MH1: ketuk membuka lembar');
       ok(!(await visible(pg)), 'MH1: tombol hilang saat lembar terbuka');
       const sh = await sheetBox(pg);
-      ok(Math.abs(sh.h - 0.58 * 851) <= 4 && sh.b >= 849 && sh.w <= 560, `MH1: lembar ~58% tinggi, menempel bawah (${Math.round(sh.h)}px)`);
+      ok(Math.abs(sh.h - 0.8 * 851) <= 4 && sh.b >= 849 && sh.w <= 820, `MH1: lembar besar ~80% tinggi, menempel bawah (${Math.round(sh.h)}px)`);
       const qv = await pg.evaluate(() => { const c = document.querySelector('.quiz-card').getBoundingClientRect(); const p = document.getElementById('quiz-prompt').getBoundingClientRect(); return { cardBottom: c.bottom, cardTop: c.top, promptBottom: p.bottom }; });
-      ok(qv.cardBottom <= sh.y + 2 && qv.cardTop >= 0, `MH1: kartu soal sepenuhnya di atas lembar (bawah kartu ${Math.round(qv.cardBottom)} <= atas lembar ${Math.round(sh.y)})`);
       ok(await pg.evaluate(() => !document.getElementById('quiz').classList.contains('hidden')), 'MH1: #quiz masih terbuka');
       ok(!(await pg.evaluate(() => window.__mathHero.state.paused)), 'MH1: game tidak masuk layar jeda saat lembar terbuka');
 
@@ -107,12 +106,15 @@ async function startServer(port) {
       ok(inked, 'MH1: coretan tergambar di kanvas');
       await pg.screenshot({ path: path.join(SHOTS, 'scratch_mh1_open.png') });
 
-      // "Lihat soal" menciutkan jadi strip ~64px.
+      // "Kecilkan" menciutkan jadi strip ~64px; kartu soal lalu terlihat penuh di atas strip.
       await pg.click('#scratch .head button');
       await pg.waitForTimeout(500);
       const sc = await sheetBox(pg);
-      ok(Math.abs((851 - sc.y) - 64) <= 6, `MH1: Lihat soal menciutkan lembar jadi strip ~64px (tampak ${Math.round(851 - sc.y)}px)`);
+      ok(Math.abs((851 - sc.y) - 64) <= 6, `MH1: Kecilkan menciutkan lembar jadi strip ~64px (tampak ${Math.round(851 - sc.y)}px)`);
       ok(await pg.evaluate(() => Scratchpad.isOpen()), 'MH1: lembar yang diciutkan masih terbuka');
+      const qc = await pg.evaluate(() => { const c = document.querySelector('.quiz-card').getBoundingClientRect(); return { top: c.top, bottom: c.bottom }; });
+      ok(qc.top >= 0 && qc.bottom <= sc.y + 2, `MH1: setelah dikecilkan kartu soal terlihat penuh di atas strip (bawah kartu ${Math.round(qc.bottom)} <= atas strip ${Math.round(sc.y)})`);
+      ok((await pg.evaluate(() => document.querySelector('#scratch .head button').textContent)) === 'Perbesar', 'MH1: tombol berganti jadi Perbesar');
       await pg.screenshot({ path: path.join(SHOTS, 'scratch_mh1_collapsed.png') });
       // Buka lagi: coretan masih ada.
       await pg.click('#scratch .head button');
@@ -120,6 +122,10 @@ async function startServer(port) {
       const sb = await sheetBox(pg);
       ok(sb.y <= 851 * 0.42 + 4, 'MH1: ketuk lagi membuka lembar penuh');
       ok(await pg.evaluate(() => { const c = document.querySelector('#scratch canvas'); const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 0; i < d.length; i += 4) if (d[i] < 80 && d[i + 2] > 60 && d[i + 3] > 200) return true; return false; }), 'MH1: coretan tetap ada setelah ciut/buka');
+      // Ketuk pada strip (bukan tombolnya) juga memperbesar.
+      await pg.click('#scratch .head button'); await pg.waitForTimeout(450);
+      await pg.click('#scratch .head span'); await pg.waitForTimeout(450);
+      ok((await sheetBox(pg)).y <= 851 * 0.42 + 4, 'MH1: ketuk strip memperbesar lembar');
 
       // Selesai menutup; game tidak paused; tombol kembali (quiz masih terbuka).
       await pg.click('#scratch .bar button:last-child');
@@ -233,7 +239,7 @@ async function startServer(port) {
       ok(await visible(pg), '1280x800: tombol muncul (gerak dikurangi: tanpa animasi)');
       await pg.click('#scratch-btn'); await pg.waitForTimeout(120);
       const sh = await sheetBox(pg);
-      ok(await pg.evaluate(() => Scratchpad.isOpen()) && sh.w <= 560 && sh.h <= 560 && Math.abs(sh.x + sh.w / 2 - 640) <= 2, `1280x800: lembar di tengah, lebar ${Math.round(sh.w)} tinggi ${Math.round(sh.h)}`);
+      ok(await pg.evaluate(() => Scratchpad.isOpen()) && sh.w <= 820 && sh.h <= 900 && Math.abs(sh.x + sh.w / 2 - 640) <= 2, `1280x800: lembar di tengah, lebar ${Math.round(sh.w)} tinggi ${Math.round(sh.h)}`);
       await pg.screenshot({ path: path.join(SHOTS, 'scratch_desktop_open.png') });
       await ctx.close();
     }
@@ -253,7 +259,7 @@ async function startServer(port) {
       const sh = await sheetBox(pg);
       ok(await pg.evaluate(() => Scratchpad.isOpen()) && sh.b >= 849, 'tanpa GSAP: ketuk membuka lembar');
       await pg.click('#scratch .head button'); await pg.waitForTimeout(150);
-      ok((851 - (await sheetBox(pg)).y) < 80, 'tanpa GSAP: Lihat soal menciutkan');
+      ok((851 - (await sheetBox(pg)).y) < 80, 'tanpa GSAP: Kecilkan menciutkan');
       await pg.click('#scratch .head button'); await pg.waitForTimeout(150);
       await pg.click('#scratch .bar button:last-child'); await pg.waitForTimeout(150);
       ok(!(await pg.evaluate(() => Scratchpad.isOpen())), 'tanpa GSAP: Selesai menutup');
