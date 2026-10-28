@@ -2,6 +2,7 @@
 Membandingkan penguat musik 1.0 (setara kondisi lama) dengan penguat yang dipakai sekarang."""
 import os, subprocess, sys, tempfile, time
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8096
@@ -40,7 +41,7 @@ def main():
             page = browser.new_context(**p.devices["Pixel 5"]).new_page()
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
-            page.goto(f"http://127.0.0.1:{PORT}/")
+            page.goto(f"http://127.0.0.1:{PORT}/mh1/")
             page.wait_for_function("document.body.classList.contains('loaded')", timeout=15000)
             page.evaluate("window.__mathHero.startGame(0, 0, 1)")
             page.wait_for_timeout(1500)

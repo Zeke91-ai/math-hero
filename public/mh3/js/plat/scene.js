@@ -457,13 +457,11 @@
     const k = tp.k, a = Math.min(1, tp.t * 3, (4.5 - tp.t) * 4), maxW = 200;
     g.font = `13px ${M.FONT}`;
     const lines = M.wrap(g, k.text, maxW), w = Math.max(...lines.map((l) => g.measureText(l).width)) + 20, h = lines.length * 17 + 14;
-    const ax = (k.x - S.cam.x) * SC, ay = HUD + (k.y - S.cam.y) * SC - 10;
-    const bx = Math.max(6, Math.min(M.VW - w - 6, ax - w / 2)), by = Math.max(HUD + 4, ay - h - 12);
+    // Balon tetap di atas layar (di bawah HUD) supaya tidak menutupi pemain dan rintangan.
+    const bx = (M.VW - w) / 2, by = HUD + 6;
     g.globalAlpha = a;
     g.fillStyle = '#fff6dc'; g.strokeStyle = '#2b1d52'; g.lineWidth = 3;
     g.beginPath(); g.roundRect ? g.roundRect(bx, by, w, h, 8) : g.rect(bx, by, w, h); g.fill(); g.stroke();
-    const tx = Math.max(bx + 12, Math.min(bx + w - 12, ax));
-    if (by + h < ay) { g.beginPath(); g.moveTo(tx - 7, by + h - 1); g.lineTo(tx, Math.min(ay, by + h + 12)); g.lineTo(tx + 7, by + h - 1); g.closePath(); g.fill(); g.stroke(); g.fillRect(tx - 6, by + h - 3, 12, 3); }
     lines.forEach((l, i) => M.text(g, l, bx + w / 2, by + 15 + i * 17, { size: 13, align: 'center', color: '#2b1d52', outline: false }));
     g.globalAlpha = 1;
   }

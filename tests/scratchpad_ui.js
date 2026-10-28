@@ -219,6 +219,7 @@ async function startServer(port) {
       await pg.touchscreen.tap(bb.x + bb.w / 2, bb.y + bb.h / 2); await pg.waitForTimeout(700);
       ok(await pg.evaluate(() => Scratchpad.isOpen()), 'MH3: ketuk membuka lembar');
       ok(await pg.evaluate(() => MH3.homework.active), 'MH3: kartu PR tetap aktif di bawah lembar');
+      { const sh3 = await sheetBox(pg); ok(Math.abs(sh3.h - 0.8 * 851) <= 4 && sh3.b >= 849, `MH3: lembar besar ~80% tinggi (${Math.round(sh3.h)}px)`); }
       await pg.screenshot({ path: path.join(SHOTS, 'scratch_mh3_open.png') });
       await pg.click('#scratch .bar button:last-child'); await pg.waitForTimeout(500);
       ok(!(await pg.evaluate(() => Scratchpad.isOpen())) && await pg.evaluate(() => MH3.homework.active), 'MH3: Selesai menutup lembar, kartu tetap');

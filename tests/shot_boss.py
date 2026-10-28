@@ -2,6 +2,7 @@
 Pemain kebal dan diam di arena; diambil saat peringatan (tele) dan serangan (atk)."""
 import os, subprocess, sys, time
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8094
@@ -28,7 +29,7 @@ def main():
             errors = []
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-            page.goto(f"http://127.0.0.1:{PORT}/")
+            page.goto(f"http://127.0.0.1:{PORT}/mh1/")
             page.wait_for_function("window.__mathHero && window.__mathHero.ready && document.body.classList.contains('loaded')", timeout=15000)
             for lv, (c, k) in BOSS.items():
                 page.evaluate(f"window.__mathHero.startGame({lv - 1}, 0, 1)")

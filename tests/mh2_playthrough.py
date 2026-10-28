@@ -18,6 +18,7 @@ import time
 import urllib.request
 
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8197
@@ -92,7 +93,7 @@ def main():
 
             page.goto(BASE + '/')
             hrefs = page.eval_on_selector_all('a.play', 'els => els.map(e => e.getAttribute("href"))')
-            assert hrefs == ['mh1/', 'mh2/'], hrefs
+            assert hrefs == ['mh1/', 'mh2/', 'mh3/'], hrefs
             print('pemilih seri: OK')
 
             page.goto(BASE + '/mh1')
