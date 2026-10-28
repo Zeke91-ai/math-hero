@@ -235,7 +235,7 @@ Struktur singkat:
 Math Hero 2 (`public/mh2/`):
 - `js/core.js`: layar logis 360 x tinggi-mengikuti-HP, loop, adegan, input (sentuh, joystick, keyboard), tombol pixel yang digambar di canvas, partikel, pesan.
 - `js/gfx.js`: pemuat atlas, sprite Math Hero 1 yang dipakai ulang, pixel art buatan sendiri, latar parallax tiap dunia, gambar bos.
-- `js/audio.js`: musik chiptune per dunia dan bos, efek suara (Web Audio).
+- `shared/js/audio.js` (bersama MH3): musik chiptune per dunia dan bos, efek suara (Web Audio).
 - `js/save.js`: tiga slot pemain di localStorage.
 - `shared/js/concepts.js` (bersama MH3): semua pembuat soal dan penjelasan konsep (murni logika, diuji di Node).
 - `js/stages.js`: 6 dunia x 5 level beserta cerita dan bos. Mengganti/menambah level cukup di sini.
