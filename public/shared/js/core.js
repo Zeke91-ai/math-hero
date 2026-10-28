@@ -227,9 +227,13 @@
   hold(btnB, (v) => { padB = v; if (v) latch.B = true; });
   // Tombol panah: tiap ketukan = satu langkah (dibaca sebagai I.lHit / I.rHit).
   // Panah juga bisa ditahan (I.lHold / I.rHold) untuk adegan yang berjalan terus, seperti level Kejar.
-  let padL = false, padR = false;
+  let padL = false, padR = false, padU = false, padD = false;
   hold(document.getElementById('btn-kiri'), (v) => { padL = v; if (v) latch.L = true; });
   hold(document.getElementById('btn-kanan'), (v) => { padR = v; if (v) latch.R = true; });
+  // Pad 4 arah (mode dpad): tombol atas/bawah, bila ada di halaman.
+  const btnU = document.getElementById('btn-atas'), btnD = document.getElementById('btn-bawah');
+  if (btnU) hold(btnU, (v) => { padU = v; });
+  if (btnD) hold(btnD, (v) => { padD = v; });
   ctrl.addEventListener('contextmenu', (e) => e.preventDefault());
 
   const KEYMAP = { ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r', ArrowUp: 'u', KeyW: 'u', ArrowDown: 'd', KeyS: 'd',
@@ -243,7 +247,7 @@
     keys[k] = true; e.preventDefault();
   });
   window.addEventListener('keyup', (e) => { const k = KEYMAP[e.code]; if (k) keys[k] = false; });
-  window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; padA = padB = padL = padR = false; if (M.scene && M.scene.blur) M.scene.blur(); });
+  window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; padA = padB = padL = padR = padU = padD = false; if (M.scene && M.scene.blur) M.scene.blur(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden && M.scene && M.scene.blur) M.scene.blur(); });
   document.addEventListener('gesturestart', (e) => e.preventDefault());
 
@@ -251,7 +255,7 @@
   function readInput() {
     const on = (k) => !!(keys[k] || latch[k]);
     I.x = joyX || ((on('r') ? 1 : 0) - (on('l') ? 1 : 0));
-    I.y = joyY || ((on('d') ? 1 : 0) - (on('u') ? 1 : 0));
+    I.y = joyY || ((on('d') || padD ? 1 : 0) - (on('u') || padU ? 1 : 0));
     const a = padA || !!keys.A, b = padB || !!keys.B;
     I.aHit = (a && !prevA) || !!latch.A; I.bHit = (b && !prevB) || !!latch.B;
     I.a = a || !!latch.A; I.b = b || !!latch.B; prevA = a; prevB = b;
@@ -260,12 +264,14 @@
     for (const k in latch) delete latch[k];
   }
 
-  // Adegan memilih kontrol yang tampil: { joy: true, a: 'Lompat', b: 'Ambil' }, { arrows: true, ... } atau null.
+  // Adegan memilih kontrol yang tampil: { joy: true, a: 'Lompat', b: 'Ambil' }, { arrows: true, ... },
+  // { dpad: true, ... } (pad 4 arah: kiri, kanan, atas, bawah) atau null.
   M.setControls = function (c) {
     ctrl.classList.toggle('on', !!c);
     if (!c) return;
-    ctrl.classList.toggle('nojoy', !c.joy && !c.arrows);
-    ctrl.classList.toggle('arrows', !!c.arrows);
+    ctrl.classList.toggle('nojoy', !c.joy && !c.arrows && !c.dpad);
+    ctrl.classList.toggle('arrows', !!(c.arrows || c.dpad));
+    ctrl.classList.toggle('dpad', !!c.dpad);
     labA = labB = NONE; // paksa terapkan, termasuk label kosong (tombol disembunyikan)
     M.padLabels(c.a, c.b);
   };

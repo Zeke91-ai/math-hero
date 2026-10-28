@@ -1,6 +1,6 @@
 // Uji klien papan skor bersama dengan backend palsu (tanpa jaringan):  node tests/scores.test.js
 const assert = require('assert');
-const Scores = require('../public/js/scores.js');
+const Scores = require('../public/shared/js/scores.js');
 let n = 0;
 const ok = (c, m) => { n++; assert.ok(c, 'GAGAL: ' + m); console.log('ok: ' + m); };
 

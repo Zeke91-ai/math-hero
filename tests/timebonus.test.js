@@ -2,8 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('fs'), path = require('path');
-const TB = require('../public/js/timebonus.js');
-const Scores = require('../public/js/scores.js');
+const TB = require('../public/shared/js/timebonus.js');
+const Scores = require('../public/shared/js/scores.js');
 const { ALL_LEVELS } = require('../public/mh2/js/stages.js');
 const { LEVELS: MH3_LEVELS } = require('../public/mh3/js/progress.js');
 
@@ -106,7 +106,7 @@ test('dokumen skor MH2/MH3 (nama, bidang meta baru) lolos klien dan memakai bida
 });
 
 test('pembuat baris Papan Juara: pahlawan dari meta, atau tetap berdasarkan nama bila tidak ada', () => {
-  const J = require('../public/js/juara.js');
+  const J = require('../public/shared/js/juara.js');
   const M = { HEROES: [{ key: 'pinki' }, { key: 'owi' }, { key: 'dudu' }] };
   assert.equal(J.heroFor(M, { name: 'ANA', hero: 'owi' }), 'owi');
   assert.equal(J.heroFor(M, { name: 'ANA', hero: 'tidak-ada' }), J.heroFor(M, { name: 'ANA' }));

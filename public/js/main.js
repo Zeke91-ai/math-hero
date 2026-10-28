@@ -17,7 +17,7 @@
   const btnPause = document.getElementById('btn-pause');
 
   const MAX_HEALTH = 100, START_LIVES = 3;
-  const TB = window.TimeBonus; // bonus level menyusut menurut waktu; kecepatannya diatur di js/timebonus.js
+  const TB = window.TimeBonus; // bonus level menyusut menurut waktu; kecepatannya diatur di shared/js/timebonus.js
   const BEST_KEY = 'mathHero.highScore', HERO_KEY = 'mathHero.hero';
   const HEROES = ['hero1', 'hero2', 'hero3'];
 

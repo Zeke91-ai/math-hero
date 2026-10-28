@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#2b1d52">
   <title>Math Hero 3: Misi Kristal Bilangan</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232b1d52'/%3E%3Cpath d='M8 1l5 5-5 9-5-9z' fill='%2364e3ff'/%3E%3Cpath d='M8 1l5 5H3z' fill='%23b8f4ff'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/mh2.css">
+  <link rel="stylesheet" href="../shared/css/mh-ui.css">
 </head>
 <body>
   <div id="frame">
@@ -16,6 +16,8 @@
         <div id="joy" aria-label="Joystick arah"><div id="knob"></div></div>
         <button id="btn-kiri" class="pad arrow" type="button" aria-label="Ke kiri"><i></i></button>
         <button id="btn-kanan" class="pad arrow" type="button" aria-label="Ke kanan"><i></i></button>
+        <button id="btn-atas" class="pad vert" type="button" aria-label="Ke atas"><i></i></button>
+        <button id="btn-bawah" class="pad vert" type="button" aria-label="Ke bawah"><i></i></button>
         <button id="btn-b" class="pad" type="button" aria-label="Tombol B"><span>B</span><small></small></button>
         <button id="btn-a" class="pad" type="button" aria-label="Tombol A"><span>A</span><small></small></button>
       </div>
@@ -26,23 +28,25 @@
   <script src="../shared/vendor/gsap/gsap.min.js"></script>
   <script src="../shared/vendor/gsap/Draggable.min.js"></script>
   <script src="../shared/js/credits.js"></script>
-  <script src="js/core.js"></script>
+  <script src="../shared/js/core.js"></script>
   <script src="js/gfx.js"></script>
-  <script src="js/audio.js"></script>
+  <script src="../shared/js/audio.js"></script>
   <script src="js/progress.js"></script>
   <script src="../js/firebase-config.js"></script>
-  <script src="../js/scores.js"></script>
-  <script src="../js/timebonus.js"></script>
-  <script src="../js/juara.js"></script>
+  <script src="../shared/js/scores.js"></script>
+  <script src="../shared/js/timebonus.js"></script>
+  <script src="../shared/js/juara.js"></script>
   <script src="js/save.js"></script>
-  <script src="js/concepts.js"></script>
+  <script src="../shared/js/concepts.js"></script>
   <script src="js/homework.js"></script>
   <script src="js/homework_ui.js"></script>
   <script src="js/defense/data.js"></script>
   <script src="js/defense/sim.js"></script>
   <script src="js/defense/board.js"></script>
-  <script src="js/plat/physics.js"></script>
+  <script src="../shared/js/physics.js"></script>
   <script src="js/plat/sim.js"></script>
+  <script src="../shared/js/levelgen.chunks.js"></script>
+  <script src="../shared/js/levelgen.js"></script>
   <script src="js/plat/levels.js"></script>
   <script src="js/plat/scene.js"></script>
   <script src="js/story.js"></script>
