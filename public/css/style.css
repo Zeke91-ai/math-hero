@@ -257,6 +257,15 @@ li.hs-empty { list-style: none; padding: 16px; font-size: 16px; color: #4b2e83; 
 }
 #menu-credit { display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 360px; }
 #menu-credit.hidden { display: none; }
+/* Credit roll MH1: teks naik dari bawah, berulang. Gerakan dikurangi: daftar bisa digulir sendiri. */
+#credit-roll { position: relative; width: 100%; height: 46vh; max-height: 340px; overflow: hidden; border-radius: 10px; background: rgba(255,253,245,0.92); color: #2c1a52; text-align: center; }
+#credit-roll-inner { padding: 100% 8px 24px; animation: credit-roll 22s linear infinite; }
+#credit-roll h3 { margin: 18px 0 4px; font-size: 20px; color: #b9531f; }
+#credit-roll p { margin: 0; font-size: 16px; line-height: 1.4; }
+#credit-roll .credit-by { margin-top: 28px; font-size: 20px; font-weight: 700; }
+#credit-roll .credit-mail { font-size: 16px; }
+@keyframes credit-roll { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+@media (prefers-reduced-motion: reduce) { #credit-roll { overflow-y: auto; } #credit-roll-inner { animation: none; padding-top: 8px; } }
 #splash:not([data-panel="main"]) #title-stars,
 #splash:not([data-panel="main"]) #hero-trio,
 #splash:not([data-panel="main"]) #btn-credit,

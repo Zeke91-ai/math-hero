@@ -550,7 +550,8 @@
     'FONT', 'Kleintenna (freeware)', 'Pixelzone (domain publik)', '',
     'PIXEL ART TAMBAHAN', 'Peri, kristal, bintang, hati:', 'dibuat untuk game ini', '',
     'MUSIK DAN SUARA', 'Disintesis langsung di browser', '',
-    'Terima kasih sudah belajar!',
+    'Terima kasih sudah belajar!', '',
+    'an edu-game by Hilmi Fuadi', 'hilmifuadi@gmail.com',
   ];
   M.register('credits', {
     enter(p) { this.t = 0; this.ending = p.ending; M.audio.music('title'); },
