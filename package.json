@@ -16,7 +16,7 @@
     "test:bank": "node tests/questionbank.test.js",
     "test:mh2": "node tests/mh2.test.js",
     "test:scratch": "node tests/scratchpad_ui.js",
-    "test:mh3": "node tests/mh3_homework.test.js && node tests/mh3_defense.test.js && node tests/mh3_units.test.js && node tests/mh3_plat.test.js && node tests/mh3_progress.test.js && node tests/mh3_adapt.test.js"
+    "test:mh3": "node tests/mh3_homework.test.js && node tests/mh3_defense.test.js && node tests/mh3_units.test.js && node tests/mh3_plat.test.js && node tests/mh3_mekanik.test.js && node tests/mh3_progress.test.js && node tests/mh3_adapt.test.js"
   },
   "engines": {
     "node": ">=18"
