@@ -17,5 +17,5 @@ const report = (tag, r) => {
   if (!r.ok) failed++;
 };
 if (series.includes('mh1')) for (const L of LEVELS) if (!want.length || want.includes(L.id)) report('MH1', check(L));
-if (series.includes('kejar')) for (const d of Kejar.LEVELS) if (!want.length || want.includes(d.id)) report('Kejar', check(fromKejar(d, Sim.parse(d))));
+if (series.includes('kejar')) for (const d of Kejar.LEVELS) if (!want.length || want.includes(d.id)) report('Kejar', check(fromKejar(d, Sim.parse(d), Sim.K)));
 process.exit(failed ? 1 : 0);

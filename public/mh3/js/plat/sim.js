@@ -17,7 +17,7 @@
 })(typeof self !== 'undefined' ? self : this, function (Physics) {
   const { C, T, stepBody, overlap } = Physics;
   const HEARTS = 3, INVULN = 1.4, WALK = 55, RESPAWN_FALL = 140;
-  const SPRING = -1000, DASH = 470, DASH_T = 0.5, CLIMB = 150, PUSH = 105, MOVER = 70, LIFT = 64;
+  const SPRING = -1000, DASH = 470, DASH_T = 0.6, DASH_VY = -520, CLIMB = 150, PUSH = 105, MOVER = 70, LIFT = 64;
   const CRUMBLE_SHAKE = 0.5, CRUMBLE_BACK = 3, PIPE_SPEED = 520;
   // Skill jagoan (tombol B). Jalan utama tidak pernah membutuhkan skill; skill membuka jalan pintas dan bonus.
   const SKILLS = { pinki: 'lempar', owi: 'melayang', dudu: 'hantam' };
@@ -48,7 +48,7 @@
           if (at(c, r - 1) !== 'H') L.ladTops.push({ x, y, w: T, h: 8, ow: true, ladder: true });
         }
         else if (ch === 's') L.springs.push({ x: x + 4, y: y + T - 12, w: T - 8, h: 12, t: 0 });
-        else if (ch === '>' || ch === '<') L.dashes.push({ x: x + 2, y: y + 6, w: T - 4, h: T - 6, dir: ch === '>' ? 1 : -1, t: 0 });
+        else if (ch === '>' || ch === '<') L.dashes.push({ x: x + 2, y: y - 2 * T, w: T - 4, h: 3 * T, dir: ch === '>' ? 1 : -1, t: 0 }); // zona tinggi: tetap kena walau anak melompat di atasnya
         else if (ch === '(') mouthsIn.push({ c, r });
         else if (ch === ')') mouthsOut.push({ c, r });
         else if (ch === '-' && at(c - 1, r) !== '-') {
@@ -341,7 +341,7 @@
     }
     for (const d of L.dashes) {
       if (!g.climb && overlap(p, d) && !(g.dash && g.dash.dir === d.dir)) {
-        g.dash = { dir: d.dir, t: DASH_T }; p.vy = Math.min(p.vy, -360); g.boost = 0.3; d.t = 0.4;
+        g.dash = { dir: d.dir, t: DASH_T }; p.vy = Math.min(p.vy, DASH_VY); g.boost = 0.3; d.t = 0.4;
         g.events.push({ type: 'dash', x: d.x + d.w / 2, y: d.y });
       }
     }
@@ -364,7 +364,8 @@
     for (const pl of L.plates) {
       // Ditekan bila tengah benda (hero atau kotak) berada di atas tombol.
       const on = (b) => b.x + b.w / 2 > pl.x - 2 && b.x + b.w / 2 < pl.x + pl.w + 2 && b.y + b.h >= pl.y - 4 && b.y + b.h <= pl.y + pl.h + 2;
-      if (pl.stuck) { if (quizTouch(g, pl, on(p), 'plate')) return; pl.down = false; continue; }
+      // Tombol macet: soal muncul saat hero di dekatnya (juga saat berdiri di atas kotak yang menutupi tombol).
+      if (pl.stuck) { if (quizTouch(g, pl, overlap(p, { x: pl.x, y: pl.y - 48, w: pl.w, h: pl.h + 48 }), 'plate')) return; pl.down = false; continue; }
       const down = on(p) || g.boxes.some(on);
       if (down && !pl.down) g.events.push({ type: 'plate', ch: pl.ch, x: pl.x + pl.w / 2, y: pl.y });
       pl.down = down;
@@ -418,5 +419,7 @@
     return Math.max(1, Math.min(3, 1 + (g.hurts === 0 && g.deaths === 0 ? 1 : 0) + (frac >= 0.7 ? 1 : 0)));
   }
 
-  return { HEARTS, SKILLS, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
+  // K: nilai lontaran untuk pemeriksa level (levelcheck.fromKejar).
+  const K = { springVy: SPRING, dashVx: DASH, dashVy: DASH_VY, dashT: DASH_T };
+  return { HEARTS, SKILLS, K, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
 });

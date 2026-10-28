@@ -1,5 +1,5 @@
 // Uji asap level Kejar MH3 di layar sentuh 393x851:  node tests/mh3_plat_ui.js
-// Menahan panah kanan dan mengetuk Lompat lewat sentuhan nyata (CDP), sampai kristal direbut dan layar akhir muncul.
+// Sentuhan nyata (CDP) untuk panah kanan dan Lompat, lalu bot pemain menamatkan level 1 sampai layar akhir muncul.
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const root = path.join(__dirname, '..', 'public');
@@ -26,33 +26,46 @@ const ok = (c, m) => { if (!c) { console.error('GAGAL: ' + m); process.exitCode 
   ok(ctl.kanan.vis && ctl.kiri.vis && ctl.a.vis, 'panah kiri, kanan, dan Lompat tampil');
   const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
   const pt = (c, id) => ({ x: c.x, y: c.y, id });
-  await touch('touchStart', [pt(ctl.kanan, 1)]);          // tahan panah kanan
-  let held = [pt(ctl.kanan, 1)];
-  const info = () => pg.evaluate(() => {
-    const st = MH3.plat.state(), g = st.g, p = g.p, L = g.L, T = 32;
-    const col = Math.floor((p.x + p.w / 2) / T), foot = Math.floor((p.y + p.h - 1) / T);
-    const tile = (c, r) => (c < 0 || c >= L.cols ? 1 : r < 0 || r >= L.rows ? 0 : L.tiles[r * L.cols + c]);
-    let jump = false;
-    for (const n of [1, 2]) {
-      if (p.onGround && tile(col + n, foot + 1) === 0 && tile(col + n, foot + 2) === 0) jump = true;
-      if (tile(col + n, foot) === 1) jump = true;
-      if (L.spikes.some((q) => Math.floor(q.x / T) === col + n)) jump = true;
-    }
-    for (const e of g.enemies) if (!e.dead && e.b.x > p.x && e.b.x - p.x < 70 && Math.abs(e.b.y - p.y) < 60) jump = true;
-    return { jump: jump && p.onGround, phase: g.phase, state: st.state, x: Math.round(p.x), stars: g.stars, hearts: g.hearts };
-  });
-  let shot = false, i = 0, last;
-  for (; i < 1500; i++) {
-    last = await info();
-    if (await pg.evaluate(() => !!MH3.homework.active)) { await touch('touchEnd', []); await pg.touchscreen.tap(300 * s, 670 * s); await pg.waitForTimeout(300); await touch('touchStart', [pt(ctl.kanan, 1)]); continue; } // peti membuka kartu PR: Nanti
-    if (last.state === 'end') break;
-    if (last.jump) { await touch('touchStart', [pt(ctl.a, 2)]); await pg.waitForTimeout(160); await touch('touchEnd', [pt(ctl.a, 2)]); }
-    if (!shot && last.x > 900) { shot = true; await pg.screenshot({ path: 'tests/shots/mh3_plat_1.png' }); }
-    await pg.waitForTimeout(40);
-  }
+  const pos = () => pg.evaluate(() => { const g = MH3.plat.state().g; return { x: Math.round(g.p.x), y: Math.round(g.p.y), ground: g.p.onGround }; });
+  // 1) sentuhan nyata: tahan panah kanan, ketuk Lompat
+  const p0 = await pos();
+  await touch('touchStart', [pt(ctl.kanan, 1)]);
+  await pg.waitForTimeout(700);
+  await touch('touchStart', [pt(ctl.kanan, 1), pt(ctl.a, 2)]);
+  await pg.waitForTimeout(120);
+  const p1 = await pos();
+  await touch('touchEnd', [pt(ctl.kanan, 1)]);
   await touch('touchEnd', []);
-  ok(last.x > 100, 'panah kanan menggerakkan hero (x=' + last.x + ')');
-  ok(last.state === 'end' && last.phase === 'won', 'level Kejar 1 ditamatkan lewat sentuhan (bintang ' + last.stars + ', hati ' + last.hearts + ')');
+  ok(p1.x > p0.x + 40, 'panah kanan menggerakkan hero (x ' + p0.x + ' -> ' + p1.x + ')');
+  ok(p1.y < p0.y - 8, 'tombol Lompat membuat hero melompat');
+  // 2) sisa level dimainkan bot pemain (tests/lib/kejar_bot.js) lewat input yang sama dengan sentuhan.
+  //    Soal pertama dari benda macet memakai kartu PR asli (ditutup dengan Nanti), sisanya dijawab otomatis.
+  await pg.addScriptTag({ path: path.join(__dirname, 'lib', 'kejar_bot.js') });
+  await pg.evaluate(() => {
+    const Sim = MH3.platSim, upd = Sim.update, bot = KejarBot.make(), real = MH3.homework.open;
+    window.__quiz = [];
+    Sim.update = (g, dt) => upd(g, dt, bot.step(g));
+    MH3.homework.open = (o, cb) => {
+      if (!/macet/.test(o.title || '')) return real(o, cb);
+      window.__quiz.push(o.title);
+      if (window.__quiz.length === 1) return real(o, (r) => { window.__first = r.status; cb({ status: 'done', stars: 2, hints: 0, wrong: 0 }); });
+      cb({ status: 'done', stars: 2, hints: 0, wrong: 0 });
+    };
+  });
+  let last, shotQ = false, shot = false;
+  for (let i = 0; i < 2000; i++) {
+    last = await pg.evaluate(() => { const st = MH3.plat.state(); return { phase: st.g.phase, state: st.state, x: Math.round(st.g.p.x), stars: st.g.stars, hearts: st.g.hearts, deaths: st.g.deaths, hw: MH3.homework.active }; });
+    if (last.hw) {
+      if (!shotQ && await pg.evaluate(() => window.__quiz.length === 1)) { shotQ = true; await pg.screenshot({ path: 'tests/shots/mh3_plat_soal.png' }); }
+      await pg.touchscreen.tap(300 * s, 670 * s); await pg.waitForTimeout(300); continue; // Nanti
+    }
+    if (last.state === 'end') break;
+    if (!shot && last.x > 900) { shot = true; await pg.screenshot({ path: 'tests/shots/mh3_plat_1.png' }); }
+    await pg.waitForTimeout(100);
+  }
+  const quiz = await pg.evaluate(() => ({ n: window.__quiz.length, first: window.__first }));
+  ok(quiz.n >= 1 && quiz.first === 'later', 'benda macet membuka kartu soal (' + quiz.n + ' soal, kartu pertama ditutup lewat Nanti)');
+  ok(last.state === 'end' && last.phase === 'won', 'level Kejar 1 ditamatkan (bintang ' + last.stars + ', hati ' + last.hearts + ', mati ' + last.deaths + ')');
   await pg.waitForTimeout(800);
   await pg.screenshot({ path: 'tests/shots/mh3_plat_end.png' });
   let got = null;

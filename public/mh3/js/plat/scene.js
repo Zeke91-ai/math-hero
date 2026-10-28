@@ -183,6 +183,13 @@
     g.translate(0, HUD); g.scale(SC, SC); g.translate(-Math.round(cam.x), -Math.round(cam.y));
     const c0 = Math.max(0, Math.floor(cam.x / T)), c1 = Math.min(L.cols - 1, Math.floor((cam.x + vw) / T) + 1);
     const r0 = Math.max(0, Math.floor(cam.y / T)), r1 = Math.min(L.rows - 1, Math.floor((cam.y + vh) / T) + 1);
+    // Ruang dalam (gua, terowongan): latar digelapkan dan diberi dinding belakang bata samar dengan warna tema.
+    for (const q of S.def.inside || []) {
+      const x = q[0] * T, y = q[1] * T, w = (q[2] - q[0] + 1) * T, h = (q[3] - q[1] + 1) * T;
+      g.fillStyle = 'rgba(20,12,40,0.55)'; g.fillRect(x, y, w, h);
+      g.fillStyle = 'rgba(255,255,255,0.05)';
+      for (let r = 0; r < h / 16; r++) for (let c = (r & 1) * 12; c < w; c += 24) g.fillRect(x + c, y + r * 16, 22, 14);
+    }
     for (const pp of L.pipes) drawPipe(g, pp);
     for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
       const i = r * L.cols + c;
@@ -212,8 +219,9 @@
     }
     for (const s of L.springs) M.spr1(g, 'trap1', s.t > 0 ? Math.floor((0.4 - s.t) / 0.4 * 7) : 0, s.x + s.w / 2, s.y + s.h, { scale: 1 });
     for (const d of L.dashes) {
-      M.box(g, d.x, d.y + 10, d.w, d.h - 10, d.t > 0 ? '#ffd54a' : '#ff9f43', { line: '#1d1438' });
-      M.text(g, d.dir > 0 ? '»' : '«', d.x + d.w / 2, d.y + d.h - 3, { size: 18, align: 'center' });
+      const by = d.y + d.h; // alas per samping (zona pemicunya lebih tinggi dari gambarnya)
+      M.box(g, d.x, by - 22, d.w, 22, d.t > 0 ? '#ffd54a' : '#ff9f43', { line: '#1d1438' });
+      M.text(g, d.dir > 0 ? '»' : '«', d.x + d.w / 2, by - 3, { size: 18, align: 'center' });
     }
     drawSwitches(g, L);
     for (const b of gm.boxes) M.spr1(g, 'box1_idle', 0, b.x + b.w / 2, b.y + b.h, { scale: 1.36 });

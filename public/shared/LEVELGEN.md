@@ -1,7 +1,10 @@
 # Spesifikasi Level Generator Platformer (Kit F5)
 
-Status: disetujui bosskuh (2026-10-28), ditambah pemicu soal (benda macet). G1 (mekanik) selesai: `mh3/js/plat/sim.js`, `scene.js`, uji `tests/mh3_mekanik.test.js`. Setelah disetujui, generator dibangun di
-`public/shared/js/levelgen.js` lalu dipakai untuk merombak 8 level Kejar MH3.
+Status: disetujui bosskuh (2026-10-28), ditambah pemicu soal (benda macet). G1 sampai G5 selesai: mekanik di
+`mh3/js/plat/sim.js` + `scene.js`, generator `public/shared/js/levelgen.js` + pustaka 24 ruang `levelgen.chunks.js`,
+pemeriksa `levelcheck.js` mengerti mekanik baru, bot pemain `tests/lib/kejar_bot.js`, dan 8 level Kejar MH3 dibuat
+generator dengan seed tetap (`mh3/js/plat/levels.js`). Uji: `tests/mh3_mekanik.test.js`, `tests/mh3_plat.test.js`,
+`tests/mh3_plat_ui.js`. Pustaka baru 24 ruang (bukan 40); ruang boleh dipakai ulang sampai 4 kali bila pilihan sedikit.
 
 ## 1. Pelajaran dari contoh `public/assets/advanced-level-example-*`
 

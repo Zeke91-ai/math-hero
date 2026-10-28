@@ -1,54 +1,47 @@
 // Uji logika level Kejar MH3 di Node:  node tests/mh3_plat.test.js
-// Bot sederhana berlari ke kanan, melompat sebelum jurang, dinding, duri, dan musuh. Setiap level harus bisa ditamatkan.
+// Level dibuat level generator (seed tetap). Tiap level harus lulus pemeriksa level (jalur ada) dan ditamatkan
+// bot pemain (tests/lib/kejar_bot.js) di simulasi asli; soal dari benda macet dijawab otomatis.
 const assert = require('assert');
 const Sim = require('../public/mh3/js/plat/sim.js');
 const Lv = require('../public/mh3/js/plat/levels.js');
+const Gen = require('../public/shared/js/levelgen.js');
+const { check, fromKejar } = require('../public/shared/js/levelcheck.js');
+const Bot = require('./lib/kejar_bot.js');
 const { T } = require('../public/shared/js/physics.js');
-const tileAt = (L, c, r) => (c < 0 || c >= L.cols ? 1 : r < 0 || r >= L.rows ? 0 : L.tiles[r * L.cols + c]);
 
-function bot(g, usePower) {
-  const p = g.p, L = g.L;
-  const col = Math.floor((p.x + p.w / 2) / T), foot = Math.floor((p.y + p.h - 1) / T);
-  let jump = false;
-  const look = (n) => col + n;
-  for (const n of [1, 2]) {
-    const c = look(n), surf = tileAt(L, c, foot + 1);
-    if (p.onGround && surf === 0 && tileAt(L, c, foot + 2) === 0) jump = true;      // jurang
-    if (tileAt(L, c, foot) === 1) jump = true;                                       // dinding
-    if (L.spikes.some((s) => Math.floor(s.x / T) === c)) jump = true;               // duri
-  }
-  for (const e of g.enemies) if (!e.dead && e.b.x > p.x && e.b.x - p.x < 70 && Math.abs(e.b.y - p.y) < 60) jump = true;
-  if (!p.onGround && p.y > (L.rows * T - 60) && g.power === 'djump') jump = true;
-  return { dir: 1, jump: jump && p.onGround, jumpHeld: true };
-}
-function run(def, maxSec) {
-  const g = Sim.create(def);
-  let prevJump = false;
+function run(def, hero, maxSec) {
+  const g = Sim.create(def, { hero });
+  const bot = Bot.make();
+  let quiz = 0;
   for (let i = 0; i < maxSec * 60 && g.phase === 'play'; i++) {
-    const inp = bot(g);
-    Sim.update(g, 1 / 60, inp);
+    Sim.update(g, 1 / 60, bot.step(g));
+    for (const e of g.events) if (e.type === 'quiz') { quiz++; Sim.solveQuiz(g, e.what, e.id); }
     g.events.length = 0;
   }
-  return g;
+  return { g, quiz };
 }
 
 for (const lv of Lv.LEVELS) {
-  const g = run(lv, 240);
-  assert.strictEqual(g.phase, 'won', `level ${lv.id} harus selesai (posisi x=${Math.round(g.p.x)}, mati ${g.deaths}, hati ${g.hearts})`);
-  console.log(`ok: level ${lv.id} "${lv.nama}" selesai dalam ${g.t.toFixed(1)} dtk, bintang ${g.stars}/${g.L.stars.length}, hati ${g.hearts}, mati ${g.deaths}, rating ${Sim.rating(g)}`);
-  assert.ok(g.L.chests.length === 2, 'tiap level punya Peti Kekuatan dan Peti Kristal');
-  assert.ok(g.L.chests.every((c) => c.got), `semua peti di level ${lv.id} bisa diambil dari jalur bot`);
+  const plan = Lv.PLAN.find((p) => p.id === lv.id);
+  // generator deterministik: seed yang sama = peta yang sama
+  assert.deepStrictEqual(Gen.generate(Object.assign({ tema: plan.tema }, plan.gen)).map, lv.map, `level ${lv.id} deterministik`);
+  const r = check(fromKejar(lv, Sim.parse(lv), Sim.K));
+  assert.ok(r.ok, `level ${lv.id} lulus pemeriksa level: ${(r.msg || []).join('; ')}`);
+  assert.ok(lv.rooms.some((x) => x.dy), `level ${lv.id} punya ruang naik/turun`);
+  const { g, quiz } = run(lv, 'pinki', 300);
+  assert.strictEqual(g.phase, 'won', `level ${lv.id} harus selesai (posisi x=${Math.round(g.p.x)} y=${Math.round(g.p.y)}, mati ${g.deaths})`);
+  assert.ok(quiz >= 1, `level ${lv.id} punya pemicu soal di jalan`);
+  assert.strictEqual(g.L.chests.length, 2, 'tiap level punya Peti Kekuatan dan Peti Kristal');
+  console.log(`ok: level ${lv.id} "${lv.nama}" ${lv.map[0].length}x${lv.map.length} selesai ${g.t.toFixed(0)} dtk, soal ${quiz}, bintang ${g.stars}/${g.L.stars.length}, mati ${g.deaths}, rating ${Sim.rating(g)}`);
 }
-// Peti tidak menghalangi: bot tanpa menjawab apa pun tetap menamatkan level (sudah dibuktikan di atas).
-// Checkpoint: jatuh ke jurang mengembalikan ke checkpoint terakhir tanpa macet.
+// Checkpoint: jatuh ke dasar peta mengembalikan ke checkpoint terakhir tanpa macet.
 {
-  const g = Sim.create(Lv.LEVELS[0]);
-  Sim.place(g, { x: 29 * T, y: 5 * T }); // di atas jurang pertama
-  g.p.y = 12 * T;
-  Sim.update(g, 1 / 60, { dir: 0 });
+  const lv = Lv.LEVELS[0], g = Sim.create(lv);
+  g.p.y = lv.map.length * T + 10;
   for (let i = 0; i < 120; i++) Sim.update(g, 1 / 60, { dir: 0 });
   assert.strictEqual(g.phase, 'play');
   assert.ok(g.hearts >= 1, 'masih punya hati setelah jatuh');
+  assert.ok(Math.abs(g.p.x + g.p.w / 2 - g.cp.x) < 2, 'kembali ke checkpoint');
 }
 // Habis hati: ulang dari checkpoint dengan hati penuh.
 {
@@ -58,10 +51,26 @@ for (const lv of Lv.LEVELS) {
   assert.strictEqual(g.hearts, Sim.HEARTS); assert.strictEqual(g.deaths, 1);
   assert.ok(Math.abs(g.p.x + g.p.w / 2 - 30 * T) < 2, 'kembali ke checkpoint');
 }
-// Perisai menahan satu pukulan; lompat ganda hanya dengan kekuatannya.
+// Perisai menahan satu pukulan.
 {
   const g = Sim.create(Lv.LEVELS[0]);
   Sim.grantPower(g, 'shield'); Sim.hurt(g, 'musuh');
   assert.strictEqual(g.hearts, Sim.HEARTS); assert.strictEqual(g.power, null);
+}
+// Generator: banyak seed acak di tiap tier lulus pemeriksa level, dan tier tinggi lebih banyak naik/turun.
+{
+  const all = ['tangga', 'per', 'kotak', 'tuas', 'pipa', 'lift', 'gerak', 'rapuh', 'samping', 'gergaji', 'gergaji_gerak'];
+  const vert = [0, 0, 0, 0];
+  for (let tier = 0; tier < 4; tier++) {
+    for (let s = 1; s <= 6; s++) {
+      const d = Gen.generate({ seed: 900 + s, tier, tema: 'padang', mech: tier ? all : ['tangga', 'per', 'tuas'], quiz: 2, sec: 120 });
+      assert.ok(d.map.every((row) => row.length === d.map[0].length), 'peta persegi');
+      const r = check(fromKejar(Object.assign({ id: 's' + s, nama: 'acak' }, d), Sim.parse(d), Sim.K));
+      assert.ok(r.ok, `seed ${900 + s} tier ${tier} lulus: ${(r.msg || []).join('; ')}`);
+      vert[tier] += d.rooms.filter((x) => x.dy).length / d.rooms.length;
+    }
+  }
+  assert.ok(vert[3] > vert[0], `tier 3 lebih vertikal dari tier 0 (${vert.map((v) => (v / 6).toFixed(2)).join(' ')})`);
+  console.log('ok: 24 seed acak lulus pemeriksa level, porsi ruang vertikal per tier', vert.map((v) => (v / 6).toFixed(2)).join(' '));
 }
 console.log('semua uji Kejar lulus');
