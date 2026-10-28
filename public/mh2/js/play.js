@@ -39,6 +39,7 @@
   function begin() {
     const ph = S.ph;
     S.state = 'play';
+    window.Scratchpad.clear(); // soal baru, kertas bersih
     S.P = makeP(ph);
     S.inst = S.mode.create(S.P);
     M.setControls(S.mode.controls ? S.mode.controls(ph.cfg) : null);
@@ -315,16 +316,24 @@
     if (S.clearT > 0.2 && S.clearT < 0.3) M.fx.confetti();
   }
 
+  // Pulau kertas coret hanya untuk mode teka-teki tanpa jam (properti `scratch` di definisi mode, boleh fungsi cfg).
+  function scratchOk() {
+    if (!S || S.state !== 'play' || !S.mode) return false;
+    const sc = S.mode.scratch;
+    return typeof sc === 'function' ? !!sc(S.ph.cfg) : !!sc;
+  }
+
   // ---------- Adegan ----------
   M.register('play', {
     enter(p) {
       S = { level: p.level, hearts: HEARTS, score: 0, mistakes: 0, correct: 0, time: 0, shake: 0, hint: null, bonus: window.TimeBonus.forGame('mh2') };
       startPhase(0);
     },
-    exit() { M.audio.setPaused(false); },
+    exit() { M.audio.setPaused(false); window.Scratchpad.setAvailable(false); },
     blur() { if (S && S.state === 'play') openPause(); },
     update(dt) {
       if (!S) return;
+      window.Scratchpad.setAvailable(scratchOk());
       if (S.state === 'intro') { S.introT += dt; return; }
       if (S.state === 'explain') { S.explain.t += dt; return; }
       if (S.state === 'pause' || S.state === 'fail') { if (S.state === 'fail') S.failT += dt; return; }

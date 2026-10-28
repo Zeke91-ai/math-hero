@@ -49,6 +49,7 @@
   };
 
   M.Modes.pizza = {
+    scratch: (cfg) => !(cfg && cfg.timer > 0), // bos Koki Kacau punya jam: tanpa kertas coret
     nama: 'Pizza Pecahan',
     concept(cfg) {
       const c = CONCEPTS[cfg.kind];

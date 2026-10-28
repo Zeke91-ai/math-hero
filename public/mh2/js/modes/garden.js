@@ -37,6 +37,7 @@
   };
 
   M.Modes.garden = {
+    scratch: true, // teka-teki tanpa jam dan tanpa bahaya: boleh pakai kertas coret
     nama: 'Kebun Kotak',
     concept(cfg) {
       const c = CONCEPTS[cfg.kind];

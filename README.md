@@ -231,8 +231,14 @@ Aturan Firestore hanya mengizinkan membaca dan **menambah** skor yang bentuknya 
 
 ## Kertas coret-coret dan kredit (semua seri)
 
-- `public/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3: tombol kuning "Coret" di tengah atas membuka kertas bergaris untuk menulis hitungan dengan jari atau mouse. Game dijeda selama kertas terbuka; coretan tersimpan sampai ditekan Hapus.
+- `public/shared/js/scratchpad.js` dipakai bersama MH1, MH2, dan MH3. Tombol berupa pulau kuning bulat (✎) yang bisa diseret dan menempel ke tepi kiri/kanan (posisi tersimpan di `localStorage` kunci `mathHero.scratch.pos`). Ketukan membuka lembar bawah setinggi ~58% layar sehingga soal di atas tetap terlihat; tombol "Lihat soal" menciutkan lembar jadi strip. Coretan tersimpan sampai Hapus atau soal baru. Animasi memakai GSAP + Draggable; tanpa GSAP tetap jalan tanpa animasi.
+- Pulau hanya muncul saat anak mengerjakan soal yang menghentikan waktu, lewat `Scratchpad.setAvailable(bool)` (dipanggil tiap frame, idempoten). Kertas tidak menjeda game. MH1: selama `Quiz.isOpen()`. MH2: mode dengan properti `scratch: true` (balance, garden, market, numline, share, dan pizza kecuali `cfg.timer` > 0); tidak muncul di runner, shooter, racer. MH3: selama kartu PR dikerjakan (`MH3.homework`, mode soal).
+- API: `setAvailable`, `open`, `close`, `clear`, `isOpen`, `isAvailable`, `init(opts)` (opsional `onOpen`/`onClose`). Uji: `npm run test:scratch`.
 - Setiap seri punya credit roll yang ditutup dengan "an edu-game by Hilmi Fuadi" dan hilmifuadi@gmail.com.
+
+## Bank aset bersama
+
+`public/shared/` menampung kode yang dipakai bersama MH1-MH3: kertas coret (`scratchpad.js`), kredit (`credits.js`), dan pustaka animasi GSAP 3.15.0 di `vendor/gsap/`. Aturan dan cara memuat ada di `public/shared/README.md`.
 
 ## Lisensi dan atribusi
 

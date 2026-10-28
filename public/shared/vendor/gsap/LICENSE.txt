@@ -1,0 +1,10 @@
+GSAP 3.15.0 (gsap.min.js, Draggable.min.js)
+Disalin apa adanya dari paket npm resmi gsap@3.15.0 (folder dist).
+Hak cipta 2026 GreenSock. Semua hak dilindungi.
+
+Lisensi: GSAP "Standard 'no charge' license"
+  https://gsap.com/standard-license
+
+Paket npm tidak menyertakan berkas lisensi terpisah; bidang "license" di
+package.json paket menyebut lisensi di atas, dan header tiap berkas .min.js
+memuat pernyataan yang sama. Plugin seperti Draggable gratis sejak 2024.

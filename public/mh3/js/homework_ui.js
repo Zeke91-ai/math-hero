@@ -9,7 +9,6 @@
   const MH3 = window.MH3 = window.MH3 || {};
   const KEY = 'mathHero3.homework.open.v1';
   const DEFAULT_WRONG = 'Belum tepat. Cek lagi langkahmu.';
-  const INK = ['#2b6fd6', '#d6384a'];
 
   function store(v) { try { if (v) localStorage.setItem(KEY, JSON.stringify(v)); else localStorage.removeItem(KEY); } catch (e) { /* tetap jalan */ } }
   function stored() { try { const v = JSON.parse(localStorage.getItem(KEY)); return v && v.id ? v : null; } catch (e) { return null; } }
@@ -24,10 +23,10 @@
   const SEP = { rem: 'sisa', frac: '/', time: '.' };
 
   const S = {
-    active: false, mode: 'solve', // solve | hint | scratch | result
+    active: false, mode: 'solve', // solve | hint | result
     p: null, opts: null, onDone: null,
     vals: {}, field: 0, wrong: 0, hints: 0, msg: '', msgT: 0, shake: 0, t: 0,
-    strokes: [], ink: 0, drawing: null, result: null, count: 0,
+    result: null, count: 0,
   };
 
   function build(opts) {
@@ -39,7 +38,8 @@
     opts = opts || {};
     const p = build(opts);
     Object.assign(S, { active: true, mode: 'solve', p, opts: { id: p.id, seed: p.seed, tier: p.tier, title: opts.title }, onDone, vals: {}, field: 0,
-      wrong: 0, hints: 0, msg: '', msgT: 0, shake: 0, t: 0, strokes: [], ink: 0, drawing: null, result: null, count: 0 });
+      wrong: 0, hints: 0, msg: '', msgT: 0, shake: 0, t: 0, result: null, count: 0 });
+    if (!resumeState) window.Scratchpad.clear(); // soal baru, kertas bersih
     if (resumeState) { S.wrong = resumeState.wrong | 0; S.hints = resumeState.hints | 0; if (S.hints) S.mode = 'solve'; }
     save();
     M.overlay = overlay;
@@ -53,6 +53,7 @@
     const out = { status, stars: status === 'later' ? 0 : r.stars, hints: S.hints, wrong: S.wrong, id: S.p.id, seed: S.p.seed, tier: S.p.tier, grade: S.p.grade, steps: S.p.steps };
     const cb = S.onDone;
     S.active = false; M.overlay = null; store(null); keyOn(false);
+    window.Scratchpad.setAvailable(false);
     M.audio.setPaused(false);
     if (cb) cb(out);
   }
@@ -164,12 +165,11 @@
     // Papan angka.
     const ky = msgY + 36;
     const kb = drawKeypad(g, ky);
-    // Tombol bawah: Petunjuk, Coret, Nanti.
-    const by = kb + 4, bw = 108, bh = 44, bx = (VW - (3 * bw + 2 * 8)) / 2;
+    // Tombol bawah: Petunjuk, Nanti. Kertas coret ada di pulau melayang (shared/js/scratchpad.js).
+    const by = kb + 4, bw = 140, bh = 44, bx = (VW - (2 * bw + 8)) / 2;
     const pulse = S.wrong >= 2 && S.hints === 0 && Math.floor(S.t * 3) % 2 === 0;
     M.button(g, { id: 'petunjuk', x: bx, y: by, w: bw, h: bh, color: 'yellow', label: `Petunjuk ${S.hints}/3`, size: 15, selected: pulse, onTap: useHint });
-    M.button(g, { id: 'coret', x: bx + bw + 8, y: by, w: bw, h: bh, color: 'teal', label: 'Coret', size: 17, onTap: () => { S.mode = 'scratch'; } });
-    M.button(g, { id: 'nanti', x: bx + 2 * (bw + 8), y: by, w: bw, h: bh, color: 'gray', label: 'Nanti', size: 17, onTap: () => finish('later') });
+    M.button(g, { id: 'nanti', x: bx + bw + 8, y: by, w: bw, h: bh, color: 'gray', label: 'Nanti', size: 17, onTap: () => finish('later') });
   }
   function drawHint(g) {
     const VW = M.VW, VH = M.VH;
@@ -184,32 +184,6 @@
     }
     if (S.hints < 3) M.text(g, 'Petunjuk berikutnya menurunkan hadiah.', VW / 2, 70 + h - 14, { size: 13, align: 'center', color: '#8a7aa8', outline: false });
     M.button(g, { id: 'tutuphint', x: VW / 2 - 90, y: VH - 84, w: 180, h: 52, color: 'green', label: 'Mengerti', size: 22, onTap: () => { S.mode = 'solve'; } });
-  }
-  const PAPER = { x: 8, y: 92, w: 344 };
-  function paperRect() { return { x: PAPER.x, y: PAPER.y, w: PAPER.w, h: M.VH - 92 - 74 }; }
-  function drawScratch(g) {
-    const VW = M.VW, VH = M.VH, r = paperRect();
-    dim(g);
-    M.text(g, S.p.question, VW / 2, 44, { size: 15, align: 'center', color: '#fff', maxW: VW - 20, lh: 18 });
-    M.box(g, r.x, r.y, r.w, r.h, '#fffdf2', { line: '#2b1d52', shade: false });
-    g.save(); g.beginPath(); g.rect(r.x + 3, r.y + 3, r.w - 6, r.h - 6); g.clip();
-    g.strokeStyle = 'rgba(80,120,200,0.18)'; g.lineWidth = 1;
-    for (let y = r.y + 30; y < r.y + r.h; y += 30) { g.beginPath(); g.moveTo(r.x, y); g.lineTo(r.x + r.w, y); g.stroke(); }
-    g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = 4;
-    const all = S.drawing ? S.strokes.concat([S.drawing]) : S.strokes;
-    for (const s of all) {
-      g.strokeStyle = INK[s.c];
-      g.beginPath(); g.moveTo(s.pts[0][0], s.pts[0][1]);
-      if (s.pts.length === 1) g.lineTo(s.pts[0][0] + 0.1, s.pts[0][1]);
-      for (let i = 1; i < s.pts.length; i++) g.lineTo(s.pts[i][0], s.pts[i][1]);
-      g.stroke();
-    }
-    g.restore();
-    const by = VH - 66;
-    M.button(g, { id: 'tinta0', x: 8, y: by, w: 52, h: 48, fill: INK[0], selected: S.ink === 0, onTap: () => { S.ink = 0; } });
-    M.button(g, { id: 'tinta1', x: 68, y: by, w: 52, h: 48, fill: INK[1], selected: S.ink === 1, onTap: () => { S.ink = 1; } });
-    M.button(g, { id: 'hapuscoret', x: 128, y: by, w: 100, h: 48, color: 'orange', label: 'Hapus', size: 18, onTap: () => { S.strokes = []; S.drawing = null; } });
-    M.button(g, { id: 'selesaicoret', x: 236, y: by, w: 116, h: 48, color: 'green', label: 'Selesai', size: 18, onTap: () => { S.mode = 'solve'; } });
   }
   function drawResult(g) {
     const VW = M.VW, VH = M.VH;
@@ -233,6 +207,7 @@
   const overlay = {
     update(dt) {
       S.t += dt;
+      window.Scratchpad.setAvailable(S.active && S.mode === 'solve'); // hanya saat mengerjakan, bukan saat petunjuk/hasil
       if (S.shake > 0) S.shake = Math.max(0, S.shake - dt);
       if (S.mode === 'result' && S.count > 0) { S.count -= dt; if (S.count <= 0) finish('done'); }
     },
@@ -240,21 +215,8 @@
       M.clearHits();
       if (S.mode === 'solve') drawSolve(g);
       else if (S.mode === 'hint') drawHint(g);
-      else if (S.mode === 'scratch') drawScratch(g);
       else drawResult(g);
     },
-    pointerDown(x, y) {
-      if (S.mode !== 'scratch') return;
-      const r = paperRect();
-      if (!M.inRect(x, y, r)) return;
-      S.drawing = { c: S.ink, pts: [[x, y]] };
-    },
-    pointerMove(x, y) {
-      if (S.mode !== 'scratch' || !S.drawing) return;
-      const r = paperRect();
-      S.drawing.pts.push([M.clamp(x, r.x + 3, r.x + r.w - 3), M.clamp(y, r.y + 3, r.y + r.h - 3)]);
-    },
-    pointerUp() { if (S.drawing) { S.strokes.push(S.drawing); S.drawing = null; } },
     blur() { save(); },
   };
 
