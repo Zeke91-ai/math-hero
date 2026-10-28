@@ -1,6 +1,6 @@
 # Spesifikasi Level Generator Platformer (Kit F5)
 
-Status: draf untuk disetujui bosskuh (2026-10-28). Belum ada kode. Setelah disetujui, generator dibangun di
+Status: disetujui bosskuh (2026-10-28), ditambah pemicu soal (benda macet). G1 (mekanik) selesai: `mh3/js/plat/sim.js`, `scene.js`, uji `tests/mh3_mekanik.test.js`. Setelah disetujui, generator dibangun di
 `public/shared/js/levelgen.js` lalu dipakai untuk merombak 8 level Kejar MH3.
 
 ## 1. Pelajaran dari contoh `public/assets/advanced-level-example-*`
@@ -25,18 +25,33 @@ punya platform gerak, papan rapuh, gergaji, meriam, dan gerbang; fisikanya (`sha
 
 | Kode | Mekanik | Perilaku | Aset |
 |---|---|---|---|
-| `H` | Tangga | Tekan atas/bawah di depan tangga untuk memanjat; lepas di atas berdiri di puncak. Musuh tidak memanjat. | Animasi `*_climb` hero; batang tangga digambar dengan warna kayu tema. |
+| `H` | Tangga | Lompat ke tangga lalu tahan Lompat (atau panah atas di keyboard) untuk memanjat; diam = berpegangan; panah kiri/kanan + Lompat = loncat keluar. `H` paling atas sebaris dengan lantai atas dan bisa dipijak; panah bawah untuk turun. Musuh tidak memanjat. | Animasi `*_climb` hero; batang tangga digambar dengan warna kayu tema. |
 | `s` | Per (pegas) | Diinjak: melontar setinggi sekitar 8 tile (2x lompat biasa). | `trap1` (pad merah yang tertekan). |
 | `>` `<` | Per samping | Melontar mendatar, untuk lintasan cepat gaya Sonic. | `trap1` diputar. |
-| `(` `)` | Pipa | Masuk di mulut pipa, hero dibawa sepanjang jalur pipa ke mulut lain (bisa naik). | Tile pipa digambar dari palet logam `tileset`. |
-| `-` `\|` | Platform gerak (datar, tegak) | Seperti `movers` MH1. Lift tegak untuk poros vertikal. | Papan dari `tileset` (sudah dipakai MH1). |
+| `(` `)` | Pipa | Masuk di mulut `(`, hero dibawa ke mulut `)` pasangannya (pasangan ke-k menurut urutan kolom), keluar dengan loncatan kecil. | Tile pipa digambar dari palet logam `tileset`. |
+| `-` `\|` | Platform gerak (datar, tegak) | Deretan `-` = lintasan platform 2 tile, deretan `\|` = lintasan lift selebar 2 tile. Hero ikut terbawa. | Papan dari `tileset` (sudah dipakai MH1). |
 | `~` | Papan rapuh | Runtuh 0,6 detik setelah diinjak, muncul lagi 3 detik kemudian. | `trap5` (animasi runtuh). |
 | `B` | Kotak dorong | Didorong dengan berjalan ke arahnya, jatuh oleh gravitasi, bisa dipijak dan menekan tombol. | `box1_idle`, animasi `*_push` hero. |
-| `_` | Tombol injak | Aktif selama ditekan hero atau kotak. Membuka gerbang dengan warna sama. | `end_idle`/`end_pressed`. |
-| `t` | Tuas | Disentuh sekali, menyala tetap. Membuka gerbang dengan warna sama. | Digambar prosedural (batang + kenop warna kanal). |
-| `G` | Gerbang | Padat sampai kanalnya aktif. Maksimal 3 kanal warna per level (merah, biru, kuning). | Balok bergaris dari `tileset` + warna kanal. |
+| `_` `,` `;` | Tombol injak kanal 1/2/3 | Aktif selama ditekan hero atau kotak. Membuka gerbang dengan warna sama. | Digambar prosedural (alas + tombol warna kanal). |
+| `t` `y` `u` | Tuas kanal 1/2/3 | Disentuh sekali, menyala tetap. Membuka gerbang dengan warna sama. | Digambar prosedural (batang + kenop warna kanal). |
+| `1` `2` `3` | Gerbang kanal 1/2/3 | Padat sampai kanalnya aktif. Maksimal 3 kanal warna per level (merah, biru, kuning). Tidak menutup di atas hero atau kotak. | Balok bergaris dari `tileset` + warna kanal. |
 | `x` | Blok retak | Bisa dihancurkan dengan skill Dudu atau kotak yang jatuh. Hanya menutup jalan pintas atau harta, tidak pernah jalan utama. | `box2_break`. |
-| `o` | Gergaji | Diam atau bergerak bolak-balik. Hanya tier 2 ke atas. | `trap2`. |
+| `o` `O` | Gergaji (diam, bolak-balik) | Melukai seperti duri. Hanya tier 2 ke atas. | `trap2`. |
+
+### Pemicu soal (benda macet)
+
+Supaya tetap game edukasi, sebagian tuas dan tombol **macet**. Menyentuhnya membuka kartu PR MH3 (soal sesuai kelas dan
+tingkat adaptif, ada petunjuk dan kertas coret). Jawaban selesai: benda bekerja seperti biasa. Ditunda: tetap macet dan
+soal muncul lagi saat disentuh ulang, jadi anak tidak pernah terkunci, hanya diminta mencoba lagi.
+
+| Kode | Benda macet | Setelah soal selesai |
+|---|---|---|
+| `T` `Y` `U` | Tuas macet kanal 1/2/3 | Tuas langsung menyala, gerbang kanalnya terbuka. |
+| `j` `k` `l` | Tombol macet kanal 1/2/3 | Tombol bisa ditekan hero atau kotak seperti biasa. |
+| `P` `K` | Peti Kekuatan, Peti Kristal (sudah ada) | Kekuatan, atau 1 sampai 3 Kunci Kristal. |
+
+Aturan generator: 1 benda macet di jalan utama untuk tier 0, sampai 2 untuk tier 1 ke atas, ditaruh di ruang puzzle
+(bukan di tengah lompatan), ditambah 2 peti PR seperti sekarang. Tiap benda macet diberi tanda gembok "?" yang berkedip.
 
 Puzzle yang disukai anak SD (dipakai generator sebagai pola ruang):
 - Dorong kotak ke tombol supaya gerbang tetap terbuka.
@@ -86,7 +101,7 @@ Satu level = satu tema. Generator hanya memilih aset dari palet tema itu.
 |---|---|---|---|---|---|---|
 | padang | `tileset` rumput hijau | papan kayu | `padang` | gua tanah, latar digelapkan 40% | slime1, kelinci | semak, bunga, pagar |
 | gua | `tileset` batu abu (bars) | papan batu | `gua` | sama, ditambah kristal biru bercahaya | burung, slime2 | kristal, stalaktit |
-| kebun (Rawa Kabut) | `tileset_pink` rumput merah muda | papan kayu | `kebun` | rongga akar, kabut | slime3, babi | jamur, alang-alang |
+| kebun (Rawa Kabut) | `tileset` rumput kuning, tanah bata (grassB MH1) | papan kayu | `kebun` | rongga akar, kabut | slime3, babi | jamur, alang-alang |
 | langit (Kastil Awan) | `tileset` logam | papan logam | `langit` | dalam kastil, latar `benteng` | robo, alien | bendera, rantai |
 
 Aturan tampilan:

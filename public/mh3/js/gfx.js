@@ -87,6 +87,10 @@
     const im = img['1:tileset'];
     if (im && im.naturalWidth) ctx.drawImage(im, sx * 16, sy * 16, 16, 16, Math.round(dx), Math.round(dy), size || 32, size || 32);
   };
+  M.tile1Part = function (ctx, sx, sy, sw, sh, dx, dy, dw, dh) {
+    const im = img['1:tileset'];
+    if (im && im.naturalWidth) ctx.drawImage(im, sx * 16, sy * 16, sw, sh, Math.round(dx), Math.round(dy), dw, dh);
+  };
   M.svg = function (ctx, name, x, y, w, h) {
     const im = img['svg:' + name];
     if (im && im.naturalWidth) ctx.drawImage(im, Math.round(x), Math.round(y), w, h || w);
