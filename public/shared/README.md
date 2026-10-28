@@ -6,6 +6,9 @@ Folder ini dipakai bersama oleh Math Hero 1, 2, dan 3. Isinya hanya hal yang mem
 
 - `js/scratchpad.js`: kertas coret-coret (`window.Scratchpad`): pulau seret + lembar bawah. Game memanggil `Scratchpad.setAvailable(bool)` tiap frame saat anak mengerjakan soal yang menghentikan waktu, dan `Scratchpad.clear()` saat soal baru.
 - `js/credits.js`: data kredit bersama dan helper (`window.MathHeroCredits`).
+- `js/audio.js`: musik chiptune dan efek suara Web Audio (`window.MHAudio` atau yang diekspos berkas itu), dipakai MH2 dan MH3. MH1 masih memakai `public/js/audio.js` sendiri (isinya berbeda).
+- `js/concepts.js`: semua pembuat soal dan penjelasan konsep (murni logika, diuji di Node), dipakai MH2 dan MH3.
+- `css/mh-ui.css`: gaya antarmuka bersama MH2 dan MH3 (dulu `mh2/css/mh2.css`).
 - `vendor/gsap/`: GSAP 3.15.0 (`gsap.min.js`, `Draggable.min.js`) dari paket npm resmi, disalin apa adanya, lisensi di `LICENSE.txt` (Standard "no charge"). Di-vendor lokal karena game dimainkan lewat LAN atau offline, bukan CDN.
 
 ## Aturan

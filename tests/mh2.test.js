@@ -1,7 +1,7 @@
 // Uji logika soal dan data level Math Hero 2:  node tests/mh2.test.js
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const C = require('../public/mh2/js/concepts.js');
+const C = require('../public/shared/js/concepts.js');
 const { STAGES, ALL_LEVELS, MODES } = require('../public/mh2/js/stages.js');
 
 const N = 300;
