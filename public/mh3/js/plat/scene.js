@@ -15,6 +15,8 @@
     { key: 'shield', nama: 'Perisai', info: 'Menahan satu pukulan', color: 'teal' },
   ];
 
+  const SKILL_LABEL = { lempar: 'Lempar', melayang: 'Melayang', hantam: 'Hantam' };
+  const controls = () => ({ arrows: true, a: 'Lompat', b: SKILL_LABEL[S && S.g && S.g.skill] || null });
   const heroKey = () => (M.save && M.save.active && M.save.active.hero) || 'pinki';
   const say = (t, ms, c) => M.toast(t, ms, c);
   const viewH = () => M.VH - HUD - PAD_H;
@@ -37,6 +39,10 @@
     else if (e.type === 'crumble') fx.burst(sx(e.x + 16), sy(e.y + 6), { n: 8, speed: 70, color: ['#c48a4a', '#7a4a2a'], life: 0.4 });
     else if (e.type === 'boxReset') say('Kotak kembali ke tempat awal.', 1600);
     else if (e.type === 'quiz') quiz(e);
+    else if (e.type === 'throw') a.sfx('tembak');
+    else if (e.type === 'shotHit') fx.burst(sx(e.x), sy(e.y), { n: 6, speed: 60, color: ['#ffd54a'], life: 0.25 });
+    else if (e.type === 'slam') { a.sfx('ledak'); S.shake = 0.25; fx.burst(sx(e.x), sy(e.y), { n: 14, speed: 140, color: ['#fff6dc', '#c48a4a'], life: 0.4 }); }
+    else if (e.type === 'crack') { fx.burst(sx(e.x), sy(e.y), { n: 12, speed: 120, color: ['#c48a4a', '#7a4a2a', '#4a2a14'], life: 0.5 }); if (!S.crackHint) { S.crackHint = true; say('Blok retak pecah!', 1500, '#e3ffe6'); } }
     else if (e.type === 'chest') chest(e);
     else if (e.type === 'win') { a.sfx('benar'); fx.confetti(); }
   }
@@ -46,7 +52,7 @@
     const ch = S.g.L.chests[e.id], power = e.kind === 'power';
     S.state = 'card';
     MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: power ? 'Peti Kekuatan' : 'Peti Kristal' }, (r) => {
-      M.setControls({ arrows: true, a: 'Lompat', b: null });
+      M.setControls(controls());
       if (r.status !== 'done') { ch.got = false; ch.skip = true; S.state = 'play'; say('Peti disimpan. Sentuh lagi kalau sudah siap.', 2200); return; }
       M.audio.sfx('benar');
       if (power) S.state = 'power';
@@ -63,7 +69,7 @@
     if (S.opts.onQuiz) { S.opts.onQuiz(e, S.g); return; }
     S.state = 'card'; a0().sfx('awas');
     MH3.homework.open({ grade: grade(), tier: S.def.tier || 0, title: e.what === 'lever' ? 'Tuas macet!' : 'Tombol macet!' }, (r) => {
-      M.setControls({ arrows: true, a: 'Lompat', b: null });
+      M.setControls(controls());
       S.state = 'play';
       if (r.status !== 'done') { say('Masih macet. Sentuh lagi kalau sudah siap.', 2200); return; }
       Sim.solveQuiz(S.g, e.what, e.id);
@@ -229,7 +235,13 @@
       if (e.dead) { if (e.timer > 0) M.spr1(g, 'enemy1_hit', 2, b.x + b.w / 2, b.y + b.h + 2, { scale: 1.2, alpha: Math.max(0, e.timer * 2.5) }); continue; }
       M.spr1(g, 'enemy1_run', f, b.x + b.w / 2, b.y + b.h + 2, { scale: 1.2, flip: e.dir > 0 });
     }
+    for (const sh of gm.shots) M.art(g, 'bintang', sh.x - 11 * 0.7, sh.y - 11 * 0.7 + Math.sin(M.t * 30) * 1, 1.4);
     const p = gm.p;
+    if (gm.glide) {
+      // sayap daun kecil saat Owi melayang
+      g.fillStyle = 'rgba(255,255,255,0.85)';
+      for (const d of [-1, 1]) { g.beginPath(); g.ellipse(p.x + p.w / 2 + d * 20, p.y + 16 + Math.sin(M.t * 18) * 2, 16, 6, d * 0.35, 0, 7); g.fill(); }
+    }
     const blink = gm.invuln > 0 && Math.floor(M.t * 14) % 2;
     if (!gm.pipe && !blink) M.hero(g, heroKey(), gm.anim, M.t, p.x + p.w / 2, p.y + p.h + 2, { scale: 1.5, flip: gm.face < 0, frame: gm.climb && !p.vy ? 0 : undefined });
     if (gm.power === 'shield' && !gm.pipe) { g.strokeStyle = 'rgba(100,227,255,0.8)'; g.lineWidth = 3; g.beginPath(); g.arc(p.x + p.w / 2, p.y + p.h / 2, 38, 0, 7); g.stroke(); }
@@ -274,10 +286,10 @@
   M.register('plat', {
     enter(p) {
       const def = p.def || Lv.level(p.level || 1);
-      S = { def, params: p, opts: p, g: Sim.create(def), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame('mh3') };
+      S = { def, params: p, opts: p, g: Sim.create(def, { hero: heroKey() }), cam: { x: 0, y: 0 }, state: 'play', endT: 0, shake: 0, keys: 0, bonus: window.TimeBonus.forGame('mh3') };
       S.gateCell = new Set(S.g.L.gates.map((gt) => gt.r * S.g.L.cols + gt.c));
       updateCam(0, true);
-      M.setControls({ arrows: true, a: 'Lompat', b: null });
+      M.setControls(controls());
       M.audio.music('padang');
     },
     exit() { M.setControls(null); M.audio.setPaused(false); },
@@ -290,9 +302,9 @@
       if (S.state !== 'play') return;
       const I = M.input;
       if (I.pause) { S.state = 'pause'; return; }
-      // Tombol Lompat: A (juga B); layar tidak dipakai supaya jempol tidak meleset ke tombol lain.
+      // Tombol Lompat: A; tombol B: skill jagoan; layar tidak dipakai supaya jempol tidak meleset ke tombol lain.
       S.bonus.tick(dt); // hanya saat state 'play': kartu PR (overlay), jeda, pilih kekuatan, dan layar hasil tidak menghitung
-      Sim.update(S.g, dt, { dir: (I.rHold ? 1 : 0) - (I.lHold ? 1 : 0) || Math.sign(I.x), jump: I.aHit || I.bHit, jumpHeld: I.a || I.b, up: I.y < 0, down: I.y > 0 });
+      Sim.update(S.g, dt, { dir: (I.rHold ? 1 : 0) - (I.lHold ? 1 : 0) || Math.sign(I.x), jump: I.aHit, jumpHeld: I.a, skill: I.bHit, skillHeld: I.b, up: I.y < 0, down: I.y > 0 });
       for (const e of S.g.events) handle(e);
       S.g.events.length = 0;
       updateCam(dt, false);

@@ -5,7 +5,7 @@ const Sim = require('../public/mh3/js/plat/sim.js');
 const { T } = require('../public/shared/js/physics.js');
 
 // Peta uji tanpa tujuan diberi E di pojok kiri atas (tidak terjangkau) supaya bisa diurai.
-const mk = (map) => Sim.create({ id: 0, nama: 'uji', tema: 'padang', map: map.some((r) => r.includes('E')) ? map : ['', 'E'].concat(map.slice(2)) });
+const mk = (map, opts) => Sim.create({ id: 0, nama: 'uji', tema: 'padang', map: map.some((r) => r.includes('E')) ? map : ['', 'E'].concat(map.slice(2)) }, opts);
 function run(g, sec, inp) {
   for (let i = 0; i < sec * 60 && g.phase === 'play'; i++) { Sim.update(g, 1 / 60, typeof inp === 'function' ? inp(g, i) : inp); g.events.length = 0; }
   return g;
@@ -158,6 +158,46 @@ const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
   Sim.solveQuiz(h, 'plate', 0); run(h, 0.2, { dir: 0 });
   assert.ok(h.L.gates[0].open, 'tombol yang sudah tidak macet bekerja saat diinjak');
   console.log('ok: tuas dan tombol macet meminta soal dulu');
+}
+// Skill jagoan sesuai hero; MH1 dan tanpa nama memakai lempar.
+{
+  assert.strictEqual(mk(pad(['', '', '.S..'])).skill, 'lempar');
+  assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'owi' }).skill, 'melayang');
+  assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'dudu' }).skill, 'hantam');
+  assert.strictEqual(mk(pad(['', '', '.S..']), { hero: 'hero2' }).skill, 'lempar');
+  console.log('ok: skill dipilih dari jagoan');
+}
+// Pinki: bola bintang mengalahkan musuh dari jauh dan menyalakan tuas di seberang jurang.
+{
+  const g = mk(pad(['', '', '', '', '', '', '', '', '', '.S.....e....', '############']), { hero: 'pinki' });
+  run(g, 0.2, { dir: 0 });
+  run(g, 0.05, { dir: 0, skill: true });
+  run(g, 1, { dir: 0 });
+  assert.ok(g.enemies[0].dead && g.hurts === 0, 'musuh kalah oleh lemparan');
+  const h = mk(pad(['', '', '', '', '', '', '', '', '', '.S....t.1.E.', '######.#####']), { hero: 'pinki' });
+  run(h, 0.2, { dir: 0 }); run(h, 0.05, { dir: 0, skill: true }); run(h, 1, { dir: 0 });
+  assert.ok(h.L.levers[0].on && h.L.gates[0].open, 'lemparan menyalakan tuas dari jauh');
+  console.log('ok: Pinki melempar bola bintang');
+}
+// Owi: menahan B di udara turun pelan, jadi bisa menyeberang jurang yang terlalu lebar untuk lompat biasa.
+{
+  const map = ['', '', '', '', '', '', '', '', '', '', '', '', '.S..........E...', '#####.......####'];
+  const plain = mk(map, { hero: 'pinki' }), owi = mk(map, { hero: 'owi' });
+  const plan = (sk) => (g) => ({ dir: 1, jump: g.p.onGround && cx(g) > 4.3 * T, jumpHeld: true, skillHeld: sk });
+  run(plain, 5, plan(false)); run(owi, 5, plan(true));
+  assert.ok(plain.phase !== 'won' && owi.phase === 'won', `hanya Owi yang menyeberang (biasa: ${plain.phase}, Owi: ${owi.phase})`);
+  console.log('ok: Owi melayang menyeberang jurang lebar');
+}
+// Dudu: hantam tanah memecahkan blok retak (bisa beberapa lapis) dan membuka ruang rahasia.
+{
+  const g = mk(pad(['', '', '', '', '', '', '.S..........', '##x#########', '..x.........', '#..*........', '############']), { hero: 'dudu' });
+  Sim.place(g, { x: 2.5 * T, y: 7 * T }); run(g, 0.2, { dir: 0 });
+  run(g, 0.05, { dir: 0, skill: true }); run(g, 1.5, { dir: 0 });
+  assert.ok(g.L.cracks.every((k) => k.broken) && feet(g) === 10 * T, `dua lapis blok retak pecah (kaki=${feet(g)})`);
+  const n = mk(pad(['', '', '', '', '', '', '.S..........', '##x#########', '..x.........', '#..*........', '############']), { hero: 'pinki' });
+  Sim.place(n, { x: 2.5 * T, y: 7 * T }); run(n, 0.2, { dir: 0 }); run(n, 0.05, { dir: 0, skill: true }); run(n, 1, { dir: 0 });
+  assert.ok(n.L.cracks.every((k) => !k.broken), 'jagoan lain tidak memecahkan blok retak');
+  console.log('ok: Dudu menghantam tanah memecahkan blok retak');
 }
 // Gergaji melukai.
 {

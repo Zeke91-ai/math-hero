@@ -19,6 +19,9 @@
   const HEARTS = 3, INVULN = 1.4, WALK = 55, RESPAWN_FALL = 140;
   const SPRING = -1000, DASH = 470, DASH_T = 0.5, CLIMB = 150, PUSH = 105, MOVER = 70, LIFT = 64;
   const CRUMBLE_SHAKE = 0.5, CRUMBLE_BACK = 3, PIPE_SPEED = 520;
+  // Skill jagoan (tombol B). Jalan utama tidak pernah membutuhkan skill; skill membuka jalan pintas dan bonus.
+  const SKILLS = { pinki: 'lempar', owi: 'melayang', dudu: 'hantam' };
+  const SHOT_SPEED = 430, SHOT_LIFE = 0.7, SHOT_CD = 0.45, GLIDE_FALL = 95, SLAM = 900;
   const PLATE = '_,;', LEVER = 'tyu', GATE = '123', LEVER_Q = 'TYU', PLATE_Q = 'jkl';
 
   function parse(def) {
@@ -80,11 +83,14 @@
     return L;
   }
 
-  function create(def) {
+  // opts.hero: kunci jagoan (menentukan skill); opts.skill menimpa langsung ('lempar' | 'melayang' | 'hantam' | null).
+  function create(def, opts) {
+    opts = opts || {};
     const L = parse(def);
     const g = {
       def, L, t: 0, phase: 'play', hearts: HEARTS, invuln: 0, stars: 0, deaths: 0, hurts: 0, events: [], power: null,
       cp: { x: L.start.x, y: L.start.y }, coyote: 0, buffer: 0, face: 1, anim: 'idle', djumpUsed: false, enemies: [],
+      skill: opts.skill !== undefined ? opts.skill : SKILLS[opts.hero] || 'lempar', skillCd: 0, shots: [], slam: 0, glide: false, throwT: 0,
       climb: false, boost: 0, dash: null, pipe: null, pipeCool: 0, ride: null, pushing: false, chans: [false, false, false],
       boxes: L.boxes.map((b) => ({ id: b.id, x0: b.x0, y0: b.y0, x: b.x0, y: b.y0, w: 30, h: 30, vx: 0, vy: 0, onGround: false })),
       p: { x: 0, y: 0, w: C.PW, h: C.PH, vx: 0, vy: 0, onGround: false },
@@ -96,7 +102,7 @@
   }
   function place(g, pt) {
     const p = g.p; p.x = pt.x - p.w / 2; p.y = pt.y - p.h; p.vx = p.vy = 0; p.onGround = false;
-    g.climb = false; g.dash = null; g.pipe = null; g.ride = null; g.boost = 0;
+    g.climb = false; g.dash = null; g.pipe = null; g.ride = null; g.boost = 0; g.slam = 0; g.glide = false;
   }
 
   function hurt(g, why) {
@@ -145,6 +151,61 @@
     return false;
   }
 
+  function useSkill(g, input) {
+    const p = g.p;
+    if (!input.skill || g.skillCd > 0) return;
+    if (g.skill === 'lempar') {
+      g.shots.push({ x: p.x + p.w / 2 + g.face * 10, y: p.y + 20, vx: g.face * SHOT_SPEED, t: SHOT_LIFE, w: 12, h: 12 });
+      g.skillCd = SHOT_CD; g.throwT = 0.25; g.events.push({ type: 'throw' });
+    } else if (g.skill === 'hantam' && !g.slam) {
+      // Di tanah: loncat kecil lalu menghantam. Di udara: langsung menghantam ke bawah.
+      if (p.onGround) { p.vy = -480; g.slam = 1; g.ride = null; } else { g.slam = 2; p.vy = SLAM; }
+      g.skillCd = 0.3; g.events.push({ type: 'slamStart' });
+    }
+  }
+  // Hantam mendarat: pecahkan blok retak tepat di bawah kaki, kalahkan musuh di dekatnya. Bila ada blok pecah, hantaman
+  // berlanjut ke bawah (bisa menembus beberapa lapis).
+  function landSlam(g) {
+    const p = g.p, L = g.L, r = Math.floor((p.y + p.h + 2) / T);
+    let broke = false;
+    for (let c = Math.floor((p.x + 2) / T); c <= Math.floor((p.x + p.w - 2) / T); c++) broke = breakCrack(g, c, r) || broke;
+    for (const e of g.enemies) {
+      if (e.dead) continue;
+      const b = e.b;
+      if (Math.abs(b.x + b.w / 2 - (p.x + p.w / 2)) < 70 && Math.abs(b.y + b.h - (p.y + p.h)) < 24) { e.dead = true; e.timer = 0.4; g.events.push({ type: 'stomp', x: b.x + b.w / 2, y: b.y }); }
+    }
+    g.events.push({ type: 'slam', x: p.x + p.w / 2, y: p.y + p.h, broke });
+    if (broke) { p.onGround = false; p.vy = SLAM * 0.6; } else g.slam = 0;
+  }
+  function breakCrack(g, c, r) {
+    const L = g.L, k = L.cracks.find((x) => x.c === c && x.r === r && !x.broken);
+    if (!k) return false;
+    k.broken = true; L.tiles[r * L.cols + c] = 0;
+    g.events.push({ type: 'crack', x: c * T + T / 2, y: r * T + T / 2 });
+    return true;
+  }
+  // Bola bintang Pinki: terbang lurus, mengalahkan musuh, menyalakan tuas, berhenti di dinding.
+  function updateShots(g, dt) {
+    const L = g.L;
+    for (const s of g.shots) {
+      s.t -= dt; s.x += s.vx * dt;
+      const c = Math.floor(s.x / T), r = Math.floor(s.y / T);
+      if (Physics.tileAt(L, c, r) === 1) { s.t = 0; g.events.push({ type: 'shotHit', x: s.x, y: s.y }); continue; }
+      const box = { x: s.x - s.w / 2, y: s.y - s.h / 2, w: s.w, h: s.h };
+      for (const e of g.enemies) {
+        if (e.dead || !overlap(box, e.b)) continue;
+        e.dead = true; e.timer = 0.4; s.t = 0; g.events.push({ type: 'stomp', x: e.b.x + e.b.w / 2, y: e.b.y });
+      }
+      for (const lv of L.levers) {
+        if (lv.on || !overlap(box, lv)) continue;
+        s.t = 0;
+        if (lv.stuck) { if (!lv.asked) { lv.asked = true; g.events.push({ type: 'quiz', what: 'lever', id: lv.id, ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); } }
+        else { lv.on = true; g.events.push({ type: 'lever', ch: lv.ch, x: lv.x + lv.w / 2, y: lv.y }); }
+      }
+    }
+    g.shots = g.shots.filter((s) => s.t > 0);
+  }
+
   // Benda macet: sentuhan pertama memunculkan soal satu kali. Sesudah ditunda, soal muncul lagi setelah hero menjauh.
   function quizTouch(g, o, touch, what) {
     if (!touch) { o.asked = false; return false; }
@@ -170,6 +231,9 @@
     g.invuln = Math.max(0, g.invuln - dt);
     g.boost = Math.max(0, g.boost - dt);
     g.pipeCool = Math.max(0, g.pipeCool - dt);
+    g.skillCd = Math.max(0, g.skillCd - dt);
+    g.throwT = Math.max(0, g.throwT - dt);
+    updateShots(g, dt);
 
     // --- benda bergerak (lebih dulu supaya pemain ikut terbawa) ---
     for (const m of L.movers) {
@@ -208,7 +272,7 @@
     const onLadder = touchLadder(g);
     const feetLadder = ladderAt(L, Math.floor((p.x + p.w / 2) / T), Math.floor((p.y + p.h + 2) / T));
     if (!g.climb && ((onLadder && (input.up || (input.jumpHeld && !p.onGround && p.vy > -420))) || (feetLadder && p.onGround && input.down))) {
-      g.climb = true; g.dash = null; p.vy = 0; g.djumpUsed = false;
+      g.climb = true; g.dash = null; g.slam = 0; p.vy = 0; g.djumpUsed = false;
     }
     if (g.climb) {
       if (input.jump && dir) { g.climb = false; p.vy = C.JUMP * 0.8; g.buffer = 0; g.events.push({ type: 'jump' }); }
@@ -249,16 +313,22 @@
         if (g.coyote > 0) { p.vy = C.JUMP; g.coyote = 0; g.buffer = 0; g.djumpUsed = false; g.ride = null; g.events.push({ type: 'jump' }); }
         else if (g.power === 'djump' && !g.djumpUsed && !p.onGround) { p.vy = C.DJUMP; g.djumpUsed = true; g.buffer = 0; g.events.push({ type: 'djump' }); }
       }
+      useSkill(g, input);
       // lompat pendek jika tombol dilepas lebih awal (tidak berlaku saat dilontar per)
       if (!input.jumpHeld && p.vy < -200 && g.boost <= 0) p.vy += C.GRAVITY * dt * 1.5;
       p.vy += C.GRAVITY * dt;
+      if (g.slam === 2) p.vy = SLAM, p.vx *= 0.3;
+      if (g.slam === 1 && p.vy >= 0) { g.slam = 2; p.vy = SLAM; }
+      g.glide = g.skill === 'melayang' && !!input.skillHeld && !p.onGround && p.vy > GLIDE_FALL;
+      if (g.glide) p.vy = GLIDE_FALL;
       const wasGround = p.onGround;
       const r = stepBody(p, dt, L, dynFor(g, p));
       g.ride = r.platform && L.movers.includes(r.platform) ? r.platform : null;
       if (r.landed && !wasGround) g.events.push({ type: 'land' });
+      if (r.landed && g.slam === 2) landSlam(g);
       if (r.platform && r.platform.state === 'idle' && L.crumbles.includes(r.platform)) { r.platform.state = 'shake'; r.platform.t = CRUMBLE_SHAKE; }
       if (r.hitWall && g.dash) g.dash = null;
-      g.anim = g.pushing ? 'push' : !p.onGround ? (p.vy < 0 ? 'jump' : 'fall') : dir ? 'run' : 'idle';
+      g.anim = g.throwT > 0 ? 'throw' : g.pushing ? 'push' : !p.onGround ? (p.vy < 0 ? 'jump' : 'fall') : dir ? 'run' : 'idle';
     }
     if (p.y > L.rows * T + RESPAWN_FALL) hurt(g, 'jatuh');
 
@@ -348,5 +418,5 @@
     return Math.max(1, Math.min(3, 1 + (g.hurts === 0 && g.deaths === 0 ? 1 : 0) + (frac >= 0.7 ? 1 : 0)));
   }
 
-  return { HEARTS, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
+  return { HEARTS, SKILLS, parse, create, update, hurt, grantPower, rating, place, solveQuiz };
 });
