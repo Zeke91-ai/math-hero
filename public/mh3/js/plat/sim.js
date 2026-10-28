@@ -90,6 +90,20 @@
       L.pipes.push({ a: { x: m.c * T, y: m.r * T, w: T, h: T }, b: { x: o.c * T, y: o.r * T, w: T, h: T }, id: L.pipes.length,
         dist: Math.abs(o.c - m.c) * T + Math.abs(o.r - m.r) * T });
     });
+    // Gerbang terhubung ke tuas/tombol berwarna sama yang terdekat (bukan semua tuas sewarna di level), jadi tuas dari
+    // teka-teki sebelumnya tidak membuka gerbang teka-teki berikutnya. Gerbang sederet berbagi satu kepala (head).
+    const sws = [...L.levers.map((o) => Object.assign(o, { key: 'l' + o.id })), ...L.plates.map((o) => Object.assign(o, { key: 'p' + o.id }))];
+    for (const gt of L.gates) {
+      let best = null, bd = 1e9;
+      for (const sw of sws) {
+        if (sw.ch !== gt.ch) continue;
+        const d = Math.abs(sw.x / T - gt.c) + Math.abs(sw.y / T - gt.r) * 0.25;
+        if (d < bd) { bd = d; best = sw; }
+      }
+      gt.link = best ? best.key : null;
+      const above = L.gates.find((o) => o.c === gt.c && o.r === gt.r - 1 && o.ch === gt.ch);
+      gt.head = above ? above.head : gt;
+    }
     if (!L.start) throw new Error('Level tanpa S');
     if (!L.goal) throw new Error('Level tanpa E');
     return L;
@@ -146,21 +160,24 @@
     return d;
   }
 
-  // Kanal aktif bila tuasnya menyala atau tombolnya sedang ditekan. Gerbang tertutup = tile padat.
+  // Gerbang terbuka bila tuas/tombol yang terhubung dengannya menyala atau sedang ditekan. Gerbang tertutup = tile padat.
   function updateGates(g, init) {
     const L = g.L, bodies = [g.p, ...g.boxes, ...g.enemies.filter((e) => !e.dead).map((e) => e.b)];
-    const on = [0, 1, 2].map((k) => L.levers.some((l) => l.ch === k && l.on) || L.plates.some((p) => p.ch === k && p.down));
+    const on = {};
+    for (const l of L.levers) if (l.on) on[l.key] = true;
+    for (const p of L.plates) if (p.down) on[p.key] = true;
     for (const gt of L.gates) {
-      const want = on[gt.ch];
+      const want = !!on[gt.link];
       if (want === gt.open) continue;
       const cell = { x: gt.c * T, y: gt.r * T, w: T, h: T };
       // Gerbang tidak menutup di atas benda (anak atau kotak tidak pernah terjepit).
       if (!want && !init && bodies.some((b) => overlap(b, cell))) continue;
       gt.open = want;
       L.tiles[gt.r * L.cols + gt.c] = want ? 0 : 1;
-      if (!init && gt === L.gates.find((x) => x.ch === gt.ch)) g.events.push({ type: want ? 'gateOpen' : 'gateClose', ch: gt.ch, x: cell.x, y: cell.y });
+      gt.anim = init ? (want ? 1 : 0) : gt.anim;
+      if (!init && gt.head === gt) g.events.push({ type: want ? 'gateOpen' : 'gateClose', ch: gt.ch, x: cell.x, y: cell.y, c: gt.c, r: gt.r });
     }
-    g.chans = on;
+    g.chans = [0, 1, 2].map((k) => L.gates.some((gt) => gt.ch === k && gt.open));
   }
 
   const ladderAt = (L, c, r) => c >= 0 && c < L.cols && r >= 0 && r < L.rows && L.lad[r * L.cols + c] === 1;

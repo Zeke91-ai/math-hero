@@ -34,7 +34,7 @@
       if (m.axis === 'x') for (let x = m.x0; x <= m.x1; x += T / 2) mark(x, m.y0, m.w);
       else for (let y = m.y0; y <= m.y1; y += T) mark(m.x0, y, m.w);
     }
-    for (const gt of L.gates || []) tiles[gt.r * L.cols + gt.c] = (L.open && L.open[gt.ch]) ? 0 : 1;
+    for (const gt of L.gates || []) tiles[gt.r * L.cols + gt.c] = (L.open && L.open[gt.link !== undefined ? gt.link : gt.ch]) ? 0 : 1;
     for (const p of L.pilih) for (const c of p.cols) mark(c * T, p.y, p.w * T);
     return Object.assign({}, L, { tiles });
   }
@@ -85,14 +85,16 @@
   const touches = (s, o) => s.x + C.PW / 2 > o.x && s.x - C.PW / 2 < o.x + o.w && s.feet > o.y && s.feet - C.PH < o.y + o.h;
 
   function reach(Lraw, allowDouble) {
-    // Gerbang: ulangi pencarian setiap kali kanal baru terbuka (paling banyak 3 kanal).
-    const open = [false, false, false];
+    // Gerbang: ulangi pencarian setiap kali tuas/tombol baru tersentuh. Gerbang membuka bila tuas/tombol yang
+    // terhubung dengannya (gate.link = switch.key, dari sim) tersentuh; tanpa key memakai kanal warna.
+    const open = {};
     for (;;) {
       const states = reachOnce(Object.assign({}, Lraw, { open }), allowDouble);
       let more = false;
       for (const sw of Lraw.switches || []) {
-        if (open[sw.ch]) continue;
-        if (states.some((s) => touches(s, sw))) { open[sw.ch] = true; more = true; }
+        const k = sw.key !== undefined ? sw.key : sw.ch;
+        if (open[k]) continue;
+        if (states.some((s) => touches(s, sw))) { open[k] = true; more = true; }
       }
       if (!more) return states;
     }
@@ -184,7 +186,7 @@
       crates: [], stars: L.stars, secrets: [], bridges: [], movers: [], crumbles: L.crumbles || [], pilih: [],
       chests: L.chests,
       ladTops: L.ladTops || [], ladders, springs: L.springs || [], dashes: L.dashes || [], pipes: L.pipes || [],
-      tracks: L.movers || [], gates: L.gates || [], switches: [...(L.levers || []), ...(L.plates || []).map((p) => ({ x: p.x, y: p.y - 8, w: p.w, h: p.h + 8, ch: p.ch }))],
+      tracks: L.movers || [], gates: L.gates || [], switches: [...(L.levers || []), ...(L.plates || []).map((p) => ({ x: p.x, y: p.y - 8, w: p.w, h: p.h + 8, ch: p.ch, key: p.key }))],
       springVy: opts.springVy, dashVx: opts.dashVx, dashVy: opts.dashVy, dashT: opts.dashT, djump: !!opts.djump,
     };
   }

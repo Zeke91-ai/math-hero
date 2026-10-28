@@ -6,7 +6,7 @@
   const M = window.MH2;
   const MH3 = window.MH3 = window.MH3 || {};
   const Sim = MH3.platSim, Lv = MH3.platLevels, Ph = window.Physics;
-  const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 150;
+  const T = Ph.T, SC = 1.3, HUD = 56, PAD_H = 180;
   let S = null;
   const grade = () => (M.save && M.save.active && M.save.active.grade) || 2;
   const POWERS = [
@@ -39,7 +39,12 @@
     else if (e.type === 'spring' || e.type === 'dash') { a.sfx('boost'); fx.burst(sx(e.x), sy(e.y), { n: 8, speed: 90, color: ['#ffd54a', '#fff6dc'], life: 0.3 }); }
     else if (e.type === 'pipeIn' || e.type === 'pipeOut') a.sfx('hop');
     else if (e.type === 'lever' || e.type === 'plate') a.sfx('klik');
-    else if (e.type === 'gateOpen') { a.sfx('naik'); if (!S.gateHint) { S.gateHint = true; say('Gerbang terbuka!', 1500, '#e3ffe6'); } }
+    else if (e.type === 'gateOpen') {
+      a.sfx('naik'); say('Gerbang terbuka!', 1500, '#e3ffe6');
+      // gerbang di luar layar: tengok sebentar supaya anak melihat apa yang dibuka tuas/tombolnya
+      const vw = M.VW / SC, vh = viewH() / SC, gx = e.x + T / 2, gy = e.y + T;
+      if (gx < S.cam.x || gx > S.cam.x + vw || gy < S.cam.y || gy > S.cam.y + vh) S.pan = { x: gx, y: gy, t: 2.2 };
+    }
     else if (e.type === 'gateClose') a.sfx('klik');
     else if (e.type === 'crumble') fx.burst(sx(e.x + 16), sy(e.y + 6), { n: 8, speed: 70, color: ['#c48a4a', '#7a4a2a'], life: 0.4 });
     else if (e.type === 'boxReset') say('Kotak kembali ke tempat awal.', 1600);
@@ -83,10 +88,11 @@
   }
   const a0 = () => M.audio;
 
+  // Kamera mengikuti hero; saat pan (gerbang jauh terbuka) kamera menengok ke gerbang dulu lalu kembali.
   function updateCam(dt, snap) {
-    const g = S.g, p = g.p, L = g.L, vw = M.VW / SC, vh = viewH() / SC;
-    const tx = Math.max(0, Math.min(L.cols * T - vw, p.x + p.w / 2 - vw * 0.42 + g.face * 20));
-    const ty = Math.max(0, Math.min(L.rows * T - vh, p.y + p.h / 2 - vh * 0.6));
+    const g = S.g, p = g.p, L = g.L, vw = M.VW / SC, vh = viewH() / SC, pan = S.pan && S.pan.t > 0.5 ? S.pan : null;
+    const fx = pan ? pan.x - vw / 2 : p.x + p.w / 2 - vw * 0.42 + g.face * 20, fy = pan ? pan.y - vh / 2 : p.y + p.h / 2 - vh * 0.6;
+    const tx = Math.max(0, Math.min(L.cols * T - vw, fx)), ty = Math.max(0, Math.min(L.rows * T - vh, fy));
     if (snap) { S.cam.x = tx; S.cam.y = ty; } else { S.cam.x += (tx - S.cam.x) * Math.min(1, dt * 8); S.cam.y += (ty - S.cam.y) * Math.min(1, dt * 5); }
   }
 
@@ -147,14 +153,25 @@
       g.fillStyle = '#1d1438'; g.fillRect(m.x + 6, m.y + 8, T - 12, T - 10);
     }
   }
+  // Gerbang: jeruji tebal berwarna kanal di dalam bingkai gelap. Saat terbuka jeruji naik masuk ke kepala gerbang
+  // (animasi gt.anim 0..1), jadi anak melihat gerbang mana yang dibuka tuas/tombolnya.
   function drawGate(g, gt, L) {
-    const x = gt.c * T, y = gt.r * T, col = CH_COL[gt.ch];
-    if (gt.open) { g.strokeStyle = col; g.globalAlpha = 0.35; g.lineWidth = 2; g.strokeRect(x + 3, y + 3, T - 6, T - 6); g.globalAlpha = 1; return; }
-    g.fillStyle = CH_DARK[gt.ch]; g.fillRect(x, y, T, T);
-    g.fillStyle = col; for (let k = 0; k < 4; k++) g.fillRect(x + 2 + k * 8, y + 2, 4, T - 4);
-    g.fillStyle = '#1d1438'; g.fillRect(x, y, T, 3); g.fillRect(x, y + T - 3, T, 3);
-    // kepala dan kaki gerbang di ujung atas/bawah deretan
-    if (!L.gates.some((o) => o.c === gt.c && o.r === gt.r - 1)) { g.fillStyle = '#3a3346'; g.fillRect(x - 2, y - 4, T + 4, 6); }
+    const x = gt.c * T, y = gt.r * T, col = CH_COL[gt.ch], dk = CH_DARK[gt.ch];
+    gt.anim = gt.anim === undefined ? (gt.open ? 1 : 0) : gt.anim + ((gt.open ? 1 : 0) - gt.anim) * Math.min(1, M.dt * 4);
+    const k = gt.anim, top = !L.gates.some((o) => o.c === gt.c && o.r === gt.r - 1 && o.ch === gt.ch);
+    g.fillStyle = 'rgba(29,20,56,0.35)'; g.fillRect(x, y, T, T);
+    const h = Math.round(T * (1 - k));
+    if (h > 0) {
+      g.fillStyle = dk; g.fillRect(x + 2, y, T - 4, h);
+      g.fillStyle = col; for (let i = 0; i < 4; i++) g.fillRect(x + 4 + i * 7, y, 4, h);
+      g.fillStyle = '#fff'; g.globalAlpha = 0.35; for (let i = 0; i < 4; i++) g.fillRect(x + 4 + i * 7, y, 1, h); g.globalAlpha = 1;
+      g.fillStyle = '#1d1438'; g.fillRect(x + 2, y + Math.max(0, h - 3), T - 4, 3);
+    }
+    g.fillStyle = '#1d1438'; g.fillRect(x, y, 2, T); g.fillRect(x + T - 2, y, 2, T);
+    if (top) {
+      M.box(g, x - 4, y - 8, T + 8, 10, '#3a3346', { line: '#1d1438', shade: false });
+      g.fillStyle = col; g.fillRect(x + T / 2 - 5, y - 6, 10, 6);
+    }
   }
   function drawSwitches(g, L) {
     for (const pl of L.plates) {
@@ -350,7 +367,7 @@
     tangga: 'Tangga! Tekan ▲ untuk naik, ▼ untuk turun.', per: 'Per! Injak untuk melambung tinggi.', samping: 'Per samping! Lewati untuk melesat jauh.',
     pipa: 'Pipa! Masuk dari mulut hijau.', gerak: 'Papan bergerak! Tunggu, lalu lompat naik.', lift: 'Lift! Berdiri di atasnya untuk naik.',
     rapuh: 'Papan rapuh! Cepat lewat, nanti runtuh.', kotak: 'Kotak! Dorong ke tombol.', tombol: 'Tombol! Injak, atau taruh kotak di atasnya.',
-    tuas: 'Tuas! Sentuh untuk membuka gerbang yang warnanya sama.', macet: 'Macet! Sentuh, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
+    tuas: 'Tuas! Sentuh untuk membuka gerbang yang warnanya sama.', gerbang: 'Gerbang tertutup! Cari tuas atau tombol yang warnanya sama.', macet: 'Macet! Sentuh, lalu jawab soalnya.', gergaji: 'Gergaji! Lompati, jangan disentuh.',
     e: 'Musuh! Injak kepalanya.', a: 'Musuh! Injak kepalanya.', r: 'Banteng! Bisa diinjak saat pusing, atau pakai B.',
     f: 'Lebah! Tidak bisa diinjak. Hindari atau pakai B.', n: 'Meriam! Lompati pelurunya, atau pakai B.', peti: 'Peti Kekuatan! Jawab soal, dapat kekuatan super.',
   };
@@ -368,6 +385,7 @@
     for (const o of [...L.levers, ...L.plates]) if (o.stuck) add('macet', o.x + o.w / 2, o.y - 30);
     for (const o of L.plates) if (!o.stuck) add('tombol', o.x + o.w / 2, o.y);
     for (const o of L.levers) if (!o.stuck) add('tuas', o.x + o.w / 2, o.y);
+    for (const o of L.gates) if (o.head === o) add('gerbang', o.c * T + T / 2, o.r * T - 8);
     for (const o of L.saws) add('gergaji', o.cx, o.cy - 14);
     for (const k of L.cracks) add('retak', k.c * T + T / 2, k.r * T);
     for (const o of L.enemies) add(o.type || 'e', o.x + 14, o.y - 8);
@@ -457,6 +475,7 @@
       S.shake = Math.max(0, S.shake - dt);
       if (S.state === 'end') { S.endT += dt; return; }
       if (S.state !== 'play') return;
+      if (S.pan) { S.pan.t -= dt; updateCam(dt, false); if (S.pan.t <= 0) S.pan = null; return; }
       const I = M.input;
       if (I.pause) { S.state = 'pause'; return; }
       // Tombol Lompat: A; tombol B: skill jagoan; layar tidak dipakai supaya jempol tidak meleset ke tombol lain.

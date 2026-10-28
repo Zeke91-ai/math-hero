@@ -141,6 +141,16 @@ const pad = (rows) => rows.map((r) => r.padEnd(12, '.'));
   assert.strictEqual(g.phase, 'won', 'tuas membuka gerbang kanal yang sama');
   console.log('ok: tuas membuka gerbang sesuai warna kanal');
 }
+// Tiap gerbang terhubung ke tuas/tombol sewarna terdekat: tuas teka-teki sebelumnya tidak membuka gerbang berikutnya.
+{
+  const g = mk(['', '', '', '', '', '', '', '', '', '.S.t..1.......1.t.E.', '####################']);
+  const [g1, g2] = g.L.gates;
+  assert.ok(!g1.open && !g2.open, 'semua gerbang tertutup di awal');
+  run(g, 5, { dir: 1 });
+  assert.ok(g1.open && !g2.open, 'tuas pertama hanya membuka gerbang pertama');
+  assert.ok(cx(g) < 14 * T && g.phase === 'play', 'gerbang kedua menghadang');
+  console.log('ok: gerbang terhubung ke tuas terdekat yang sewarna');
+}
 // Tuas dan tombol macet: memunculkan soal sekali per sentuhan; gerbang baru terbuka setelah soal selesai.
 {
   const evs = []; const g0 = mk(pad(['', '', '', '', '', '', '', '', '', '.S.T..1...E.', '############']));
