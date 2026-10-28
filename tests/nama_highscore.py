@@ -6,6 +6,7 @@ D. Papan Juara: urutan, medali 1-3, avatar karakter tergambar, keterangan Tamat/
 E. Migrasi: database lama (tanpa kolom hero, nama daftar tetap) tetap terbaca dan berfungsi."""
 import json, os, subprocess, sys, tempfile, time, urllib.request, urllib.error
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SHOTS = os.path.join(ROOT, 'tests', 'shots')
@@ -47,7 +48,7 @@ def buka_halaman(browser_ctx, port, errors):
     page = browser_ctx.new_page()
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-    page.goto(f"http://127.0.0.1:{port}/")
+    page.goto(f"http://127.0.0.1:{port}/mh1/")
     page.wait_for_function("document.body.classList.contains('loaded')", timeout=15000)
     return page
 

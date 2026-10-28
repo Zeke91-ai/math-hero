@@ -3,6 +3,7 @@ Server statis murni (http.server) menyajikan folder public di bawah /math-hero/ 
 Menu harus otomatis memakai LocalApi (localStorage): nama, skor terbaik per pemain, checkpoint, nama tidak pantas, dan bertahan setelah reload."""
 import functools, http.server, json, os, socketserver, sys, threading
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PUBLIC = os.path.join(ROOT, 'public')
@@ -44,7 +45,7 @@ def buka(ctx, errors):
     page = ctx.new_page()
     page.on("pageerror", lambda e: errors.append(str(e)))
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-    page.goto(f"http://127.0.0.1:{PORT}{PREFIX}")
+    page.goto(f"http://127.0.0.1:{PORT}{PREFIX}mh1/")
     page.wait_for_function("document.body.classList.contains('loaded')", timeout=15000)
     return page
 

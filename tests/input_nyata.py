@@ -1,6 +1,7 @@
 """Tes input nyata: joystick dan tombol lompat benar-benar menggerakkan pemain lewat loop game."""
 import os, subprocess, time
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = dict(os.environ, PORT='8096', MATHHERO_DATA_DIR=__import__('tempfile').mkdtemp())  # DB sementara, bukan data asli
@@ -11,7 +12,7 @@ try:
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_context(**p.devices["Pixel 5"]).new_page()
-        page.goto("http://127.0.0.1:8096/")
+        page.goto("http://127.0.0.1:8096/mh1/")
         page.wait_for_function("document.body.classList.contains('loaded')")
         page.evaluate("window.__mathHero.startGame(0, 0, 1)")
         page.wait_for_timeout(1500)

@@ -1,6 +1,7 @@
 """Tes font Kleintenna Bow: font termuat di HTML dan canvas, tanpa error console, screenshot menu dan gameplay."""
 import os, subprocess, sys, tempfile, time
 from playwright.sync_api import sync_playwright, expect
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8101  # bukan 8091: port itu dipakai server asli pengguna
@@ -31,7 +32,7 @@ def main():
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
             page.on("response", lambda r: failed.append(r.url) if r.status >= 400 else None)
-            page.goto(f"http://127.0.0.1:{PORT}/")
+            page.goto(f"http://127.0.0.1:{PORT}/mh1/")
             expect(page.locator("#splash h1")).to_have_text("Math Hero")
             page.evaluate("document.fonts.ready")
             loaded = page.evaluate("document.fonts.check(\"16px 'Kleintenna'\")")

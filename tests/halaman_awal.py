@@ -1,6 +1,7 @@
 """Tes T13: halaman awal Math Hero (logo, tiga karakter, tombol, Kredit, tanpa info debug). DB sementara, port 8105."""
 import os, subprocess, sys, tempfile
 from playwright.sync_api import sync_playwright
+import _tanpa_skor  # noqa: F401  (mematikan papan skor online selama tes)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = 8105
@@ -27,7 +28,7 @@ try:
             errs = []
             page.on("pageerror", lambda e: errs.append(str(e)))
             page.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
-            page.goto(f"http://127.0.0.1:{PORT}/")
+            page.goto(f"http://127.0.0.1:{PORT}/mh1/")
             page.wait_for_function("document.body.classList.contains('loaded')", timeout=15000)
             page.wait_for_timeout(500)
             cek(f"[{nama}] judul Math Hero", page.locator('#splash h1').inner_text().replace('\n', ' ').strip() == 'Math Hero')

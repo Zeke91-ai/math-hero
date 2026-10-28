@@ -196,7 +196,7 @@ Seri lanjutan untuk anak kelas 2 sampai 5 SD. Dibuka langsung di `mh3/` (alamat 
 ## Tes
 
 - `npm test`: semua tes logika Node (skor, bonus waktu, bank soal, pemeriksa level, templat seri, MH2, MH3), sekitar 20 detik dan jalan di cloud tanpa browser. Per bagian: `npm run test:mh2`, `test:mh3`, `test:levels`, `test:bank`, `test:scores`, `test:bonus`, `test:template`.
-- `npm run test:ui`: semua tes sentuh Chromium (butuh paket `playwright` untuk Node). `npm run test:legacy`: tes Python MH1/MH2 lama (butuh Python + playwright Python).
+- `npm run test:ui`: semua tes sentuh Chromium (butuh paket `playwright` untuk Node). `npm run test:legacy`: tes Python MH1/MH2 lama (butuh Python dan `pip install playwright` lalu `playwright install chromium`). Tes ini membuka MH1 di `/mh1/` dan memeriksa tiga kartu di pemilih seri; `tests/_tanpa_skor.py` mematikan papan skor online selama tes supaya tidak ada skor tes terkirim ke Firebase sungguhan.
 - Tes sentuh di Chromium (layar 393x851, butuh paket `playwright` untuk Node): `node tests/mh3_plat_ui.js`, `node tests/mh3_defense_ui.js`, `node tests/mh3_map_ui.js`, `node tests/mh3_boss_ui.js`, `node tests/mh3_chests_ui.js`. Tes ini juga memeriksa tidak ada galat di konsol.
 
 Catatan: uji di HP sungguhan belum dilakukan untuk MH3. Sentuhan, suara, dan performa tetap perlu dicek di perangkat.
